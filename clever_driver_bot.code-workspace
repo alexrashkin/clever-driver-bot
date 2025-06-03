@@ -1,0 +1,44 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "./venv/Scripts/python.exe",
+        "python.terminal.activateEnvironment": true,
+        "python.analysis.typeCheckingMode": "basic",
+        "python.analysis.autoSearchPaths": true,
+        "python.analysis.extraPaths": [
+            "./",
+            "./venv/Lib/site-packages"
+        ],
+        "python.analysis.exclude": [
+            "**/venv/**",
+            "**/.venv/**",
+            "**/node_modules/**",
+            "**/__pycache__/**"
+        ],
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": false,
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/*.pyc": true,
+            "**/venv": false
+        },
+        "search.exclude": {
+            "**/venv": true,
+            "**/__pycache__": true,
+            "**/*.pyc": true
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.vscode-pylance",
+            "ms-python.flake8",
+            "ms-vscode.vscode-json"
+        ]
+    }
+} 

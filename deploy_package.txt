@@ -1,0 +1,71 @@
+# CLEVER DRIVER BOT - DEPLOYMENT PACKAGE
+# =======================================
+
+## НЕОБХОДИМЫЕ ФАЙЛЫ ДЛЯ ДЕПЛОЯ:
+
+### Основные файлы приложения:
+- https_simple_server.py (основной HTTPS сервер)
+- geolocation_bot.py (логика геолокации и уведомлений)
+- telegram_bot_handler.py (Telegram бот)
+- geo_locations.json (конфигурация геозон)
+
+### Системные файлы:
+- check_status.py (проверка статуса системы)
+- restart_system.py (перезапуск системы)
+- requirements.txt (зависимости Python)
+- __init__.py (Python модуль)
+
+### Документация:
+- README_GEO_BOT.md (документация)
+- .gitignore (игнор файлы для Git)
+
+## КОНФИГУРАЦИЯ:
+
+### Telegram Bot Token:
+BOT_TOKEN = "7824059826:AAEQx8WETTaAE4iU-tC58fT9ODkotjo-Enc"
+
+### Chat ID:
+CHAT_ID = "946872573"
+
+### Домашние координаты:
+LAT = 55.676803
+LON = 37.523510
+
+### Порты:
+HTTPS_PORT = 8443
+
+## ТРЕБОВАНИЯ К ВМ:
+
+### Минимальные требования:
+- Python 3.8+
+- 512MB RAM
+- 1 vCPU
+- 1GB свободного места
+- Ubuntu 20.04+ / CentOS 7+ / Windows Server 2019+
+
+### Сетевые требования:
+- Открытый порт 8443 (HTTPS)
+- Доступ в интернет для Telegram API
+- Статический IP или DDNS
+
+## ИНСТРУКЦИИ ПО УСТАНОВКЕ:
+
+### Для Linux (Ubuntu/Debian):
+1. sudo apt update && sudo apt install python3 python3-pip python3-venv
+2. python3 -m venv venv
+3. source venv/bin/activate
+4. pip install -r requirements.txt
+5. python telegram_bot_handler.py &
+6. python https_simple_server.py
+
+### Для CentOS/RHEL:
+1. sudo yum install python3 python3-pip
+2. python3 -m venv venv
+3. source venv/bin/activate
+4. pip install -r requirements.txt
+
+### Для Windows Server:
+1. Установить Python 3.8+
+2. python -m venv venv
+3. venv\Scripts\activate
+4. pip install -r requirements.txt 
