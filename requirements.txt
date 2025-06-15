@@ -1,6 +1,7 @@
-python-telegram-bot==20.7
-schedule==1.2.0
-asyncio
-geopy==2.4.1
 requests==2.31.0
-flask==3.0.0 
+urllib3==2.4.0
+pywhatkit==5.4
+pyautogui==0.9.54
+Pillow==11.2.1
+python-telegram-bot==20.7
+pytz==2024.1 

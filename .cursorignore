@@ -1,0 +1,45 @@
+# Виртуальные окружения Python
+venv/
+.venv/
+env/
+.env/
+
+# Кеш Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Node modules (если есть)
+node_modules/
+
+# Git
+.git/
+
+# IDE файлы
+.vscode/
+.idea/
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Логи
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.temp
+temp/
+
+# Большие файлы данных
+*.db
+*.sqlite
+*.json.bak
+
+# Бэкапы
+backup/
+backups/
+*backup* 
