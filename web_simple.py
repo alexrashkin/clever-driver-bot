@@ -20,6 +20,9 @@ WORK_LONGITUDE = 37.52351
 WORK_RADIUS = 100  # метров
 NOTIFICATION_COOLDOWN = 1800  # секунд (30 минут)
 
+# Глобальная переменная для отслеживания последнего уведомления
+last_notification_sent = None
+
 def init_db():
     """Инициализация базы данных"""
     conn = sqlite3.connect('driver_tracker.db')
@@ -134,6 +137,12 @@ def send_telegram_notification(message):
         logger.error(f"Ошибка отправки: {str(e)}")
         return False
 
+def reset_notification_state():
+    """Сбросить состояние уведомлений при запуске"""
+    global last_notification_sent
+    last_notification_sent = None
+    logger.info("Состояние уведомлений сброшено")
+
 @app.route('/')
 def index():
     """Главная страница"""
@@ -192,6 +201,8 @@ def toggle_tracking():
 @app.route('/api/location', methods=['POST'])
 def receive_location():
     """Обновить местоположение"""
+    global last_notification_sent
+    
     try:
         data = request.get_json()
         latitude = float(data.get('latitude'))
@@ -207,19 +218,30 @@ def receive_location():
             
             # Проверяем, находится ли водитель на работе
             if distance <= WORK_RADIUS:
-                # Проверяем кулдаун уведомлений
-                last_notification = get_last_notification_time()
-                if last_notification:
-                    last_time = datetime.fromisoformat(last_notification.replace('Z', '+00:00'))
-                    time_diff = (datetime.now() - last_time).total_seconds()
-                else:
-                    time_diff = NOTIFICATION_COOLDOWN + 1
+                current_time = datetime.now()
                 
-                if time_diff >= NOTIFICATION_COOLDOWN:
-                    message = f"🚗 <b>Водитель прибыл на работу!</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
+                # Проверяем кулдаун уведомлений
+                should_send = False
+                
+                if last_notification_sent is None:
+                    should_send = True
+                else:
+                    time_diff = (current_time - last_notification_sent).total_seconds()
+                    if time_diff >= NOTIFICATION_COOLDOWN:
+                        should_send = True
+                
+                if should_send:
+                    message = f"🚗 <b>Водитель прибыл на работу!</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {current_time.strftime('%H:%M:%S')}"
                     if send_telegram_notification(message):
+                        last_notification_sent = current_time
                         update_notification_time()
                         logger.info("Уведомление о прибытии отправлено")
+            else:
+                # Если водитель уехал с работы, сбрасываем флаг уведомления
+                # чтобы при следующем прибытии уведомление было отправлено
+                if last_notification_sent is not None:
+                    logger.info("Водитель покинул рабочую зону, уведомления сброшены")
+                    last_notification_sent = None
         
         return jsonify({"success": True})
     except Exception as e:
@@ -243,6 +265,7 @@ def send_notification():
             message = "🚗 <b>Местоположение водителя неизвестно</b>\n⏰ Время: " + datetime.now().strftime('%H:%M:%S')
         
         if send_telegram_notification(message):
+            logger.info("Ручное уведомление отправлено")
             return jsonify({"success": True, "message": "Уведомление отправлено"})
         else:
             return jsonify({"success": False, "error": "Ошибка отправки"}), 500
@@ -253,6 +276,9 @@ def send_notification():
 if __name__ == '__main__':
     # Инициализируем базу данных
     init_db()
+    
+    # Сбрасываем состояние уведомлений при запуске
+    reset_notification_state()
     
     print("🌐 Запуск упрощенного веб-интерфейса...")
     print("📍 Адрес: http://0.0.0.0:5000")
