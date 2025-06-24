@@ -1,13 +1,13 @@
 [Unit]
-Description=Driver Bot Service
+Description=Driver Bot Simple
 After=network.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/opt/driver-bot
-Environment=PYTHONUNBUFFERED=1
-ExecStart=/opt/driver-bot/venv/bin/python3 -u /opt/driver-bot/bot_v4.py
+Environment=PATH=/opt/driver-bot/venv/bin
+ExecStart=/opt/driver-bot/venv/bin/python run_simple_bot.py
 Restart=always
 RestartSec=10
 

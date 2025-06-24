@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Tracker</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 5px solid #007bff;
+        }
+        
+        .status-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(86, 171, 47, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 154, 158, 0.3);
+        }
+        
+        .tracking-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .tracking-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .tracking-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .location-status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .status-at-work {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-on-way {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .log {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8em;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .log-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .log-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .log-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .install-prompt {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .install-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .background-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .background-info h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        
+        .background-info p {
+            color: #424242;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Driver Tracker</h1>
+            <p>Автоматическое отслеживание</p>
+        </div>
+        
+        <div class="content">
+            <!-- Информация о фоновом режиме -->
+            <div class="background-info">
+                <h4>ℹ️ Как работает фоновый режим</h4>
+                <p>Для работы в фоне:</p>
+                <p>1. Разрешите уведомления</p>
+                <p>2. Добавьте страницу в закладки</p>
+                <p>3. Не закрывайте вкладку полностью</p>
+                <p>4. Используйте "Свернуть" вместо "Закрыть"</p>
+            </div>
+            
+            <!-- Установка приложения -->
+            <div id="installPrompt" class="install-prompt" style="display: none;">
+                <p>📱 Установите приложение для лучшей работы</p>
+                <button id="installBtn" class="install-btn">Установить</button>
+            </div>
+            
+            <!-- Статус -->
+            <div class="status-card">
+                <div class="status-title">📊 Статус</div>
+                <div class="info-item">
+                    <div class="info-label">Отслеживание</div>
+                    <div class="info-value">
+                        <span id="trackingStatus" class="tracking-status tracking-inactive">⏹️ Выключено</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Фоновый режим</div>
+                    <div class="info-value">
+                        <span id="backgroundStatus" class="tracking-status tracking-inactive">⏹️ Неактивен</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Местоположение</div>
+                    <div class="info-value">
+                        <span id="locationStatus" class="location-status status-on-way">🚗 В пути</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Координаты</div>
+                    <div class="info-value" id="coordinates">Не определены</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Расстояние до работы</div>
+                    <div class="info-value" id="distance">Неизвестно</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Последнее обновление</div>
+                    <div class="info-value" id="lastUpdate">Нет данных</div>
+                </div>
+            </div>
+            
+            <!-- Управление -->
+            <div class="status-card">
+                <div class="status-title">🎮 Управление</div>
+                <button id="startTracking" class="btn btn-success">🔄 Включить отслеживание</button>
+                <button id="stopTracking" class="btn btn-danger">⏹️ Выключить отслеживание</button>
+                <button id="getLocation" class="btn btn-primary">📍 Получить местоположение</button>
+                <button id="enableNotifications" class="btn btn-primary">🔔 Включить уведомления</button>
+            </div>
+            
+            <!-- Лог -->
+            <div class="status-card">
+                <div class="status-title">📝 Лог</div>
+                <div id="log" class="log"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Настройки
+        const SERVER_URL = window.location.origin; // Динамический URL вместо localhost
+        const UPDATE_INTERVAL = 30000; // 30 секунд
+        let trackingInterval = null;
+        let isTracking = false;
+        let swRegistration = null;
+        let deferredPrompt = null;
+        let isPageVisible = true;
+        
+        // Элементы
+        const trackingStatus = document.getElementById('trackingStatus');
+        const backgroundStatus = document.getElementById('backgroundStatus');
+        const locationStatus = document.getElementById('locationStatus');
+        const coordinates = document.getElementById('coordinates');
+        const distance = document.getElementById('distance');
+        const lastUpdate = document.getElementById('lastUpdate');
+        const startBtn = document.getElementById('startTracking');
+        const stopBtn = document.getElementById('stopTracking');
+        const getLocationBtn = document.getElementById('getLocation');
+        const enableNotificationsBtn = document.getElementById('enableNotifications');
+        const log = document.getElementById('log');
+        const installPrompt = document.getElementById('installPrompt');
+        const installBtn = document.getElementById('installBtn');
+        
+        // Логирование
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Регистрация Service Worker
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    swRegistration = await navigator.serviceWorker.register('/static/sw.js');
+                    addLog('Service Worker зарегистрирован', 'success');
+                    
+                    // Слушаем сообщения от Service Worker
+                    navigator.serviceWorker.addEventListener('message', (event) => {
+                        if (event.data.type === 'ping') {
+                            // Отвечаем на пинг, чтобы показать что страница активна
+                            if (navigator.serviceWorker.controller) {
+                                navigator.serviceWorker.controller.postMessage({type: 'pong'});
+                            }
+                        }
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    addLog(`Ошибка регистрации Service Worker: ${error.message}`, 'error');
+                    return false;
+                }
+            } else {
+                addLog('Service Worker не поддерживается', 'error');
+                return false;
+            }
+        }
+        
+        // Получение местоположения
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Геолокация не поддерживается'));
+                    return;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        });
+                    },
+                    (error) => {
+                        reject(error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            });
+        }
+        
+        // Отправка местоположения на сервер
+        async function sendLocation(lat, lon) {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/location`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        latitude: lat,
+                        longitude: lon
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    addLog(`Местоположение отправлено: ${lat.toFixed(6)}, ${lon.toFixed(6)}`, 'success');
+                    return true;
+                } else {
+                    addLog(`Ошибка отправки: ${data.error}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                addLog(`Ошибка сети: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // Обновление статуса
+        async function updateStatus() {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/status`);
+                const data = await response.json();
+                
+                // Обновляем статус отслеживания
+                if (data.tracking) {
+                    trackingStatus.textContent = '🔄 Активно';
+                    trackingStatus.className = 'tracking-status tracking-active';
+                } else {
+                    trackingStatus.textContent = '⏹️ Выключено';
+                    trackingStatus.className = 'tracking-status tracking-inactive';
+                }
+                
+                // Обновляем статус фонового режима
+                if (swRegistration && swRegistration.active) {
+                    backgroundStatus.textContent = '🌙 Активен';
+                    backgroundStatus.className = 'tracking-status tracking-active';
+                } else {
+                    backgroundStatus.textContent = '⏹️ Неактивен';
+                    backgroundStatus.className = 'tracking-status tracking-inactive';
+                }
+                
+                // Обновляем статус местоположения
+                if (data.status === 'at_work') {
+                    locationStatus.textContent = '📍 На работе';
+                    locationStatus.className = 'location-status status-at-work';
+                } else {
+                    locationStatus.textContent = '🚗 В пути';
+                    locationStatus.className = 'location-status status-on-way';
+                }
+                
+                // Обновляем координаты
+                if (data.latitude && data.longitude) {
+                    coordinates.textContent = `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`;
+                } else {
+                    coordinates.textContent = 'Не определены';
+                }
+                
+                // Обновляем расстояние
+                if (data.distance < 1000) {
+                    distance.textContent = `${data.distance} м`;
+                } else {
+                    distance.textContent = `${(data.distance / 1000).toFixed(1)} км`;
+                }
+                
+                // Обновляем время
+                if (data.timestamp) {
+                    const time = new Date(data.timestamp).toLocaleTimeString();
+                    lastUpdate.textContent = time;
+                } else {
+                    lastUpdate.textContent = 'Нет данных';
+                }
+                
+            } catch (error) {
+                addLog(`Ошибка обновления статуса: ${error.message}`, 'error');
+            }
+        }
+        
+        // Переключение отслеживания
+        async function toggleTracking() {
+            try {
+                const response = await fetch(`${SERVER_URL}/api/tracking/toggle`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    await updateStatus();
+                    addLog('Статус отслеживания изменен', 'success');
+                } else {
+                    addLog('Ошибка изменения статуса', 'error');
+                }
+            } catch (error) {
+                addLog(`Ошибка: ${error.message}`, 'error');
+            }
+        }
+        
+        // Включение уведомлений
+        async function enableNotifications() {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    addLog('Разрешение на уведомления получено', 'success');
+                    
+                    // Показываем тестовое уведомление
+                    if (swRegistration) {
+                        swRegistration.showNotification('Driver Tracker', {
+                            body: 'Уведомления включены!',
+                            icon: '/static/icon.svg'
+                        });
+                    }
+                } else {
+                    addLog('Разрешение на уведомления отклонено', 'error');
+                }
+            } catch (error) {
+                addLog(`Ошибка включения уведомлений: ${error.message}`, 'error');
+            }
+        }
+        
+        // Обработчики событий
+        startBtn.addEventListener('click', async () => {
+            await toggleTracking();
+            const status = trackingStatus.textContent.includes('Активно');
+            if (status) {
+                startAutoTracking();
+            } else {
+                stopAutoTracking();
+            }
+        });
+        
+        stopBtn.addEventListener('click', async () => {
+            await toggleTracking();
+            stopAutoTracking();
+        });
+        
+        getLocationBtn.addEventListener('click', async () => {
+            try {
+                addLog('Получение местоположения...', 'info');
+                const location = await getCurrentLocation();
+                const success = await sendLocation(location.latitude, location.longitude);
+                
+                if (success) {
+                    await updateStatus();
+                }
+            } catch (error) {
+                addLog(`Ошибка получения местоположения: ${error.message}`, 'error');
+            }
+        });
+        
+        enableNotificationsBtn.addEventListener('click', enableNotifications);
+        
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    addLog('Приложение установлено', 'success');
+                }
+                deferredPrompt = null;
+                installPrompt.style.display = 'none';
+            }
+        });
+        
+        // Автоматическое отслеживание
+        async function startAutoTracking() {
+            if (isTracking) return;
+            
+            isTracking = true;
+            addLog('Автоматическое отслеживание запущено', 'info');
+            
+            trackingInterval = setInterval(async () => {
+                try {
+                    const location = await getCurrentLocation();
+                    const success = await sendLocation(location.latitude, location.longitude);
+                    
+                    if (success) {
+                        await updateStatus();
+                    }
+                } catch (error) {
+                    addLog(`Ошибка автоматического отслеживания: ${error.message}`, 'error');
+                }
+            }, UPDATE_INTERVAL);
+        }
+        
+        function stopAutoTracking() {
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+            isTracking = false;
+            addLog('Автоматическое отслеживание остановлено', 'info');
+        }
+        
+        // Отслеживание видимости страницы
+        document.addEventListener('visibilitychange', () => {
+            isPageVisible = !document.hidden;
+            if (isPageVisible) {
+                addLog('Страница стала видимой', 'info');
+                updateStatus();
+            } else {
+                addLog('Страница скрыта (но отслеживание продолжается)', 'info');
+            }
+        });
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            addLog('Приложение запущено', 'info');
+            
+            // Регистрируем Service Worker
+            await registerServiceWorker();
+            
+            // Обновляем статус
+            await updateStatus();
+            
+            // Проверяем статус каждые 10 секунд
+            setInterval(updateStatus, 10000);
+        });
+        
+        // Обработка установки приложения
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt.style.display = 'block';
+        });
+        
+        // Обработка успешной установки
+        window.addEventListener('appinstalled', () => {
+            addLog('Приложение установлено на устройство', 'success');
+            installPrompt.style.display = 'none';
+        });
+        
+        // Обработка фокуса окна
+        window.addEventListener('focus', () => {
+            addLog('Окно получило фокус', 'info');
+            updateStatus();
+        });
+        
+        // Обработка потери фокуса
+        window.addEventListener('blur', () => {
+            addLog('Окно потеряло фокус', 'info');
+        });
+    </script>
+</body>
+</html> 

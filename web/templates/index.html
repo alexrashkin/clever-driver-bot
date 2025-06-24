@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд - Driver Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt"></i> Дашборд
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Статус отслеживания -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-satellite"></i> Статус отслеживания
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="status-indicator {% if tracking_status %}status-active{% else %}status-inactive{% endif %}"></span>
+                    <span class="fw-bold">
+                        {% if tracking_status %}
+                            Активно
+                        {% else %}
+                            Неактивно
+                        {% endif %}
+                    </span>
+                </div>
+                <button class="btn btn-primary w-100" id="toggleTracking">
+                    {% if tracking_status %}
+                        <i class="fas fa-stop"></i> Остановить отслеживание
+                    {% else %}
+                        <i class="fas fa-play"></i> Запустить отслеживание
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Последнее местоположение -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-map-marker-alt"></i> Последнее местоположение
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if last_location %}
+                    <div class="mb-2">
+                        <strong>Координаты:</strong><br>
+                        {{ "%.6f"|format(last_location.latitude) }}, {{ "%.6f"|format(last_location.longitude) }}
+                    </div>
+                    {% if last_location.distance %}
+                        <div class="mb-2">
+                            <strong>Расстояние до работы:</strong><br>
+                            {{ last_location.distance|int }} м
+                        </div>
+                    {% endif %}
+                    <div class="mb-2">
+                        <strong>Статус:</strong><br>
+                        {% if last_location.is_at_work %}
+                            <span class="badge bg-success">На работе</span>
+                        {% else %}
+                            <span class="badge bg-warning">В пути</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Время:</strong><br>
+                        {{ last_location.timestamp }}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Местоположение не определено</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Настройки работы -->
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog"></i> Настройки работы
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <strong>Координаты работы:</strong><br>
+                    {{ "%.6f"|format(work_lat) }}, {{ "%.6f"|format(work_lon) }}
+                </div>
+                <div class="mb-2">
+                    <strong>Радиус работы:</strong><br>
+                    {{ work_radius }} м
+                </div>
+                <a href="/settings" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-edit"></i> Изменить настройки
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> Быстрые действия
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="/history" class="btn btn-outline-info w-100">
+                            <i class="fas fa-list"></i> История местоположений
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-success w-100" id="refreshStatus">
+                            <i class="fas fa-sync"></i> Обновить статус
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-warning w-100" id="getLocation">
+                            <i class="fas fa-map-marker-alt"></i> Получить местоположение
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="/settings" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-cogs"></i> Настройки
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Переключение отслеживания
+    $('#toggleTracking').click(function() {
+        $.ajax({
+            url: '/api/tracking/toggle',
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + response.error);
+                }
+            },
+            error: function() {
+                alert('Ошибка соединения');
+            }
+        });
+    });
+
+    // Обновление статуса
+    $('#refreshStatus').click(function() {
+        location.reload();
+    });
+
+    // Получение местоположения
+    $('#getLocation').click(function() {
+        $.ajax({
+            url: '/api/location',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Местоположение не найдено');
+                }
+            },
+            error: function() {
+                alert('Ошибка соединения');
+            }
+        });
+    });
+
+    // Автообновление каждые 30 секунд
+    setInterval(function() {
+        $.ajax({
+            url: '/api/status',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    // Обновляем только статус отслеживания
+                    const statusIndicator = $('.status-indicator');
+                    const statusText = $('.status-indicator').next();
+                    const toggleButton = $('#toggleTracking');
+                    
+                    if (response.tracking_active) {
+                        statusIndicator.removeClass('status-inactive').addClass('status-active');
+                        statusText.text('Активно');
+                        toggleButton.html('<i class="fas fa-stop"></i> Остановить отслеживание');
+                    } else {
+                        statusIndicator.removeClass('status-active').addClass('status-inactive');
+                        statusText.text('Неактивно');
+                        toggleButton.html('<i class="fas fa-play"></i> Запустить отслеживание');
+                    }
+                }
+            }
+        });
+    }, 30000);
+});
+</script>
+{% endblock %} 
