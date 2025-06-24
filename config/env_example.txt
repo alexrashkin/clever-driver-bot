@@ -1,0 +1,26 @@
+# Telegram Bot Configuration
+TELEGRAM_TOKEN=your_telegram_bot_token_here
+
+# Work Location Coordinates
+WORK_LATITUDE=55.676803
+WORK_LONGITUDE=37.52351
+WORK_RADIUS=100
+
+# Chat IDs
+DRIVER_CHAT_ID=946872573
+NOTIFICATION_CHAT_ID=1623256768
+
+# Database
+DATABASE_URL=sqlite:///driver.db
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=driver-bot.log
+
+# Intervals
+CHECK_INTERVAL=60
+
+# Web Interface
+WEB_HOST=0.0.0.0
+WEB_PORT=5000
+WEB_SECRET_KEY=your-secret-key-here 

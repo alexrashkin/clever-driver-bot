@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Ошибка - Driver Bot{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Ошибка
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h6>Произошла ошибка:</h6>
+                    <p>{{ error }}</p>
+                </div>
+                
+                <div class="mt-3">
+                    <a href="/" class="btn btn-primary">
+                        <i class="fas fa-home"></i> Вернуться на главную
+                    </a>
+                    <button class="btn btn-secondary" onclick="history.back()">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -11,15 +11,13 @@ import db
 import asyncio
 import pytz
 import config
+import sys
 
 # Настройка логирования
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=getattr(logging, config.LOG_LEVEL),
-    handlers=[
-        logging.FileHandler(config.LOG_FILE),
-        logging.StreamHandler()
-    ]
+    level=logging.INFO,
+    filename='/var/log/driver-bot/driver-bot.log'
 )
 logger = logging.getLogger(__name__)
 
@@ -60,17 +58,20 @@ def create_tracking_keyboard():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик команды /start"""
-    keyboard = [
-        [InlineKeyboardButton("Включить отслеживание", callback_data="enable_tracking")],
-        [InlineKeyboardButton("Выключить отслеживание", callback_data="disable_tracking")],
-        [InlineKeyboardButton("Статус", callback_data="status")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "Привет! Я бот для отслеживания местоположения. "
-        "Используйте кнопки ниже для управления отслеживанием.",
-        reply_markup=reply_markup
-    )
+    await update.message.reply_text('Привет! Я бот для управления водителями.')
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик команды /help"""
+    help_text = """
+    Доступные команды:
+    /start - Начать работу с ботом
+    /help - Показать это сообщение
+    """
+    await update.message.reply_text(help_text)
+
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик ошибок"""
+    logger.error(f"Update {update} caused error {context.error}")
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик нажатий на кнопки"""
@@ -233,18 +234,25 @@ async def periodic_check():
 
 def main():
     """Основная функция"""
-    application = Application.builder().token(config.TELEGRAM_TOKEN).build()
+    try:
+        # Создаем приложение
+        application = Application.builder().token(config.TELEGRAM_TOKEN).build()
 
-    # Добавляем обработчики
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button_handler))
+        # Добавляем обработчики команд
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CallbackQueryHandler(button_handler))
 
-    # Запускаем периодическую проверку в фоновом режиме
-    async def run():
-        asyncio.create_task(periodic_check())
-        await application.run_polling()
+        # Обработчик ошибок
+        application.add_error_handler(error_handler)
 
-    asyncio.run(run())
+        # Запускаем бота
+        logger.info("Starting bot...")
+        application.run_polling(drop_pending_updates=True)
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main() 

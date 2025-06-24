@@ -1,0 +1,261 @@
+from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory
+import sqlite3
+import json
+from datetime import datetime
+import os
+import requests
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+
+# Настройки
+TELEGRAM_TOKEN = "7824059826:AAEQx8WETTaAE4iU-tC58fT9ODkotjo-Enc"
+NOTIFICATION_CHAT_ID = 1623256768
+WORK_LATITUDE = 55.676803
+WORK_LONGITUDE = 37.52351
+WORK_RADIUS = 100  # метров
+NOTIFICATION_COOLDOWN = 1800  # секунд (30 минут)
+
+def init_db():
+    """Инициализация базы данных"""
+    conn = sqlite3.connect('driver_tracker.db')
+    c = conn.cursor()
+    
+    # Таблица отслеживания
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS tracking_status (
+            id INTEGER PRIMARY KEY,
+            is_active BOOLEAN DEFAULT FALSE,
+            last_notification TIMESTAMP
+        )
+    ''')
+    
+    # Таблица последнего местоположения
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS locations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            latitude REAL,
+            longitude REAL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Инициализация статуса отслеживания
+    c.execute('INSERT OR IGNORE INTO tracking_status (id, is_active) VALUES (1, FALSE)')
+    
+    conn.commit()
+    conn.close()
+
+def get_tracking_status():
+    """Получить статус отслеживания"""
+    conn = sqlite3.connect('driver_tracker.db')
+    c = conn.cursor()
+    c.execute('SELECT is_active FROM tracking_status WHERE id = 1')
+    result = c.fetchone()
+    conn.close()
+    return bool(result[0]) if result else False
+
+def set_tracking_status(active):
+    """Установить статус отслеживания"""
+    conn = sqlite3.connect('driver_tracker.db')
+    c = conn.cursor()
+    c.execute('UPDATE tracking_status SET is_active = ? WHERE id = 1', (1 if active else 0,))
+    conn.commit()
+    conn.close()
+
+def save_location(lat, lon):
+    """Сохранить местоположение"""
+    conn = sqlite3.connect('driver_tracker.db')
+    c = conn.cursor()
+    c.execute('INSERT INTO locations (latitude, longitude) VALUES (?, ?)', (lat, lon))
+    conn.commit()
+    conn.close()
+
+def get_last_location():
+    """Получить последнее местоположение"""
+    conn = sqlite3.connect('driver_tracker.db')
+    c = conn.cursor()
+    c.execute('SELECT latitude, longitude, timestamp FROM locations ORDER BY timestamp DESC LIMIT 1')
+    result = c.fetchone()
+    conn.close()
+    return result if result else (None, None, None)
+
+def get_last_notification_time():
+    conn = sqlite3.connect('driver_tracker.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT last_notification FROM tracking_status WHERE id = 1')
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else None
+
+def update_notification_time():
+    conn = sqlite3.connect('driver_tracker.db')
+    cursor = conn.cursor()
+    cursor.execute('UPDATE tracking_status SET last_notification = CURRENT_TIMESTAMP WHERE id = 1')
+    conn.commit()
+    conn.close()
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Рассчитать расстояние между точками"""
+    import math
+    R = 6371000  # Радиус Земли в метрах
+    lat1_rad, lat2_rad = math.radians(lat1), math.radians(lat2)
+    delta_lat, delta_lon = math.radians(lat2-lat1), math.radians(lon2-lon1)
+    a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad)*math.cos(lat2_rad)*math.sin(delta_lon/2)**2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+def is_at_work(lat, lon):
+    """Проверить, находится ли водитель на работе"""
+    if lat is None or lon is None:
+        return False
+    return calculate_distance(lat, lon, WORK_LATITUDE, WORK_LONGITUDE) <= WORK_RADIUS
+
+def send_telegram_notification(message):
+    """Отправить уведомление через Telegram"""
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        data = {
+            "chat_id": NOTIFICATION_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+        response = requests.post(url, json=data)
+        if response.status_code == 200:
+            logger.info(f"Уведомление отправлено: {message}")
+            return True
+        else:
+            logger.error(f"Ошибка API: {response.status_code}")
+            return False
+    except Exception as e:
+        logger.error(f"Ошибка отправки: {str(e)}")
+        return False
+
+@app.route('/')
+def index():
+    """Главная страница"""
+    tracking = get_tracking_status()
+    lat, lon, timestamp = get_last_location()
+    
+    status = "📍 На работе" if is_at_work(lat, lon) else "🚗 В пути"
+    distance = calculate_distance(lat or 0, lon or 0, WORK_LATITUDE, WORK_LONGITUDE) if lat and lon else 0
+    distance_text = f"{int(distance)} м" if distance < 1000 else f"{distance/1000:.1f} км"
+    
+    return render_template('index.html', 
+                         tracking=tracking,
+                         status=status,
+                         latitude=lat,
+                         longitude=lon,
+                         distance=distance_text,
+                         timestamp=timestamp,
+                         work_lat=WORK_LATITUDE,
+                         work_lon=WORK_LONGITUDE)
+
+@app.route('/mobile_tracker.html')
+def mobile_tracker():
+    return send_from_directory('.', 'mobile_tracker.html')
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory('static', filename)
+
+@app.route('/api/status')
+def api_status():
+    """API статуса"""
+    tracking = get_tracking_status()
+    lat, lon, timestamp = get_last_location()
+    
+    status = "at_work" if is_at_work(lat, lon) else "on_way"
+    distance = calculate_distance(lat or 0, lon or 0, WORK_LATITUDE, WORK_LONGITUDE) if lat and lon else 0
+    
+    return jsonify({
+        'tracking': tracking,
+        'status': status,
+        'latitude': lat,
+        'longitude': lon,
+        'distance': int(distance),
+        'timestamp': timestamp,
+        'work_latitude': WORK_LATITUDE,
+        'work_longitude': WORK_LONGITUDE
+    })
+
+@app.route('/api/tracking/toggle', methods=['POST'])
+def toggle_tracking():
+    """Переключить отслеживание"""
+    current = get_tracking_status()
+    set_tracking_status(not current)
+    return redirect(url_for('index'))
+
+@app.route('/api/location', methods=['POST'])
+def receive_location():
+    """Обновить местоположение"""
+    try:
+        data = request.get_json()
+        latitude = float(data.get('latitude'))
+        longitude = float(data.get('longitude'))
+        
+        # Сохраняем местоположение
+        save_location(latitude, longitude)
+        
+        # Проверяем, активно ли отслеживание
+        if get_tracking_status():
+            # Вычисляем расстояние до работы
+            distance = calculate_distance(latitude, longitude, WORK_LATITUDE, WORK_LONGITUDE)
+            
+            # Проверяем, находится ли водитель на работе
+            if distance <= WORK_RADIUS:
+                # Проверяем кулдаун уведомлений
+                last_notification = get_last_notification_time()
+                if last_notification:
+                    last_time = datetime.fromisoformat(last_notification.replace('Z', '+00:00'))
+                    time_diff = (datetime.now() - last_time).total_seconds()
+                else:
+                    time_diff = NOTIFICATION_COOLDOWN + 1
+                
+                if time_diff >= NOTIFICATION_COOLDOWN:
+                    message = f"🚗 <b>Водитель прибыл на работу!</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
+                    if send_telegram_notification(message):
+                        update_notification_time()
+                        logger.info("Уведомление о прибытии отправлено")
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        logger.error(f"Ошибка обработки местоположения: {e}")
+        return jsonify({"success": False, "error": str(e)}), 400
+
+@app.route('/api/notify', methods=['POST'])
+def send_notification():
+    """Отправить уведомление"""
+    try:
+        last_location = get_last_location()
+        if last_location:
+            latitude, longitude, timestamp = last_location
+            distance = calculate_distance(latitude, longitude, WORK_LATITUDE, WORK_LONGITUDE)
+            
+            if distance <= WORK_RADIUS:
+                message = f"🚗 <b>Водитель на работе</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
+            else:
+                message = f"🚗 <b>Водитель в пути</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние до работы: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
+        else:
+            message = "🚗 <b>Местоположение водителя неизвестно</b>\n⏰ Время: " + datetime.now().strftime('%H:%M:%S')
+        
+        if send_telegram_notification(message):
+            return jsonify({"success": True, "message": "Уведомление отправлено"})
+        else:
+            return jsonify({"success": False, "error": "Ошибка отправки"}), 500
+    except Exception as e:
+        logger.error(f"Ошибка отправки уведомления: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+if __name__ == '__main__':
+    # Инициализируем базу данных
+    init_db()
+    
+    print("🌐 Запуск упрощенного веб-интерфейса...")
+    print("📍 Адрес: http://0.0.0.0:5000")
+    print(f"📱 Уведомления отправляются в чат: {NOTIFICATION_CHAT_ID}")
+    
+    app.run(host='0.0.0.0', port=5000, debug=True) 

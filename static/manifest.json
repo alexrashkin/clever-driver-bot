@@ -1,0 +1,21 @@
+{
+    "name": "Driver Tracker",
+    "short_name": "DriverTracker",
+    "description": "Автоматическое отслеживание местоположения водителя",
+    "start_url": "/mobile_tracker.html",
+    "display": "standalone",
+    "background_color": "#667eea",
+    "theme_color": "#667eea",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/static/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["navigation", "utilities"],
+    "lang": "ru",
+    "dir": "ltr"
+} 

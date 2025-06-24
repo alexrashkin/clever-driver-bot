@@ -1,11 +1,4 @@
-# Виртуальное окружение
-venv/
-env/
-ENV/
-.venv/
-.env/
-
-# Файлы Python
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -28,6 +21,71 @@ wheels/
 *.egg
 MANIFEST
 
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Test files
+test_*.py
+*_test.py
+
+# Backup files
+*.bak
+*.backup
+
+# Node modules (if any)
+node_modules/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
 # PyInstaller
 *.manifest
 *.spec
@@ -39,29 +97,16 @@ MANIFEST
 .python-version
 
 # Конфиденциальные данные
-.env
 config.py
 secrets.py
 
-# Логи
-*.log
-logs/
-
 # IDE файлы
-.vscode/
-.idea/
 *.swp
 *.swo
-*~
 
 # OS файлы
-.DS_Store
-Thumbs.db
-ehthumbs.db
 Desktop.ini
 
 # Временные файлы
-*.tmp
-*.temp
 *.bak
 *.backup 
