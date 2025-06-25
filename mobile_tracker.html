@@ -293,7 +293,6 @@
                 <button id="startTracking" class="btn btn-success">🔄 Включить отслеживание</button>
                 <button id="stopTracking" class="btn btn-danger">⏹️ Выключить отслеживание</button>
                 <button id="getLocation" class="btn btn-primary">📍 Получить местоположение</button>
-                <button id="enableNotifications" class="btn btn-primary">🔔 Включить уведомления</button>
             </div>
             
             <!-- Лог -->
@@ -324,7 +323,6 @@
         const startBtn = document.getElementById('startTracking');
         const stopBtn = document.getElementById('stopTracking');
         const getLocationBtn = document.getElementById('getLocation');
-        const enableNotificationsBtn = document.getElementById('enableNotifications');
         const log = document.getElementById('log');
         const installPrompt = document.getElementById('installPrompt');
         const installBtn = document.getElementById('installBtn');
@@ -500,28 +498,6 @@
             }
         }
         
-        // Включение уведомлений
-        async function enableNotifications() {
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    addLog('Разрешение на уведомления получено', 'success');
-                    
-                    // Показываем тестовое уведомление
-                    if (swRegistration) {
-                        swRegistration.showNotification('Driver Tracker', {
-                            body: 'Уведомления включены!',
-                            icon: '/static/icon.svg'
-                        });
-                    }
-                } else {
-                    addLog('Разрешение на уведомления отклонено', 'error');
-                }
-            } catch (error) {
-                addLog(`Ошибка включения уведомлений: ${error.message}`, 'error');
-            }
-        }
-        
         // Обработчики событий
         startBtn.addEventListener('click', async () => {
             await toggleTracking();
@@ -551,8 +527,6 @@
                 addLog(`Ошибка получения местоположения: ${error.message}`, 'error');
             }
         });
-        
-        enableNotificationsBtn.addEventListener('click', enableNotifications);
         
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
