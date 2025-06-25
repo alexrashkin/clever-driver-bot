@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import requests
 import logging
+import time
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,10 @@ NOTIFICATION_COOLDOWN = 1800  # секунд (30 минут)
 
 # Глобальная переменная для отслеживания последнего уведомления
 last_notification_sent = None
+
+# Настройка московского времени
+os.environ['TZ'] = 'Europe/Moscow'
+time.tzset()  # Применяем изменение часового пояса
 
 def init_db():
     """Инициализация базы данных"""
