@@ -16,9 +16,9 @@ app = Flask(__name__)
 # Настройки
 TELEGRAM_TOKEN = "7824059826:AAEQx8WETTaAE4iU-tC58fT9ODkotjo-Enc"
 NOTIFICATION_CHAT_ID = 1623256768
-WORK_LATITUDE = 55.725496
-WORK_LONGITUDE = 37.505666
-WORK_RADIUS = 400  # метров
+WORK_LATITUDE = 55.676885
+WORK_LONGITUDE = 37.523070
+WORK_RADIUS = 50  # метров
 NOTIFICATION_COOLDOWN = 1800  # секунд (30 минут)
 
 # Глобальная переменная для отслеживания последнего уведомления
