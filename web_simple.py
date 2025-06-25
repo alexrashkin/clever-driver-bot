@@ -6,16 +6,6 @@ import os
 import requests
 import logging
 import time
-try:
-    import pytz
-    moscow_tz = pytz.timezone('Europe/Moscow')
-except ImportError:
-    # Если pytz не установлен, используем простой способ
-    os.environ['TZ'] = 'Europe/Moscow'
-    try:
-        time.tzset()  # Работает только на Unix
-    except AttributeError:
-        pass  # На Windows игнорируем ошибку
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +23,13 @@ NOTIFICATION_COOLDOWN = 1800  # секунд (30 минут)
 
 # Глобальная переменная для отслеживания последнего уведомления
 last_notification_sent = None
+
+# Настройка московского времени (UTC+3)
+os.environ['TZ'] = 'Europe/Moscow'
+try:
+    time.tzset()  # Работает только на Unix
+except AttributeError:
+    pass  # На Windows игнорируем ошибку
 
 def init_db():
     """Инициализировать базу данных"""
@@ -83,14 +80,7 @@ def set_tracking_status(active):
 
 def save_location(lat, lon):
     """Сохранить местоположение"""
-    try:
-        # Получаем московское время
-        if 'moscow_tz' in globals():
-            current_time = datetime.now(moscow_tz)
-        else:
-            current_time = datetime.now()
-    except:
-        current_time = datetime.now()
+    current_time = datetime.now()
     
     conn = sqlite3.connect('driver_tracker.db')
     cursor = conn.cursor()
@@ -140,15 +130,7 @@ def is_at_work(lat, lon):
 
 def get_greeting_by_time():
     """Получить приветствие в зависимости от времени суток"""
-    try:
-        # Используем московское время
-        if 'moscow_tz' in globals():
-            current_time = datetime.now(moscow_tz)
-        else:
-            current_time = datetime.now()
-    except:
-        current_time = datetime.now()
-    
+    current_time = datetime.now()
     hour = current_time.hour
     
     if 5 <= hour < 12:
@@ -274,15 +256,7 @@ def receive_location():
                         should_send = True
                 
                 if should_send:
-                    try:
-                        # Используем московское время
-                        if 'moscow_tz' in globals():
-                            current_time = datetime.now(moscow_tz)
-                        else:
-                            current_time = datetime.now()
-                    except:
-                        current_time = datetime.now()
-                    
+                    current_time = datetime.now()
                     greeting = get_greeting_by_time()
                     message = f"{greeting}\n\n🚗 <b>Подъехал к дому</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {current_time.strftime('%H:%M:%S')}\n\nПрошу подтвердить, что получили сообщение ✅"
                     if send_telegram_notification(message):
@@ -309,13 +283,7 @@ def send_notification():
         greeting = get_greeting_by_time()
         
         # Получаем московское время
-        try:
-            if 'moscow_tz' in globals():
-                current_time = datetime.now(moscow_tz)
-            else:
-                current_time = datetime.now()
-        except:
-            current_time = datetime.now()
+        current_time = datetime.now()
         
         if last_location:
             latitude, longitude, timestamp = last_location
