@@ -6,6 +6,16 @@ import os
 import requests
 import logging
 import time
+try:
+    import pytz
+    moscow_tz = pytz.timezone('Europe/Moscow')
+except ImportError:
+    # Если pytz не установлен, используем простой способ
+    os.environ['TZ'] = 'Europe/Moscow'
+    try:
+        time.tzset()  # Работает только на Unix
+    except AttributeError:
+        pass  # На Windows игнорируем ошибку
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -24,26 +34,22 @@ NOTIFICATION_COOLDOWN = 1800  # секунд (30 минут)
 # Глобальная переменная для отслеживания последнего уведомления
 last_notification_sent = None
 
-# Настройка московского времени
-os.environ['TZ'] = 'Europe/Moscow'
-time.tzset()  # Применяем изменение часового пояса
-
 def init_db():
-    """Инициализация базы данных"""
+    """Инициализировать базу данных"""
     conn = sqlite3.connect('driver_tracker.db')
-    c = conn.cursor()
+    cursor = conn.cursor()
     
-    # Таблица отслеживания
-    c.execute('''
+    # Создаем таблицу статуса отслеживания
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS tracking_status (
             id INTEGER PRIMARY KEY,
-            is_active BOOLEAN DEFAULT FALSE,
+            active BOOLEAN DEFAULT FALSE,
             last_notification TIMESTAMP
         )
     ''')
     
-    # Таблица последнего местоположения
-    c.execute('''
+    # Создаем таблицу местоположений
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS locations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             latitude REAL,
@@ -52,8 +58,8 @@ def init_db():
         )
     ''')
     
-    # Инициализация статуса отслеживания
-    c.execute('INSERT OR IGNORE INTO tracking_status (id, is_active) VALUES (1, FALSE)')
+    # Вставляем начальную запись статуса, если её нет
+    cursor.execute('INSERT OR IGNORE INTO tracking_status (id, active) VALUES (1, FALSE)')
     
     conn.commit()
     conn.close()
@@ -62,7 +68,7 @@ def get_tracking_status():
     """Получить статус отслеживания"""
     conn = sqlite3.connect('driver_tracker.db')
     c = conn.cursor()
-    c.execute('SELECT is_active FROM tracking_status WHERE id = 1')
+    c.execute('SELECT active FROM tracking_status WHERE id = 1')
     result = c.fetchone()
     conn.close()
     return bool(result[0]) if result else False
@@ -71,15 +77,25 @@ def set_tracking_status(active):
     """Установить статус отслеживания"""
     conn = sqlite3.connect('driver_tracker.db')
     c = conn.cursor()
-    c.execute('UPDATE tracking_status SET is_active = ? WHERE id = 1', (1 if active else 0,))
+    c.execute('UPDATE tracking_status SET active = ? WHERE id = 1', (1 if active else 0,))
     conn.commit()
     conn.close()
 
 def save_location(lat, lon):
     """Сохранить местоположение"""
+    try:
+        # Получаем московское время
+        if 'moscow_tz' in globals():
+            current_time = datetime.now(moscow_tz)
+        else:
+            current_time = datetime.now()
+    except:
+        current_time = datetime.now()
+    
     conn = sqlite3.connect('driver_tracker.db')
-    c = conn.cursor()
-    c.execute('INSERT INTO locations (latitude, longitude) VALUES (?, ?)', (lat, lon))
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO locations (latitude, longitude, timestamp) VALUES (?, ?, ?)', 
+                   (lat, lon, current_time.strftime('%Y-%m-%d %H:%M:%S')))
     conn.commit()
     conn.close()
 
@@ -124,7 +140,16 @@ def is_at_work(lat, lon):
 
 def get_greeting_by_time():
     """Получить приветствие в зависимости от времени суток"""
-    hour = datetime.now().hour
+    try:
+        # Используем московское время
+        if 'moscow_tz' in globals():
+            current_time = datetime.now(moscow_tz)
+        else:
+            current_time = datetime.now()
+    except:
+        current_time = datetime.now()
+    
+    hour = current_time.hour
     
     if 5 <= hour < 12:
         return "Доброе утро! 🌅"
@@ -249,6 +274,15 @@ def receive_location():
                         should_send = True
                 
                 if should_send:
+                    try:
+                        # Используем московское время
+                        if 'moscow_tz' in globals():
+                            current_time = datetime.now(moscow_tz)
+                        else:
+                            current_time = datetime.now()
+                    except:
+                        current_time = datetime.now()
+                    
                     greeting = get_greeting_by_time()
                     message = f"{greeting}\n\n🚗 <b>Подъехал к дому</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {current_time.strftime('%H:%M:%S')}\n\nПрошу подтвердить, что получили сообщение ✅"
                     if send_telegram_notification(message):
@@ -274,16 +308,25 @@ def send_notification():
         last_location = get_last_location()
         greeting = get_greeting_by_time()
         
+        # Получаем московское время
+        try:
+            if 'moscow_tz' in globals():
+                current_time = datetime.now(moscow_tz)
+            else:
+                current_time = datetime.now()
+        except:
+            current_time = datetime.now()
+        
         if last_location:
             latitude, longitude, timestamp = last_location
             distance = calculate_distance(latitude, longitude, WORK_LATITUDE, WORK_LONGITUDE)
             
             if distance <= WORK_RADIUS:
-                message = f"{greeting}\n\n🚗 <b>Подъехал к дому</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}\n\nПрошу подтвердить, что получили сообщение ✅"
+                message = f"{greeting}\n\n🚗 <b>Подъехал к дому</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {current_time.strftime('%H:%M:%S')}\n\nПрошу подтвердить, что получили сообщение ✅"
             else:
-                message = f"{greeting}\n\n🚗 <b>В пути</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние до дома: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
+                message = f"{greeting}\n\n🚗 <b>В пути</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние до дома: {distance:.0f} м\n⏰ Время: {current_time.strftime('%H:%M:%S')}"
         else:
-            message = f"{greeting}\n\n🚗 <b>Местоположение водителя неизвестно</b>\n⏰ Время: " + datetime.now().strftime('%H:%M:%S')
+            message = f"{greeting}\n\n🚗 <b>Местоположение водителя неизвестно</b>\n⏰ Время: " + current_time.strftime('%H:%M:%S')
         
         if send_telegram_notification(message):
             logger.info("Ручное уведомление отправлено")
