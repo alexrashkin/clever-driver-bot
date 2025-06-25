@@ -18,7 +18,7 @@ TELEGRAM_TOKEN = "7824059826:AAEQx8WETTaAE4iU-tC58fT9ODkotjo-Enc"
 NOTIFICATION_CHAT_ID = 1623256768
 WORK_LATITUDE = 55.725496
 WORK_LONGITUDE = 37.505666
-WORK_RADIUS = 350  # метров
+WORK_RADIUS = 400  # метров
 NOTIFICATION_COOLDOWN = 1800  # секунд (30 минут)
 
 # Глобальная переменная для отслеживания последнего уведомления
