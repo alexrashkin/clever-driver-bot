@@ -117,6 +117,19 @@ def is_at_work(lat, lon):
         return False
     return calculate_distance(lat, lon, WORK_LATITUDE, WORK_LONGITUDE) <= WORK_RADIUS
 
+def get_greeting_by_time():
+    """Получить приветствие в зависимости от времени суток"""
+    hour = datetime.now().hour
+    
+    if 5 <= hour < 12:
+        return "Доброе утро! 🌅"
+    elif 12 <= hour < 17:
+        return "Добрый день! ☀️"
+    elif 17 <= hour < 23:
+        return "Добрый вечер! 🌆"
+    else:
+        return "Доброй ночи! 🌙"
+
 def send_telegram_notification(message):
     """Отправить уведомление через Telegram"""
     try:
@@ -231,7 +244,8 @@ def receive_location():
                         should_send = True
                 
                 if should_send:
-                    message = f"🚗 <b>Водитель прибыл на работу!</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {current_time.strftime('%H:%M:%S')}"
+                    greeting = get_greeting_by_time()
+                    message = f"{greeting}\n\n🚗 <b>Подъехал к дому</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {current_time.strftime('%H:%M:%S')}\n\nПрошу подтвердить, что получили сообщение ✅"
                     if send_telegram_notification(message):
                         last_notification_sent = current_time
                         update_notification_time()
@@ -253,16 +267,18 @@ def send_notification():
     """Отправить уведомление"""
     try:
         last_location = get_last_location()
+        greeting = get_greeting_by_time()
+        
         if last_location:
             latitude, longitude, timestamp = last_location
             distance = calculate_distance(latitude, longitude, WORK_LATITUDE, WORK_LONGITUDE)
             
             if distance <= WORK_RADIUS:
-                message = f"🚗 <b>Водитель на работе</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
+                message = f"{greeting}\n\n🚗 <b>Подъехал к дому</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}\n\nПрошу подтвердить, что получили сообщение ✅"
             else:
-                message = f"🚗 <b>Водитель в пути</b>\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние до работы: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
+                message = f"{greeting}\n\n🚗 <b>В пути</b>\n\n📍 Координаты: {latitude:.6f}, {longitude:.6f}\n📏 Расстояние до дома: {distance:.0f} м\n⏰ Время: {datetime.now().strftime('%H:%M:%S')}"
         else:
-            message = "🚗 <b>Местоположение водителя неизвестно</b>\n⏰ Время: " + datetime.now().strftime('%H:%M:%S')
+            message = f"{greeting}\n\n🚗 <b>Местоположение водителя неизвестно</b>\n⏰ Время: " + datetime.now().strftime('%H:%M:%S')
         
         if send_telegram_notification(message):
             logger.info("Ручное уведомление отправлено")
