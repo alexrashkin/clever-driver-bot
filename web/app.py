@@ -211,7 +211,7 @@ def api_settings_update():
 
 @app.route('/mobile_tracker.html')
 def mobile_tracker():
-    return send_from_directory('.', 'mobile_tracker.html')
+    return render_template('mobile_tracker.html')
 
 @app.errorhandler(404)
 def not_found(error):
