@@ -11,25 +11,23 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = config.WEB_SECRET_KEY
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    """Главная страница (упрощённый интерфейс)"""
     try:
         tracking_status = db.get_tracking_status()
-        last_location = db.get_last_location()
-        work_lat = float(db.get_setting('work_latitude', str(config.WORK_LATITUDE)))
-        work_lon = float(db.get_setting('work_longitude', str(config.WORK_LONGITUDE)))
-        work_radius = int(db.get_setting('work_radius', str(config.WORK_RADIUS)))
-        return render_template(
-            'index.html',
-            tracking_status=tracking_status,
-            last_location=last_location,
-            work_lat=work_lat,
-            work_lon=work_lon,
-            work_radius=work_radius
-        )
+        return render_template('index.html', tracking_status=tracking_status)
     except Exception as e:
         logger.error(f"Ошибка при загрузке главной страницы: {e}")
+        return render_template('error.html', error=str(e))
+
+@app.route('/toggle', methods=['POST'])
+def toggle_tracking():
+    try:
+        current_status = db.get_tracking_status()
+        db.set_tracking_status(not current_status)
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Ошибка при переключении статуса: {e}")
         return render_template('error.html', error=str(e))
 
 @app.route('/api/status')
