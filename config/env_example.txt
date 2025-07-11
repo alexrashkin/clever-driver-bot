@@ -1,5 +1,5 @@
 # Telegram Bot Configuration
-TELEGRAM_TOKEN=your_telegram_bot_token_here
+TELEGRAM_TOKEN=7824059826:AAEQx8WETTaAE4iU-tC58fT9ODkotjo-Enc
 
 # Work Location Coordinates
 WORK_LATITUDE=55.676803
