@@ -500,18 +500,37 @@
         
         // Обработчики событий
         startBtn.addEventListener('click', async () => {
-            await toggleTracking();
-            const status = trackingStatus.textContent.includes('Активно');
-            if (status) {
-                startAutoTracking();
-            } else {
-                stopAutoTracking();
+            try {
+                const response = await fetch(`${SERVER_URL}/api/tracking/enable`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    await updateStatus();
+                    addLog('Отслеживание включено', 'success');
+                    startAutoTracking();
+                } else {
+                    addLog('Ошибка включения отслеживания', 'error');
+                }
+            } catch (error) {
+                addLog(`Ошибка: ${error.message}`, 'error');
             }
         });
         
         stopBtn.addEventListener('click', async () => {
-            await toggleTracking();
-            stopAutoTracking();
+            try {
+                const response = await fetch(`${SERVER_URL}/api/tracking/disable`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    await updateStatus();
+                    addLog('Отслеживание выключено', 'success');
+                    stopAutoTracking();
+                } else {
+                    addLog('Ошибка выключения отслеживания', 'error');
+                }
+            } catch (error) {
+                addLog(`Ошибка: ${error.message}`, 'error');
+            }
         });
         
         getLocationBtn.addEventListener('click', async () => {

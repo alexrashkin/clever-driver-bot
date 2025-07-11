@@ -72,6 +72,26 @@ def api_tracking_toggle():
         logger.error(f"Ошибка переключения отслеживания: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/api/tracking/enable', methods=['POST'])
+def api_tracking_enable():
+    """API для включения отслеживания"""
+    try:
+        db.set_tracking_status(True)
+        return jsonify({'success': True, 'active': True, 'message': 'Отслеживание включено'})
+    except Exception as e:
+        logger.error(f"Ошибка включения отслеживания: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/tracking/disable', methods=['POST'])
+def api_tracking_disable():
+    """API для выключения отслеживания"""
+    try:
+        db.set_tracking_status(False)
+        return jsonify({'success': True, 'active': False, 'message': 'Отслеживание выключено'})
+    except Exception as e:
+        logger.error(f"Ошибка выключения отслеживания: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/api/location', methods=['GET'])
 def api_location():
     """API для получения последнего местоположения"""
