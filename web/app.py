@@ -29,7 +29,8 @@ def index():
     """Главная страница (упрощённый интерфейс)"""
     try:
         tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status)
+        message = request.args.get('message')
+        return render_template('index.html', tracking_status=tracking_status, message=message)
     except Exception as e:
         logger.error(f"Ошибка при загрузке главной страницы: {e}")
         return render_template('error.html', error=str(e))
