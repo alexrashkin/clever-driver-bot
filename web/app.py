@@ -3,6 +3,7 @@ from config.settings import config
 from bot.database import db
 from bot.utils import format_distance, format_timestamp, validate_coordinates
 import logging
+import requests
 
 # Настройка логирования
 logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
@@ -11,24 +12,35 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = config.WEB_SECRET_KEY
 
+def send_telegram_arrival():
+    token = config.TELEGRAM_TOKEN
+    chat_id = config.NOTIFICATION_CHAT_ID
+    text = "Водитель прибыл на место (отправлено вручную)"
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    try:
+        requests.post(url, data={"chat_id": chat_id, "text": text})
+        return True
+    except Exception as e:
+        logging.error(f"Ошибка отправки сообщения в Telegram: {e}")
+        return False
+
 @app.route('/', methods=['GET'])
 def index():
-    try:
-        tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status)
-    except Exception as e:
-        logger.error(f"Ошибка при загрузке главной страницы: {e}")
-        return render_template('error.html', error=str(e))
+    tracking_status = db.get_tracking_status()
+    message = request.args.get('message')
+    return render_template('index.html', tracking_status=tracking_status, message=message)
 
 @app.route('/toggle', methods=['POST'])
 def toggle_tracking():
-    try:
-        current_status = db.get_tracking_status()
-        db.set_tracking_status(not current_status)
-        return redirect(url_for('index'))
-    except Exception as e:
-        logger.error(f"Ошибка при переключении статуса: {e}")
-        return render_template('error.html', error=str(e))
+    current_status = db.get_tracking_status()
+    db.set_tracking_status(not current_status)
+    return redirect(url_for('index'))
+
+@app.route('/manual_arrival', methods=['POST'])
+def manual_arrival():
+    ok = send_telegram_arrival()
+    msg = "Сообщение отправлено!" if ok else "Ошибка отправки сообщения."
+    return redirect(url_for('index', message=msg))
 
 @app.route('/api/status')
 def api_status():
