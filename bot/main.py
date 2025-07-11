@@ -53,27 +53,42 @@ async def main():
         raise
 
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    # Monkey-patch close для подавления ошибки Cannot close a running event loop
-    def safe_close(self):
-        try:
-            super(type(self), self).close()
-        except RuntimeError as e:
-            if "Cannot close a running event loop" in str(e):
-                pass
-            else:
-                raise
-    loop.close = safe_close.__get__(loop, type(loop))
-
-    task = loop.create_task(main())
     try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            loop.run_until_complete(task)
-        loop.close() 
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        # Monkey-patch close для подавления ошибки Cannot close a running event loop
+        def safe_close(self):
+            try:
+                super(type(self), self).close()
+            except RuntimeError as e:
+                if "Cannot close a running event loop" in str(e):
+                    pass
+                else:
+                    raise
+        loop.close = safe_close.__get__(loop, type(loop))
+
+        task = loop.create_task(main())
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                loop.run_until_complete(task)
+            loop.close()
+    except RuntimeError as e:
+        if "already running" in str(e):
+            loop = asyncio.get_event_loop()
+            task = loop.create_task(main())
+            try:
+                loop.run_forever()
+            except KeyboardInterrupt:
+                pass
+            finally:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    loop.run_until_complete(task)
+        else:
+            raise 
