@@ -16,7 +16,18 @@ def index():
     """Главная страница (упрощённый интерфейс)"""
     try:
         tracking_status = db.get_tracking_status()
-        return render_template('index_simple.html', tracking=tracking_status)
+        last_location = db.get_last_location()
+        work_lat = db.get_setting('work_latitude', str(config.WORK_LATITUDE))
+        work_lon = db.get_setting('work_longitude', str(config.WORK_LONGITUDE))
+        work_radius = db.get_setting('work_radius', str(config.WORK_RADIUS))
+        return render_template(
+            'index.html',
+            tracking_status=tracking_status,
+            last_location=last_location,
+            work_lat=work_lat,
+            work_lon=work_lon,
+            work_radius=work_radius
+        )
     except Exception as e:
         logger.error(f"Ошибка при загрузке главной страницы: {e}")
         return render_template('error.html', error=str(e))
