@@ -266,7 +266,7 @@
                     <div class="info-item">
                         <div class="info-label">Последнее обновление</div>
                         <div class="info-value">
-                            {% if timestamp %}
+                            {% if timestamp and 'T' in timestamp %}
                                 {{ timestamp.split('T')[0] }} {{ timestamp.split('T')[1][:5] }}
                             {% else %}
                                 Нет данных
