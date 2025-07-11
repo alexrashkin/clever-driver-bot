@@ -2,3 +2,7 @@ Traceback (most recent call last):
   File "C:\Users\c393o\Driver\web\app.py", line 2, in <module>
     from config.settings import config
 ModuleNotFoundError: No module named 'config'
+Traceback (most recent call last):
+  File "C:\Users\c393o\Driver\web\app.py", line 2, in <module>
+    from config.settings import config
+ModuleNotFoundError: No module named 'config'
