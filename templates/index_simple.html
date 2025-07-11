@@ -280,12 +280,15 @@
             <div class="status-card">
                 <div class="status-title">🎮 Управление</div>
                 <div class="controls">
-                    <form method="POST" action="/api/tracking/toggle" style="display: inline;">
-                        <button type="submit" class="btn {% if tracking %}btn-danger{% else %}btn-success{% endif %}">
-                            {% if tracking %}⏹️ Выключить отслеживание{% else %}🔄 Включить отслеживание{% endif %}
-                        </button>
+                    {% if not tracking %}
+                    <form method="POST" action="/api/tracking/enable" style="display: inline;">
+                        <button type="submit" class="btn btn-success">🔄 Включить отслеживание</button>
                     </form>
-                    
+                    {% else %}
+                    <form method="POST" action="/api/tracking/disable" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">⏹️ Выключить отслеживание</button>
+                    </form>
+                    {% endif %}
                     <button onclick="sendNotification()" class="btn btn-warning">
                         📱 Отправить уведомление
                     </button>
