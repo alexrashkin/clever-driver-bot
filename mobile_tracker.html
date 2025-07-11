@@ -481,22 +481,7 @@
         }
         
         // Переключение отслеживания
-        async function toggleTracking() {
-            try {
-                const response = await fetch(`${SERVER_URL}/api/tracking/toggle`, {
-                    method: 'POST'
-                });
-                
-                if (response.ok) {
-                    await updateStatus();
-                    addLog('Статус отслеживания изменен', 'success');
-                } else {
-                    addLog('Ошибка изменения статуса', 'error');
-                }
-            } catch (error) {
-                addLog(`Ошибка: ${error.message}`, 'error');
-            }
-        }
+        // Удалить функцию toggleTracking и все обращения к /api/tracking/toggle
         
         // Обработчики событий
         startBtn.addEventListener('click', async () => {
