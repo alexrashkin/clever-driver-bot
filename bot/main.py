@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import contextlib
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters, ContextTypes
 )
@@ -52,7 +53,15 @@ async def main():
         raise
 
 if __name__ == "__main__":
-    import asyncio
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(main()) 
+    task = loop.create_task(main())
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            loop.run_until_complete(task)
+        loop.close() 
