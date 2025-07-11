@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory
 from config.settings import config
 from bot.database import db
-from bot.utils import format_distance, format_timestamp, validate_coordinates
+from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification
 import logging
 import requests
 
@@ -15,7 +15,7 @@ app.secret_key = config.WEB_SECRET_KEY
 def send_telegram_arrival():
     token = config.TELEGRAM_TOKEN
     chat_id = config.NOTIFICATION_CHAT_ID
-    text = "Водитель прибыл на место (отправлено вручную)"
+    text = create_work_notification()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     try:
         requests.post(url, data={"chat_id": chat_id, "text": text})
@@ -43,7 +43,7 @@ def toggle_tracking():
 @app.route('/manual_arrival', methods=['POST'])
 def manual_arrival():
     ok = send_telegram_arrival()
-    msg = "Сообщение отправлено!" if ok else "Ошибка отправки сообщения."
+    msg = "Уведомление отправлено!" if ok else "Ошибка отправки уведомления."
     return redirect(url_for('index', message=msg))
 
 @app.route('/api/status')
