@@ -189,8 +189,8 @@
         </div>
         
         <div class="test-buttons">
-            <button class="btn success" onclick="toggleTracking(true)">Включить отслеживание</button>
-            <button class="btn danger" onclick="toggleTracking(false)">Выключить отслеживание</button>
+            <button class="btn success" onclick="setTracking(true)">Включить отслеживание</button>
+            <button class="btn danger" onclick="setTracking(false)">Выключить отслеживание</button>
             <button class="btn" onclick="testLocation()">Тест местоположения</button>
         </div>
         
@@ -234,18 +234,18 @@
             }
         }
         
-        function toggleTracking(isTracking) {
-            fetch('/api/toggle_tracking/', {
+        function setTracking(isEnable) {
+            const url = isEnable ? '/api/tracking/enable' : '/api/tracking/disable';
+            fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({is_tracking: isTracking})
+                }
             })
             .then(response => response.json())
             .then(data => {
                 showResponse(data);
-                updateStatus(data.is_tracking);
+                updateStatus(data.active);
             })
             .catch(error => {
                 showResponse({error: error.message});
