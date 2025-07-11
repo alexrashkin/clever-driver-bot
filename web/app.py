@@ -13,28 +13,10 @@ app.secret_key = config.WEB_SECRET_KEY
 
 @app.route('/')
 def index():
-    """Главная страница"""
+    """Главная страница (упрощённый интерфейс)"""
     try:
-        # Получаем данные для дашборда
         tracking_status = db.get_tracking_status()
-        last_location = db.get_last_location()
-        
-        # Получаем настройки с правильными типами
-        work_lat_str = db.get_setting('work_latitude', str(config.WORK_LATITUDE))
-        work_lon_str = db.get_setting('work_longitude', str(config.WORK_LONGITUDE))
-        work_radius_str = db.get_setting('work_radius', str(config.WORK_RADIUS))
-        
-        # Конвертируем в числа
-        work_lat = float(work_lat_str)
-        work_lon = float(work_lon_str)
-        work_radius = int(work_radius_str)
-        
-        return render_template('index.html',
-                             tracking_status=tracking_status,
-                             last_location=last_location,
-                             work_lat=work_lat,
-                             work_lon=work_lon,
-                             work_radius=work_radius)
+        return render_template('index_simple.html', tracking=tracking_status)
     except Exception as e:
         logger.error(f"Ошибка при загрузке главной страницы: {e}")
         return render_template('error.html', error=str(e))
