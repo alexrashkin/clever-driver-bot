@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for
+from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory
 from config.settings import config
 from bot.database import db
 from bot.utils import format_distance, format_timestamp, validate_coordinates
@@ -208,6 +208,10 @@ def api_settings_update():
     except Exception as e:
         logger.error(f"Ошибка обновления настроек: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/mobile_tracker.html')
+def mobile_tracker():
+    return send_from_directory('.', 'mobile_tracker.html')
 
 @app.errorhandler(404)
 def not_found(error):
