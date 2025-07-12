@@ -160,6 +160,10 @@ class Database:
         conn.commit()
         conn.close()
         logger.info(f"Настройка {key} изменена на: {value}")
+    
+    def get_connection(self):
+        """Получение соединения с базой данных"""
+        return sqlite3.connect(self.db_path)
 
 # Создаем глобальный экземпляр базы данных
 db = Database() 

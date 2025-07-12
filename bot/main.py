@@ -9,6 +9,8 @@ from bot.handlers import (
     start_command, help_command, track_command, status_command,
     handle_location, handle_text, error_handler
 )
+from bot.database import db
+from bot.utils import create_work_notification
 
 # Настройка логирования
 logging.basicConfig(
@@ -20,6 +22,51 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+async def monitor_database(application: Application):
+    """Мониторинг базы данных для автоматических уведомлений"""
+    last_checked_id = 0
+    
+    while True:
+        try:
+            # Получаем последние записи из базы
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT id, latitude, longitude, is_at_work, timestamp
+                FROM locations
+                WHERE id > ? AND is_at_work = 1
+                ORDER BY timestamp DESC
+                LIMIT 10
+            ''', (last_checked_id,))
+            
+            new_locations = cursor.fetchall()
+            conn.close()
+            
+            if new_locations:
+                # Обновляем ID последней проверенной записи
+                last_checked_id = max(loc[0] for loc in new_locations)
+                
+                # Проверяем, включено ли отслеживание
+                if db.get_tracking_status():
+                    # Отправляем уведомление только для самых свежих записях
+                    for location in new_locations[:3]:  # Максимум 3 уведомления
+                        try:
+                            notification = create_work_notification()
+                            await application.bot.send_message(
+                                chat_id=config.NOTIFICATION_CHAT_ID, 
+                                text=notification
+                            )
+                            logger.info(f"Автоматическое уведомление отправлено для записи ID: {location[0]}")
+                        except Exception as e:
+                            logger.error(f"Ошибка отправки автоматического уведомления: {e}")
+            
+            # Ждем 30 секунд перед следующей проверкой
+            await asyncio.sleep(30)
+            
+        except Exception as e:
+            logger.error(f"Ошибка мониторинга базы данных: {e}")
+            await asyncio.sleep(60)  # При ошибке ждем дольше
 
 async def main():
     """Основная функция"""
@@ -43,15 +90,17 @@ async def main():
         logger.info("Бот настроен успешно")
         logger.info("Запуск бота...")
         
+        # Запускаем мониторинг базы данных в отдельной задаче
+        asyncio.create_task(monitor_database(application))
+        
         # Запускаем бота
         await application.run_polling(drop_pending_updates=True)
         
     except KeyboardInterrupt:
         logger.info("Бот остановлен пользователем")
     except Exception as e:
-        logger.error(f"Критическая ошибка: {e}")
+        logger.error(f"Ошибка запуска бота: {e}")
         raise
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main()) 
