@@ -136,8 +136,13 @@ def api_location_add():
         if not is_valid:
             return jsonify({'success': False, 'error': error})
         
-        # Добавляем в базу данных
-        db.add_location(latitude, longitude)
+        # Рассчитываем расстояние и статус "на работе"
+        from bot.utils import calculate_distance, is_at_work
+        distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
+        at_work = is_at_work(latitude, longitude)
+        
+        # Добавляем в базу данных с правильными параметрами
+        db.add_location(latitude, longitude, distance, at_work)
         
         return jsonify({'success': True, 'message': 'Местоположение добавлено'})
     except Exception as e:
