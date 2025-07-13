@@ -4,6 +4,7 @@ from bot.database import db
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work
 import logging
 import requests
+from datetime import datetime
 
 # Настройка логирования
 logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
@@ -211,6 +212,11 @@ def api_notify():
     except Exception as e:
         logger.error(f"Ошибка ручного уведомления: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/test')
+def test_route():
+    """Тестовый маршрут для проверки обновления"""
+    return "✅ Код обновлен! Время: " + str(datetime.now())
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
