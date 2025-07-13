@@ -42,22 +42,10 @@ def send_telegram_arrival():
         return False
 
 def send_alternative_notification():
-    """Альтернативный способ уведомления (например, через email или другой сервис)"""
+    """Альтернативный способ отправки уведомления (логирование)"""
     try:
-        # Создаем уведомление
-        notification_text = create_work_notification()
-        
-        # Логируем уведомление
-        logger.info(f"🔔 АЛЬТЕРНАТИВНОЕ УВЕДОМЛЕНИЕ: {notification_text}")
-        
-        # Здесь можно добавить отправку через email, SMS или другой сервис
-        # Например:
-        # - Email через SMTP
-        # - SMS через API
-        # - Push-уведомления
-        # - Webhook на другой сервер
-        
-        print(f"📧 Альтернативное уведомление: {notification_text}")
+        text = create_work_notification()
+        logger.info(f"АЛЬТЕРНАТИВНОЕ УВЕДОМЛЕНИЕ: {text}")
         return True
     except Exception as e:
         logger.error(f"Ошибка альтернативного уведомления: {e}")
@@ -66,12 +54,56 @@ def send_alternative_notification():
 @app.route('/')
 def index():
     """Главная страница"""
-    return render_template('index.html')
+    try:
+        tracking_status = db.get_tracking_status()
+        return render_template('index.html', tracking_status=tracking_status)
+    except Exception as e:
+        logger.error(f"Ошибка загрузки главной страницы: {e}")
+        return render_template('index.html', tracking_status=False, message="Ошибка загрузки статуса")
 
 @app.route('/mobile')
 def mobile_tracker():
     """Мобильный трекер"""
     return render_template('mobile_tracker.html')
+
+@app.route('/mobile_tracker.html')
+def mobile_tracker_redirect():
+    """Редирект для старой ссылки"""
+    return redirect('/mobile')
+
+@app.route('/toggle', methods=['POST'])
+def toggle_tracking():
+    """Переключение отслеживания через веб-форму"""
+    try:
+        current_status = db.get_tracking_status()
+        new_status = not current_status
+        db.set_tracking_status(new_status)
+        
+        message = "Отслеживание включено" if new_status else "Отслеживание выключено"
+        return render_template('index.html', tracking_status=new_status, message=message)
+    except Exception as e:
+        logger.error(f"Ошибка переключения статуса: {e}")
+        return render_template('index.html', tracking_status=False, message="Ошибка переключения статуса")
+
+@app.route('/manual_arrival', methods=['POST'])
+def manual_arrival():
+    """Ручное уведомление о прибытии через веб-форму"""
+    try:
+        if send_telegram_arrival():
+            message = "Уведомление отправлено"
+        else:
+            # Пробуем альтернативный способ
+            if send_alternative_notification():
+                message = "Уведомление отправлено (альтернативный способ)"
+            else:
+                message = "Ошибка отправки уведомления"
+        
+        tracking_status = db.get_tracking_status()
+        return render_template('index.html', tracking_status=tracking_status, message=message)
+    except Exception as e:
+        logger.error(f"Ошибка ручного уведомления: {e}")
+        tracking_status = db.get_tracking_status()
+        return render_template('index.html', tracking_status=tracking_status, message="Ошибка отправки уведомления")
 
 @app.route('/api/status')
 def api_status():
