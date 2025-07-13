@@ -19,7 +19,7 @@ if __name__ == "__main__":
         app.run(
             host=config.WEB_HOST,
             port=config.WEB_PORT,
-            debug=True
+            debug=False
         )
     except KeyboardInterrupt:
         print("\n⏹️ Веб-интерфейс остановлен")
