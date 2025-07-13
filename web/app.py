@@ -221,4 +221,4 @@ def test_route():
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
     print(f"📍 Адрес: http://{config.WEB_HOST}:{config.WEB_PORT}")
-    app.run(host=config.WEB_HOST, port=config.WEB_PORT, debug=True) 
+    app.run(host=config.WEB_HOST, port=config.WEB_PORT, debug=False) 
