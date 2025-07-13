@@ -53,11 +53,17 @@ async def monitor_database(application: Application):
                     for location in new_locations[:3]:  # Максимум 3 уведомления
                         try:
                             notification = create_work_notification()
-                            await application.bot.send_message(
-                                chat_id=config.NOTIFICATION_CHAT_ID, 
-                                text=notification
+                            # Добавляем таймаут для отправки сообщения
+                            await asyncio.wait_for(
+                                application.bot.send_message(
+                                    chat_id=config.NOTIFICATION_CHAT_ID, 
+                                    text=notification
+                                ),
+                                timeout=10.0  # 10 секунд таймаут
                             )
                             logger.info(f"Автоматическое уведомление отправлено для записи ID: {location[0]}")
+                        except asyncio.TimeoutError:
+                            logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {location[0]}")
                         except Exception as e:
                             logger.error(f"Ошибка отправки автоматического уведомления: {e}")
             
@@ -71,8 +77,13 @@ async def monitor_database(application: Application):
 async def main():
     """Основная функция"""
     try:
-        # Создаем приложение
+        # Создаем приложение с настройками таймаутов
         application = Application.builder().token(config.TELEGRAM_TOKEN).build()
+        
+        # Настраиваем таймауты для HTTP запросов
+        application.bot.request.timeout = 30.0
+        application.bot.request.connect_timeout = 10.0
+        application.bot.request.read_timeout = 30.0
 
         # Добавляем обработчики команд
         application.add_handler(CommandHandler("start", start_command))
@@ -93,8 +104,14 @@ async def main():
         # Запускаем мониторинг базы данных в отдельной задаче
         asyncio.create_task(monitor_database(application))
         
-        # Запускаем бота
-        await application.run_polling(drop_pending_updates=True)
+        # Запускаем бота с настройками
+        await application.run_polling(
+            drop_pending_updates=True,
+            timeout=30,
+            read_timeout=30,
+            write_timeout=30,
+            connect_timeout=10
+        )
         
     except KeyboardInterrupt:
         logger.info("Бот остановлен пользователем")
