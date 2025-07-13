@@ -29,10 +29,69 @@
                 {% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание
             </button>
         </form>
-        <form method="post" action="/manual_arrival">
-            <button class="btn btn-manual" type="submit">Я на месте</button>
-        </form>
+        <button class="btn btn-manual" onclick="sendManualNotification()">Я на месте</button>
         <a href="/mobile_tracker.html" class="btn btn-toggle off" style="text-align:center; text-decoration:none;">Мобильный трекер</a>
     </div>
+    
+    <script>
+        function sendManualNotification() {
+            const button = event.target;
+            const originalText = button.textContent;
+            
+            // Показываем состояние загрузки
+            button.textContent = 'Отправка...';
+            button.disabled = true;
+            
+            fetch('/api/notify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Показываем сообщение об успехе
+                    showMessage('Уведомление отправлено!', 'success');
+                } else {
+                    showMessage('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Ошибка сети: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Восстанавливаем кнопку
+                button.textContent = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        function showMessage(text, type) {
+            // Удаляем предыдущие сообщения
+            const existingMsg = document.querySelector('.msg');
+            if (existingMsg) {
+                existingMsg.remove();
+            }
+            
+            // Создаем новое сообщение
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg';
+            msgDiv.style.color = type === 'success' ? '#28a745' : '#dc3545';
+            msgDiv.textContent = text;
+            
+            // Вставляем после заголовка
+            const container = document.querySelector('.container');
+            const statusDiv = document.querySelector('.status');
+            container.insertBefore(msgDiv, statusDiv.nextSibling);
+            
+            // Автоматически скрываем через 3 секунды
+            setTimeout(() => {
+                if (msgDiv.parentNode) {
+                    msgDiv.remove();
+                }
+            }, 3000);
+        }
+    </script>
 </body>
 </html> 
