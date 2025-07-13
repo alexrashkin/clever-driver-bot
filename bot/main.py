@@ -79,11 +79,10 @@ async def main():
     try:
         # Создаем приложение с настройками таймаутов
         application = Application.builder().token(config.TELEGRAM_TOKEN).build()
-        
-        # Настраиваем таймауты для HTTP запросов
-        application.bot.request.timeout = 30.0
-        application.bot.request.connect_timeout = 10.0
-        application.bot.request.read_timeout = 30.0
+        # УДАЛЕНО: нельзя устанавливать timeout через application.bot.request
+        # application.bot.request.timeout = 30.0
+        # application.bot.request.connect_timeout = 10.0
+        # application.bot.request.read_timeout = 30.0
 
         # Добавляем обработчики команд
         application.add_handler(CommandHandler("start", start_command))
