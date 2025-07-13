@@ -21,7 +21,7 @@ class Config:
     
     # ID чатов
     DRIVER_CHAT_ID = int(os.getenv('DRIVER_CHAT_ID', '946872573'))
-    NOTIFICATION_CHAT_ID = int(os.getenv('NOTIFICATION_CHAT_ID', '1623256768'))
+    NOTIFICATION_CHAT_ID = int(os.getenv('NOTIFICATION_CHAT_ID', '946872573'))  # Ваш Chat ID
     
     # База данных
     DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///driver.db')
