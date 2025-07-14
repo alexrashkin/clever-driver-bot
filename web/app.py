@@ -182,12 +182,16 @@ def api_location():
         at_work = is_at_work(latitude, longitude)
         db.add_location(latitude, longitude, distance, at_work)
         
-        # Если включено отслеживание и пользователь на работе, отправляем уведомление
-        if db.get_tracking_status() and at_work:
-            # Пробуем отправить через Telegram
-            if not send_telegram_arrival():
-                # Если не получилось, пробуем альтернативный способ
-                send_alternative_notification()
+        # Получаем две последние записи для проверки перехода
+        history = db.get_location_history(limit=2)
+        if len(history) == 2:
+            prev = history[1]
+            curr = history[0]
+            if db.get_tracking_status() and not prev['is_at_work'] and curr['is_at_work']:
+                # Пробуем отправить через Telegram
+                if not send_telegram_arrival():
+                    # Если не получилось, пробуем альтернативный способ
+                    send_alternative_notification()
         
         return jsonify({
             'success': True,
