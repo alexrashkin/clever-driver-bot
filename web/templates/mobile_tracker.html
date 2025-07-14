@@ -7,6 +7,107 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="manifest" href="/static/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(60, 72, 100, 0.08);
+            margin-top: 32px;
+            padding: 28px 20px 32px 20px;
+            max-width: 400px;
+            width: 96vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #2d3a5a;
+            margin-bottom: 18px;
+            font-size: 1.5em;
+        }
+        .distance-block {
+            background: #f1f5fb;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin: 18px 0 10px 0;
+            font-size: 1.3em;
+            color: #1e293b;
+            font-weight: 500;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(60, 72, 100, 0.04);
+        }
+        .status-block {
+            background: #e0f7fa;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 18px;
+            font-size: 1.1em;
+            color: #00796b;
+            width: 100%;
+            text-align: center;
+        }
+        .btn-refresh {
+            background: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 32px;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(60, 72, 100, 0.08);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn-refresh:active {
+            background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+            transform: scale(0.97);
+        }
+        .info {
+            color: #64748b;
+            font-size: 0.98em;
+            margin-top: 10px;
+            text-align: center;
+        }
+        @media (max-width: 500px) {
+            .container {
+                margin-top: 10vw;
+                padding: 16px 4vw 24px 4vw;
+            }
+            h2 {
+                font-size: 1.1em;
+            }
+            .distance-block, .status-block {
+                font-size: 1em;
+                padding: 10px 8px;
+            }
+            .btn-refresh {
+                padding: 12px 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🚗 Мобильный трекер</h2>
+        <div id="distance" class="distance-block">Расстояние до дома: ...</div>
+        <div id="status" class="status-block">Ожидание отправки геолокации...</div>
+        <button class="btn-refresh" onclick="sendLocation()">Обновить местоположение</button>
+        <div class="info">Для непрерывной работы сервиса страница должна оставаться открытой.<br>Геолокация обновляется автоматически каждые 10 секунд.</div>
+    </div>
     <script>
         function sendLocation() {
             if (navigator.geolocation) {
@@ -18,12 +119,20 @@
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude
                         })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Показываем расстояние
+                        if (data.distance) {
+                            document.getElementById('distance').textContent =
+                                'Расстояние до дома: ' + data.distance;
+                        }
+                        document.getElementById('status').textContent =
+                            'Последняя отправка геолокации: ' + new Date().toLocaleTimeString();
+                    }, function(error) {
+                        document.getElementById('status').textContent =
+                            'Ошибка получения геолокации: ' + error.message;
                     });
-                    document.getElementById('status').textContent =
-                        'Последняя отправка: ' + new Date().toLocaleTimeString();
-                }, function(error) {
-                    document.getElementById('status').textContent =
-                        'Ошибка получения геолокации: ' + error.message;
                 });
             } else {
                 document.getElementById('status').textContent =
@@ -33,18 +142,5 @@
         setInterval(sendLocation, 10000); // каждые 10 секунд
         window.onload = sendLocation;
     </script>
-    <style>
-        body { font-family: sans-serif; background: #f8f9fa; color: #222; margin: 0; padding: 0; }
-        .container { max-width: 400px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0001; padding: 32px 24px; text-align: center; }
-        h2 { margin-bottom: 16px; }
-        #status { margin-top: 20px; color: #007bff; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Автоматическое отслеживание включено</h2>
-        <p>Страница может быть свернута, но не закрыта!<br>Для максимальной надёжности добавьте на экран Домой.</p>
-        <div id="status">Ожидание отправки координат...</div>
-    </div>
 </body>
 </html> 
