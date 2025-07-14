@@ -60,13 +60,18 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
     at_work = is_at_work(latitude, longitude)
     db.add_location(latitude, longitude, distance, at_work)
-    if at_work and db.get_tracking_status():
-        notification = create_work_notification()
-        try:
-            await context.bot.send_message(chat_id=config.NOTIFICATION_CHAT_ID, text=notification)
-            logger.info("Отправлено уведомление о прибытии на работу")
-        except Exception as e:
-            logger.error(f"Ошибка отправки уведомления: {e}")
+    # Получаем две последние записи
+    history = db.get_location_history(limit=2)
+    if len(history) == 2:
+        prev = history[1]
+        curr = history[0]
+        if at_work and db.get_tracking_status() and not prev['is_at_work'] and curr['is_at_work']:
+            notification = create_work_notification()
+            try:
+                await context.bot.send_message(chat_id=config.NOTIFICATION_CHAT_ID, text=notification)
+                logger.info("Отправлено уведомление о прибытии на работу")
+            except Exception as e:
+                logger.error(f"Ошибка отправки уведомления: {e}")
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
