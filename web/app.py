@@ -167,7 +167,16 @@ def api_location():
     """API добавления местоположения"""
     try:
         data = request.get_json()
-        # --- ДОБАВЛЕНО: поддержка формата OwnTracks ---
+        # --- Игнорируем служебные сообщения OwnTracks ---
+        if not data:
+            logger.warning('Нет данных в POST /api/location')
+            return jsonify({'success': False, 'error': 'Нет данных'}), 400
+
+        if data.get('_type') not in (None, 'location'):
+            logger.info(f"Игнорируем служебное сообщение OwnTracks: _type={data.get('_type')}")
+            return jsonify({'success': True, 'info': 'Service message ignored'}), 200
+
+        # --- Дальше как раньше ---
         if 'lat' in data and 'lon' in data:
             latitude = data['lat']
             longitude = data['lon']
