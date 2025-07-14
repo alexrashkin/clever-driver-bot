@@ -52,9 +52,9 @@ async def monitor_database(application: Application):
                 prev_id, prev_is_at_work, prev_time = rows[1]
                 # Только если был переход с 0 на 1
                 if prev_is_at_work == 0 and curr_is_at_work == 1 and curr_id != last_checked_id:
+                    curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 0→1, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
                     # Проверяем интервал
-                    curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     if curr_ts - last_checked_time >= 60*60:  # 60 минут
                         last_checked_id = curr_id
                         save_last_checked_id(last_checked_id)
