@@ -2,6 +2,7 @@ import logging
 import asyncio
 import contextlib
 import os
+import time
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters, ContextTypes
 )
@@ -14,6 +15,7 @@ from bot.database import db
 from bot.utils import create_work_notification
 
 LAST_ID_FILE = "last_checked_id.txt"  # Теперь файл будет рядом с ботом
+LAST_TIME_FILE = "last_checked_time.txt"  # новый файл для времени последнего выхода
 
 def load_last_checked_id():
     try:
@@ -33,6 +35,24 @@ def save_last_checked_id(last_id):
     except Exception as e:
         logger.error(f"Не удалось сохранить last_checked_id: {e}")
 
+def load_last_checked_time():
+    try:
+        with open(LAST_TIME_FILE, "r") as f:
+            value = float(f.read().strip())
+            logger.info(f"Загружено время последнего уведомления: {value}")
+            return value
+    except Exception as e:
+        logger.warning(f"Не удалось загрузить время последнего уведомления: {e}")
+        return 0.0
+
+def save_last_checked_time(ts):
+    try:
+        with open(LAST_TIME_FILE, "w") as f:
+            f.write(str(ts))
+        logger.info(f"Сохранено время последнего уведомления: {ts}")
+    except Exception as e:
+        logger.error(f"Не удалось сохранить время последнего уведомления: {e}")
+
 # Настройка логирования
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -47,39 +67,46 @@ logger = logging.getLogger(__name__)
 async def monitor_database(application: Application):
     """Мониторинг базы данных для автоматических уведомлений"""
     last_checked_id = load_last_checked_id()
+    last_checked_time = load_last_checked_time()
     while True:
         try:
             conn = db.get_connection()
             cursor = conn.cursor()
             # Получаем две последние записи
             cursor.execute("""
-                SELECT id, is_at_work FROM locations ORDER BY id DESC LIMIT 2
+                SELECT id, is_at_work, timestamp FROM locations ORDER BY id DESC LIMIT 2
             """)
             rows = cursor.fetchall()
             conn.close()
 
             if len(rows) == 2:
-                curr_id, curr_is_at_work = rows[0]
-                prev_id, prev_is_at_work = rows[1]
+                curr_id, curr_is_at_work, curr_time = rows[0]
+                prev_id, prev_is_at_work, prev_time = rows[1]
                 # Только если был переход с 0 на 1
                 if prev_is_at_work == 0 and curr_is_at_work == 1 and curr_id != last_checked_id:
-                    last_checked_id = curr_id
-                    save_last_checked_id(last_checked_id)
-                    if db.get_tracking_status():
-                        try:
-                            notification = create_work_notification()
-                            await asyncio.wait_for(
-                                application.bot.send_message(
-                                    chat_id=config.NOTIFICATION_CHAT_ID,
-                                    text=notification
-                                ),
-                                timeout=10.0
-                            )
-                            logger.info(f"Автоматическое уведомление отправлено для записи ID: {curr_id}")
-                        except asyncio.TimeoutError:
-                            logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {curr_id}")
-                        except Exception as e:
-                            logger.error(f"Ошибка отправки автоматического уведомления: {e}")
+                    # Проверяем интервал
+                    curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
+                    if curr_ts - last_checked_time >= 60*60:  # 60 минут
+                        last_checked_id = curr_id
+                        save_last_checked_id(last_checked_id)
+                        save_last_checked_time(curr_ts)
+                        if db.get_tracking_status():
+                            try:
+                                notification = create_work_notification()
+                                await asyncio.wait_for(
+                                    application.bot.send_message(
+                                        chat_id=config.NOTIFICATION_CHAT_ID,
+                                        text=notification
+                                    ),
+                                    timeout=10.0
+                                )
+                                logger.info(f"Автоматическое уведомление отправлено для записи ID: {curr_id}")
+                            except asyncio.TimeoutError:
+                                logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {curr_id}")
+                            except Exception as e:
+                                logger.error(f"Ошибка отправки автоматического уведомления: {e}")
+                    else:
+                        logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 60 минут")
             await asyncio.sleep(30)
         except Exception as e:
             logger.error(f"Ошибка мониторинга базы данных: {e}")
