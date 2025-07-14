@@ -67,14 +67,18 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(history) == 2:
         prev = history[1]
         curr = history[0]
+        logger.info(f"DEBUG: prev={prev}, curr={curr}, at_work={at_work}")
         if at_work and db.get_tracking_status() and not prev['is_at_work'] and curr['is_at_work']:
             curr_ts = time.time()
             last_checked_time = load_last_checked_time()
+            logger.info(f"DEBUG: last_checked_time={last_checked_time}, curr_ts={curr_ts}, diff={curr_ts - last_checked_time}")
             if curr_ts - last_checked_time >= 60*60:  # 60 минут
                 notification = create_work_notification()
                 try:
                     await context.bot.send_message(chat_id=config.NOTIFICATION_CHAT_ID, text=notification)
+                    logger.info("DEBUG: уведомление отправлено")
                     save_last_checked_time(curr_ts)
+                    logger.info(f"DEBUG: save_last_checked_time({curr_ts})")
                     logger.info("Отправлено уведомление о прибытии на работу")
                 except Exception as e:
                     logger.error(f"Ошибка отправки уведомления: {e}")
