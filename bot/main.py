@@ -14,8 +14,9 @@ from bot.handlers import (
 from bot.database import db
 from bot.utils import create_work_notification
 
-LAST_ID_FILE = "last_checked_id.txt"  # Теперь файл будет рядом с ботом
-LAST_TIME_FILE = "last_checked_time.txt"  # новый файл для времени последнего выхода
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LAST_ID_FILE = os.path.join(BASE_DIR, "last_checked_id.txt")  # Теперь файл будет рядом с bot/main.py
+LAST_TIME_FILE = os.path.join(BASE_DIR, "last_checked_time.txt")  # новый файл для времени последнего выхода
 
 def load_last_checked_id():
     try:
