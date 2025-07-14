@@ -28,7 +28,7 @@ class Config:
     
     # Логирование
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-    LOG_FILE = os.getenv('LOG_FILE', 'driver-bot.log')
+    LOG_FILE = '/root/clever-driver-bot/driver-bot.log'
     
     # Интервалы
     CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '60'))  # секунды
