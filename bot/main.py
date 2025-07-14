@@ -26,53 +26,42 @@ logger = logging.getLogger(__name__)
 async def monitor_database(application: Application):
     """Мониторинг базы данных для автоматических уведомлений"""
     last_checked_id = 0
-    
     while True:
         try:
-            # Получаем последние записи из базы
             conn = db.get_connection()
             cursor = conn.cursor()
-            cursor.execute('''
-                SELECT id, latitude, longitude, is_at_work, timestamp
-                FROM locations
-                WHERE id > ? AND is_at_work = 1
-                ORDER BY timestamp DESC
-                LIMIT 10
-            ''', (last_checked_id,))
-            
-            new_locations = cursor.fetchall()
+            # Получаем две последние записи
+            cursor.execute("""
+                SELECT id, is_at_work FROM locations ORDER BY id DESC LIMIT 2
+            """)
+            rows = cursor.fetchall()
             conn.close()
-            
-            if new_locations:
-                # Обновляем ID последней проверенной записи
-                last_checked_id = max(loc[0] for loc in new_locations)
-                
-                # Проверяем, включено ли отслеживание
-                if db.get_tracking_status():
-                    # Отправляем уведомление только для самых свежих записях
-                    for location in new_locations[:3]:  # Максимум 3 уведомления
+
+            if len(rows) == 2:
+                curr_id, curr_is_at_work = rows[0]
+                prev_id, prev_is_at_work = rows[1]
+                # Только если был переход с 0 на 1
+                if prev_is_at_work == 0 and curr_is_at_work == 1 and curr_id != last_checked_id:
+                    last_checked_id = curr_id
+                    if db.get_tracking_status():
                         try:
                             notification = create_work_notification()
-                            # Добавляем таймаут для отправки сообщения
                             await asyncio.wait_for(
                                 application.bot.send_message(
-                                    chat_id=config.NOTIFICATION_CHAT_ID, 
+                                    chat_id=config.NOTIFICATION_CHAT_ID,
                                     text=notification
                                 ),
-                                timeout=10.0  # 10 секунд таймаут
+                                timeout=10.0
                             )
-                            logger.info(f"Автоматическое уведомление отправлено для записи ID: {location[0]}")
+                            logger.info(f"Автоматическое уведомление отправлено для записи ID: {curr_id}")
                         except asyncio.TimeoutError:
-                            logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {location[0]}")
+                            logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {curr_id}")
                         except Exception as e:
                             logger.error(f"Ошибка отправки автоматического уведомления: {e}")
-            
-            # Ждем 30 секунд перед следующей проверкой
             await asyncio.sleep(30)
-            
         except Exception as e:
             logger.error(f"Ошибка мониторинга базы данных: {e}")
-            await asyncio.sleep(60)  # При ошибке ждем дольше
+            await asyncio.sleep(60)  # При ошибке ждём дольше
 
 async def main():
     """Основная функция"""
