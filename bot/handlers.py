@@ -72,6 +72,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 logger.info("Отправлено уведомление о прибытии на работу")
             except Exception as e:
                 logger.error(f"Ошибка отправки уведомления: {e}")
+    # Если записей меньше двух, просто ничего не делаем (без уведомления)
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
