@@ -13,21 +13,25 @@ from bot.handlers import (
 from bot.database import db
 from bot.utils import create_work_notification
 
-LAST_ID_FILE = "/root/clever-driver-bot/last_checked_id.txt"
+LAST_ID_FILE = "last_checked_id.txt"  # Теперь файл будет рядом с ботом
 
 def load_last_checked_id():
     try:
         with open(LAST_ID_FILE, "r") as f:
-            return int(f.read().strip())
-    except Exception:
+            value = int(f.read().strip())
+            logger.info(f"Загружен last_checked_id: {value}")
+            return value
+    except Exception as e:
+        logger.warning(f"Не удалось загрузить last_checked_id: {e}")
         return 0
 
 def save_last_checked_id(last_id):
     try:
         with open(LAST_ID_FILE, "w") as f:
             f.write(str(last_id))
-    except Exception:
-        pass
+        logger.info(f"Сохранён last_checked_id: {last_id}")
+    except Exception as e:
+        logger.error(f"Не удалось сохранить last_checked_id: {e}")
 
 # Настройка логирования
 logging.basicConfig(
