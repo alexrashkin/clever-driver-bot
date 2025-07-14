@@ -74,6 +74,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.info(f"DEBUG: last_checked_time={last_checked_time}, curr_ts={curr_ts}, diff={curr_ts - last_checked_time}")
             if curr_ts - last_checked_time >= 60*60:  # 60 минут
                 notification = create_work_notification()
+                logger.info(f"DEBUG: Пытаюсь отправить уведомление: '{notification}' в чат {config.NOTIFICATION_CHAT_ID}")
                 try:
                     await context.bot.send_message(chat_id=config.NOTIFICATION_CHAT_ID, text=notification)
                     logger.info("DEBUG: уведомление отправлено")
