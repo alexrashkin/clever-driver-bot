@@ -1,9 +1,11 @@
 import logging
+import time
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes
 from config.settings import config
 from bot.database import db
 from bot.utils import calculate_distance, is_at_work, create_work_notification
+from bot.main import load_last_checked_time, save_last_checked_time
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +68,18 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         prev = history[1]
         curr = history[0]
         if at_work and db.get_tracking_status() and not prev['is_at_work'] and curr['is_at_work']:
-            notification = create_work_notification()
-            try:
-                await context.bot.send_message(chat_id=config.NOTIFICATION_CHAT_ID, text=notification)
-                logger.info("Отправлено уведомление о прибытии на работу")
-            except Exception as e:
-                logger.error(f"Ошибка отправки уведомления: {e}")
+            curr_ts = time.time()
+            last_checked_time = load_last_checked_time()
+            if curr_ts - last_checked_time >= 60*60:  # 60 минут
+                notification = create_work_notification()
+                try:
+                    await context.bot.send_message(chat_id=config.NOTIFICATION_CHAT_ID, text=notification)
+                    save_last_checked_time(curr_ts)
+                    logger.info("Отправлено уведомление о прибытии на работу")
+                except Exception as e:
+                    logger.error(f"Ошибка отправки уведомления: {e}")
+            else:
+                logger.info("Переход в радиус, но уведомление не отправлено: прошло меньше 60 минут")
     # Если записей меньше двух, просто ничего не делаем (без уведомления)
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
