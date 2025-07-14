@@ -31,7 +31,7 @@ class Config:
     LOG_FILE = '/root/clever-driver-bot/driver-bot.log'
     
     # Интервалы
-    CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '60'))  # секунды
+    CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '5'))  # секунды
     
     # Веб-интерфейс
     WEB_HOST = os.getenv('WEB_HOST', '0.0.0.0')
