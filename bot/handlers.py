@@ -5,7 +5,7 @@ from telegram.ext import ContextTypes
 from config.settings import config
 from bot.database import db
 from bot.utils import calculate_distance, is_at_work, create_work_notification
-from bot.main import load_last_checked_time, save_last_checked_time
+from bot.state import load_last_checked_time, save_last_checked_time
 
 logger = logging.getLogger(__name__)
 
