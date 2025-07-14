@@ -110,3 +110,4 @@ Desktop.ini
 # Временные файлы
 *.bak
 *.backup driver.db
+driver.db
