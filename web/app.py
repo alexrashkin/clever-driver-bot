@@ -5,6 +5,7 @@ from bot.utils import format_distance, format_timestamp, validate_coordinates, c
 import logging
 import requests
 from datetime import datetime
+import pytz
 
 # Настройка логирования
 logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
@@ -211,6 +212,64 @@ def api_notify():
                 return jsonify({'success': False, 'error': 'Не удалось отправить уведомление'})
     except Exception as e:
         logger.error(f"Ошибка ручного уведомления: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/danya_wakeup', methods=['POST'])
+def api_danya_wakeup():
+    """API для кнопки 'Даня поднимается'"""
+    try:
+        # Получаем текущее время в Москве
+        tz = pytz.timezone('Europe/Moscow')
+        now = datetime.now(tz)
+        hour = now.hour
+        if 5 <= hour < 12:
+            greeting = 'Доброе утро!'
+        elif 12 <= hour < 18:
+            greeting = 'Добрый день!'
+        elif 18 <= hour < 23:
+            greeting = 'Добрый вечер!'
+        else:
+            greeting = 'Доброй ночи!'
+        text = f"{greeting} Даня поднимается"
+        # Отправляем в Telegram
+        token = config.TELEGRAM_TOKEN
+        chat_id = config.NOTIFICATION_CHAT_ID
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        response = requests.post(url, data={"chat_id": chat_id, "text": text}, timeout=15)
+        if response.status_code == 200 and response.json().get('ok'):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
+    except Exception as e:
+        logger.error(f"Ошибка danya_wakeup: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/liza_wakeup', methods=['POST'])
+def api_liza_wakeup():
+    """API для кнопки 'Лиза поднимается'"""
+    try:
+        tz = pytz.timezone('Europe/Moscow')
+        now = datetime.now(tz)
+        hour = now.hour
+        if 5 <= hour < 12:
+            greeting = 'Доброе утро!'
+        elif 12 <= hour < 18:
+            greeting = 'Добрый день!'
+        elif 18 <= hour < 23:
+            greeting = 'Добрый вечер!'
+        else:
+            greeting = 'Доброй ночи!'
+        text = f"{greeting} Лиза поднимается"
+        token = config.TELEGRAM_TOKEN
+        chat_id = config.NOTIFICATION_CHAT_ID
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        response = requests.post(url, data={"chat_id": chat_id, "text": text}, timeout=15)
+        if response.status_code == 200 and response.json().get('ok'):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
+    except Exception as e:
+        logger.error(f"Ошибка liza_wakeup: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/test')
