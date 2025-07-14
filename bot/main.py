@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import contextlib
+import os
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters, ContextTypes
 )
@@ -11,6 +12,22 @@ from bot.handlers import (
 )
 from bot.database import db
 from bot.utils import create_work_notification
+
+LAST_ID_FILE = "/root/clever-driver-bot/last_checked_id.txt"
+
+def load_last_checked_id():
+    try:
+        with open(LAST_ID_FILE, "r") as f:
+            return int(f.read().strip())
+    except Exception:
+        return 0
+
+def save_last_checked_id(last_id):
+    try:
+        with open(LAST_ID_FILE, "w") as f:
+            f.write(str(last_id))
+    except Exception:
+        pass
 
 # Настройка логирования
 logging.basicConfig(
@@ -25,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 async def monitor_database(application: Application):
     """Мониторинг базы данных для автоматических уведомлений"""
-    last_checked_id = 0
+    last_checked_id = load_last_checked_id()
     while True:
         try:
             conn = db.get_connection()
@@ -43,6 +60,7 @@ async def monitor_database(application: Application):
                 # Только если был переход с 0 на 1
                 if prev_is_at_work == 0 and curr_is_at_work == 1 and curr_id != last_checked_id:
                     last_checked_id = curr_id
+                    save_last_checked_id(last_checked_id)
                     if db.get_tracking_status():
                         try:
                             notification = create_work_notification()
