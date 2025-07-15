@@ -174,7 +174,7 @@ def api_location():
 
         if data.get('_type') not in (None, 'location'):
             logger.info(f"Игнорируем служебное сообщение OwnTracks: _type={data.get('_type')}")
-            return jsonify({'success': True, 'info': 'Service message ignored'}), 200
+            return jsonify({'_type': 'ack', 'success': True, 'info': 'Service message ignored'}), 200
 
         # --- Дальше как раньше ---
         if 'lat' in data and 'lon' in data:
@@ -196,6 +196,7 @@ def api_location():
         db.add_location(latitude, longitude, distance, at_work)
         logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
         return jsonify({
+            '_type': 'ack',
             'success': True,
             'distance': format_distance(distance),
             'is_at_work': at_work
