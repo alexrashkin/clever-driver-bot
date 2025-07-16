@@ -170,11 +170,11 @@ def api_location():
         # --- Игнорируем служебные сообщения OwnTracks ---
         if not data:
             logger.warning('Нет данных в POST /api/location')
-            return jsonify({'success': False, 'error': 'Нет данных'}), 400
+            return '', 200  # Возвращаем пустой ответ
 
         if data.get('_type') not in (None, 'location'):
             logger.info(f"Игнорируем служебное сообщение OwnTracks: _type={data.get('_type')}")
-            return jsonify({'_type': 'ack', 'success': True, 'info': 'Service message ignored'}), 200
+            return '', 200  # Возвращаем пустой ответ
 
         # --- Дальше как раньше ---
         if 'lat' in data and 'lon' in data:
@@ -185,25 +185,20 @@ def api_location():
             longitude = data['longitude']
         else:
             logger.warning(f"Нет координат в data: {data}")
-            return jsonify({'success': False, 'error': 'Нет координат'}), 400
+            return '', 200  # Возвращаем пустой ответ
         logger.info(f"Получены координаты: latitude={latitude}, longitude={longitude}")
         if not validate_coordinates(latitude, longitude):
             logger.warning(f"Неверные координаты: latitude={latitude}, longitude={longitude}")
-            return jsonify({'success': False, 'error': 'Неверные координаты'}), 400
+            return '', 200  # Возвращаем пустой ответ
         distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
         at_work = is_at_work(latitude, longitude)
         logger.info(f"Расстояние до работы: {distance:.2f} м, is_at_work={at_work}")
         db.add_location(latitude, longitude, distance, at_work)
         logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
-        return jsonify({
-            '_type': 'ack',
-            'success': True,
-            'distance': format_distance(distance),
-            'is_at_work': at_work
-        })
+        return '', 200  # Возвращаем пустой ответ
     except Exception as e:
         logger.error(f"Ошибка добавления местоположения: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return '', 200  # Возвращаем пустой ответ
 
 @app.route('/api/notify', methods=['POST'])
 def api_notify():
