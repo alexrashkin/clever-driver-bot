@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory
 from config.settings import config
 from bot.database import db
-from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work
+from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
 import logging
 import requests
 from datetime import datetime
@@ -214,18 +214,7 @@ def api_notify():
 def api_danya_wakeup():
     """API для кнопки 'Даня поднимается'"""
     try:
-        # Получаем текущее время в Москве
-        tz = pytz.timezone('Europe/Moscow')
-        now = datetime.now(tz)
-        hour = now.hour
-        if 5 <= hour < 12:
-            greeting = 'Доброе утро!'
-        elif 12 <= hour < 18:
-            greeting = 'Добрый день!'
-        elif 18 <= hour < 23:
-            greeting = 'Добрый вечер!'
-        else:
-            greeting = 'Доброй ночи!'
+        greeting = get_greeting() + '!'
         text = f"{greeting} Даня поднимается"
         # Отправляем в Telegram
         token = config.TELEGRAM_TOKEN
@@ -244,17 +233,7 @@ def api_danya_wakeup():
 def api_liza_wakeup():
     """API для кнопки 'Лиза поднимается'"""
     try:
-        tz = pytz.timezone('Europe/Moscow')
-        now = datetime.now(tz)
-        hour = now.hour
-        if 5 <= hour < 12:
-            greeting = 'Доброе утро!'
-        elif 12 <= hour < 18:
-            greeting = 'Добрый день!'
-        elif 18 <= hour < 23:
-            greeting = 'Добрый вечер!'
-        else:
-            greeting = 'Доброй ночи!'
+        greeting = get_greeting() + '!'
         text = f"{greeting} Лиза поднимается"
         token = config.TELEGRAM_TOKEN
         chat_id = config.NOTIFICATION_CHAT_ID
