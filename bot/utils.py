@@ -38,10 +38,13 @@ def is_at_work(latitude, longitude):
 
 def get_greeting():
     """
-    Получение приветствия в зависимости от времени суток
+    Получение приветствия в зависимости от времени суток (по Москве)
     """
-    current_hour = datetime.now().hour
-    
+    from datetime import datetime
+    import pytz
+    now = datetime.now(pytz.timezone('Europe/Moscow'))
+    current_hour = now.hour
+
     if 5 <= current_hour < 12:
         return "Доброе утро"
     elif 12 <= current_hour < 18:
