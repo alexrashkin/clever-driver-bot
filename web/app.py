@@ -170,11 +170,11 @@ def api_location():
         # --- Игнорируем служебные сообщения OwnTracks ---
         if not data:
             logger.warning('Нет данных в POST /api/location')
-            return jsonify({}), 200  # Возвращаем пустой JSON
+            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
 
         if data.get('_type') not in (None, 'location'):
             logger.info(f"Игнорируем служебное сообщение OwnTracks: _type={data.get('_type')}")
-            return jsonify({}), 200  # Возвращаем пустой JSON
+            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
 
         # --- Дальше как раньше ---
         if 'lat' in data and 'lon' in data:
@@ -185,20 +185,20 @@ def api_location():
             longitude = data['longitude']
         else:
             logger.warning(f"Нет координат в data: {data}")
-            return jsonify({}), 200  # Возвращаем пустой JSON
+            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
         logger.info(f"Получены координаты: latitude={latitude}, longitude={longitude}")
         if not validate_coordinates(latitude, longitude):
             logger.warning(f"Неверные координаты: latitude={latitude}, longitude={longitude}")
-            return jsonify({}), 200  # Возвращаем пустой JSON
+            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
         distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
         at_work = is_at_work(latitude, longitude)
         logger.info(f"Расстояние до работы: {distance:.2f} м, is_at_work={at_work}")
         db.add_location(latitude, longitude, distance, at_work)
         logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
-        return jsonify({}), 200  # Возвращаем пустой JSON
+        return jsonify({'_type': 'location'}), 200  # Возвращаем _type
     except Exception as e:
         logger.error(f"Ошибка добавления местоположения: {e}")
-        return jsonify({}), 200  # Возвращаем пустой JSON
+        return jsonify({'_type': 'location'}), 200  # Возвращаем _type
 
 @app.route('/api/notify', methods=['POST'])
 def api_notify():
