@@ -167,38 +167,32 @@ def api_location():
     """API добавления местоположения"""
     try:
         data = request.get_json()
-        # --- Игнорируем служебные сообщения OwnTracks ---
         if not data:
             logger.warning('Нет данных в POST /api/location')
-            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
+            return jsonify({'_type': 'status'}), 200
 
-        if data.get('_type') not in (None, 'location'):
-            logger.info(f"Игнорируем служебное сообщение OwnTracks: _type={data.get('_type')}")
-            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
-
-        # --- Дальше как раньше ---
-        if 'lat' in data and 'lon' in data:
+        # Если это location и есть все нужные поля
+        if data.get('_type') == 'location' and all(k in data for k in ('lat', 'lon', 'tst')):
             latitude = data['lat']
             longitude = data['lon']
-        elif 'latitude' in data and 'longitude' in data:
-            latitude = data['latitude']
-            longitude = data['longitude']
+            tst = data['tst']
+            # Сохраняем в базу, если нужно
+            if validate_coordinates(latitude, longitude):
+                distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
+                at_work = is_at_work(latitude, longitude)
+                db.add_location(latitude, longitude, distance, at_work)
+                logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
+            else:
+                logger.warning(f"Неверные координаты: latitude={latitude}, longitude={longitude}")
+            # Возвращаем валидный ответ location
+            return jsonify({'_type': 'location', 'lat': latitude, 'lon': longitude, 'tst': tst}), 200
         else:
-            logger.warning(f"Нет координат в data: {data}")
-            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
-        logger.info(f"Получены координаты: latitude={latitude}, longitude={longitude}")
-        if not validate_coordinates(latitude, longitude):
-            logger.warning(f"Неверные координаты: latitude={latitude}, longitude={longitude}")
-            return jsonify({'_type': 'location'}), 200  # Возвращаем _type
-        distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
-        at_work = is_at_work(latitude, longitude)
-        logger.info(f"Расстояние до работы: {distance:.2f} м, is_at_work={at_work}")
-        db.add_location(latitude, longitude, distance, at_work)
-        logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
-        return jsonify({'_type': 'location'}), 200  # Возвращаем _type
+            # Для всех остальных случаев (status, служебные и ошибки) — status
+            logger.info(f"Игнорируем служебное сообщение или не хватает полей: _type={data.get('_type')}")
+            return jsonify({'_type': 'status'}), 200
     except Exception as e:
         logger.error(f"Ошибка добавления местоположения: {e}")
-        return jsonify({'_type': 'location'}), 200  # Возвращаем _type
+        return jsonify({'_type': 'status'}), 200
 
 @app.route('/api/notify', methods=['POST'])
 def api_notify():
