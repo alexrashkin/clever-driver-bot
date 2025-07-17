@@ -68,8 +68,12 @@ def index():
         telegram_id = session.get('telegram_id')
         if telegram_id:
             user = db.get_user_by_telegram_id(telegram_id)
-            button_name_1 = user.get('button_name_1') or 'Имя 1 (введите в настройках) поднимается'
-            button_name_2 = user.get('button_name_2') or 'Имя 2 (введите в настройках) поднимается'
+            button_name_1 = (
+                f"{user.get('button_name_1')} поднимается" if user.get('button_name_1') and user.get('button_name_1') != 'Имя 1 (введите в настройках) поднимается' else 'Имя 1 (введите в настройках) поднимается'
+            )
+            button_name_2 = (
+                f"{user.get('button_name_2')} поднимается" if user.get('button_name_2') and user.get('button_name_2') != 'Имя 2 (введите в настройках) поднимается' else 'Имя 2 (введите в настройках) поднимается'
+            )
             work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
             work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
             work_radius = user.get('work_radius', config.WORK_RADIUS)
