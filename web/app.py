@@ -315,7 +315,7 @@ def settings():
     user = None
     message = None
     error = False
-    telegram_bot_username = 'Clever_driver_bot'  # username вашего бота для Telegram Login Widget
+    telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
     # Проверяем авторизацию
     telegram_id = session.get('telegram_id')
     if telegram_id:
@@ -377,7 +377,7 @@ def invite():
     user_id = request.args.get('user_id')
     if not user_id:
         return 'Некорректная ссылка приглашения', 400
-    telegram_bot_username = "Clever_driver_bot"  # username вашего бота
+    telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
     return render_template('invite.html', user_id=user_id, telegram_bot_username=telegram_bot_username)
 
 @app.route('/invite_auth', methods=['POST', 'GET'])
