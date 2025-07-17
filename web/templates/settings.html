@@ -105,6 +105,16 @@
             {% if message %}
                 <div class="msg{% if error %} error{% endif %}">{{ message }}</div>
             {% endif %}
+            {% if telegram_user %}
+                {% if user.recipient_telegram_id %}
+                    <div class="msg success">Получатель уведомлений подключён (Telegram ID: {{ user.recipient_telegram_id }})</div>
+                {% else %}
+                    <form method="get" action="/invite">
+                        <input type="hidden" name="user_id" value="{{ user.telegram_id }}">
+                        <button class="btn" type="submit">Пригласить получателя уведомлений</button>
+                    </form>
+                {% endif %}
+            {% endif %}
             <form method="post" action="/settings">
                 <div class="form-group">
                     <label for="button_name_1">Имя для кнопки 1</label>
