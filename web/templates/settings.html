@@ -118,11 +118,11 @@
             <form method="post" action="/settings">
                 <div class="form-group">
                     <label for="button_name_1">Имя для кнопки 1</label>
-                    <input type="text" id="button_name_1" name="button_name_1" value="{{ '' if user.button_name_1 == 'Имя 1 (введите в настройках) поднимается' else user.button_name_1 }}" required>
+                    <input type="text" id="button_name_1" name="button_name_1" value="{{ '' if user.button_name_1 in ['Имя 1 (введите в настройках) поднимается', 'Имя 1'] else user.button_name_1 }}" required>
                 </div>
                 <div class="form-group">
                     <label for="button_name_2">Имя для кнопки 2</label>
-                    <input type="text" id="button_name_2" name="button_name_2" value="{{ '' if user.button_name_2 == 'Имя 2 (введите в настройках) поднимается' else user.button_name_2 }}" required>
+                    <input type="text" id="button_name_2" name="button_name_2" value="{{ '' if user.button_name_2 in ['Имя 2 (введите в настройках) поднимается', 'Имя 2'] else user.button_name_2 }}" required>
                 </div>
                 <div class="form-group">
                     <label for="work_latitude">Широта работы</label>
