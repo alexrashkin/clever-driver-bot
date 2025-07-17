@@ -385,6 +385,7 @@ def invite_auth():
     # Получаем user_id, которому будет назначен получатель
     user_id = request.args.get('user_id') or request.form.get('user_id')
     if not user_id:
+        logger.error('Некорректная ссылка приглашения: user_id отсутствует')
         return 'Некорректная ссылка приглашения', 400
     # Проверка подписи Telegram
     data = request.args if request.method == 'GET' else request.form
@@ -394,11 +395,14 @@ def invite_auth():
     data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
     secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
     hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    logger.error(f"[invite_auth] user_id={user_id}, data_check_string={data_check_string}, hmac_hash={hmac_hash}, hash_={hash_}, token={config.TELEGRAM_TOKEN}")
     if hmac_hash != hash_:
+        logger.error(f"[invite_auth] Ошибка авторизации Telegram: несовпадение подписи. user_id={user_id}, hmac_hash={hmac_hash}, hash_={hash_}, data_check_string={data_check_string}")
         return 'Ошибка авторизации Telegram', 403
     recipient_telegram_id = int(auth_data['id'])
     # Сохраняем recipient_telegram_id в профиль пользователя
     db.update_user_settings(user_id, recipient_telegram_id=recipient_telegram_id)
+    logger.error(f"[invite_auth] Успешная авторизация. user_id={user_id}, recipient_telegram_id={recipient_telegram_id}")
     return render_template('invite_success.html')
 
 if __name__ == '__main__':
