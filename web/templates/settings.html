@@ -107,7 +107,14 @@
             {% endif %}
             {% if telegram_user %}
                 {% if user.recipient_telegram_id %}
-                    <div class="msg success">Получатель уведомлений подключён (Telegram ID: {{ user.recipient_telegram_id }})</div>
+                    <div class="msg success">
+                        Получатель уведомлений подключён (Telegram ID: {{ user.recipient_telegram_id }}
+                        {% if recipient_name %} — {{ recipient_name }}{% endif %})
+                        <form method="post" style="display:inline; margin-left:12px;">
+                            <input type="hidden" name="action" value="unlink_recipient">
+                            <button class="btn" type="submit" style="background:#f87171;color:#fff;">Отключить получателя</button>
+                        </form>
+                    </div>
                 {% else %}
                     <form method="get" action="/invite">
                         <input type="hidden" name="user_id" value="{{ user.telegram_id }}">
