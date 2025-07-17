@@ -383,6 +383,7 @@ def invite():
 @app.route('/invite_auth', methods=['POST', 'GET'])
 def invite_auth():
     # Получаем user_id, которому будет назначен получатель
+    logger.error(f"[invite_auth] RAW data: args={dict(request.args)}, form={dict(request.form)}")
     user_id = request.args.get('user_id') or request.form.get('user_id')
     if not user_id:
         logger.error('Некорректная ссылка приглашения: user_id отсутствует')
