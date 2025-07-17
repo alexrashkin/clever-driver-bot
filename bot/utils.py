@@ -38,12 +38,11 @@ def is_at_work(latitude, longitude):
 
 def get_greeting():
     """
-    Получение приветствия в зависимости от времени суток (по Москве)
+    Получение приветствия в зависимости от времени суток (по системному времени сервера, который уже в Europe/Moscow)
     """
     from datetime import datetime
-    import pytz
     import logging
-    now = datetime.now(pytz.timezone('Europe/Moscow'))
+    now = datetime.now()
     current_hour = now.hour
     greeting = None
     if 5 <= current_hour < 12:
@@ -54,7 +53,7 @@ def get_greeting():
         greeting = "Добрый вечер"
     else:
         greeting = "Доброй ночи"
-    logging.warning(f"[DEBUG GREETING] Московское время: {now}, Час: {current_hour}, Приветствие: {greeting}")
+    logging.warning(f"[DEBUG GREETING] Системное время: {now}, Час: {current_hour}, Приветствие: {greeting}")
     return greeting
 
 def format_distance(distance):
