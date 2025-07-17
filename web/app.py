@@ -383,21 +383,14 @@ def invite():
 
 @app.route('/invite_auth', methods=['POST', 'GET'])
 def invite_auth():
-    import traceback
     try:
-        # Получаем user_id, которому будет назначен получатель
-        logger.error(f"[invite_auth] RAW data: args={dict(request.args)}, form={dict(request.form)}")
         auth_data = {**request.args, **request.form}
-        logger.error(f"[invite_auth] RAW data: {auth_data}")
         if 'hash' not in auth_data:
-            logger.error(f"[invite_auth] Нет параметра hash в auth_data: {auth_data}")
             return 'Ошибка авторизации Telegram: отсутствует hash', 400
         if 'auth_date' not in auth_data:
-            logger.error(f"[invite_auth] Нет параметра auth_date в auth_data: {auth_data}")
             return 'Ошибка авторизации Telegram: отсутствует auth_date', 400
         user_id = auth_data.get('user_id')
         if not user_id:
-            logger.error('Некорректная ссылка приглашения: user_id отсутствует')
             return 'Некорректная ссылка приглашения', 400
         hash_ = auth_data.pop('hash')
         auth_data.pop('user_id', None)
@@ -407,17 +400,13 @@ def invite_auth():
         )
         secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
-        logger.error(f"[invite_auth] user_id={user_id}, data_check_string={data_check_string}, hmac_hash={hmac_hash}, hash_={hash_}, token={config.TELEGRAM_TOKEN}")
         if hmac_hash != hash_:
-            logger.error(f"[invite_auth] Ошибка авторизации Telegram: несовпадение подписи. user_id={user_id}, hmac_hash={hmac_hash}, hash_={hash_}, data_check_string={data_check_string}")
             return 'Ошибка авторизации Telegram', 403
         recipient_telegram_id = int(auth_data['id'])
-        # Сохраняем recipient_telegram_id в профиль пользователя
         db.update_user_settings(user_id, recipient_telegram_id=recipient_telegram_id)
-        logger.error(f"[invite_auth] Успешная авторизация. user_id={user_id}, recipient_telegram_id={recipient_telegram_id}")
+        # logger.error(f"[invite_auth] Успешная авторизация. user_id={user_id}, recipient_telegram_id={recipient_telegram_id}")
         return render_template('invite_success.html')
     except Exception as e:
-        logger.error(f"[invite_auth] Exception: {traceback.format_exc()}")
         return 'Internal Server Error', 500
 
 if __name__ == '__main__':
