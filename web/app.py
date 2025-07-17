@@ -17,18 +17,22 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = config.WEB_SECRET_KEY
 
-def send_telegram_arrival():
+def send_telegram_arrival(user_telegram_id):
+    """Отправка уведомления о прибытии для конкретного пользователя или его получателя."""
     token = config.TELEGRAM_TOKEN
-    chat_id = config.NOTIFICATION_CHAT_ID
+    user = db.get_user_by_telegram_id(user_telegram_id)
+    if not user:
+        logger.error(f"Пользователь с telegram_id={user_telegram_id} не найден")
+        return False
+    recipient_id = user.get('recipient_telegram_id') or user_telegram_id
     text = create_work_notification()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     try:
-        # Добавляем таймаут и обработку ошибок
-        response = requests.post(url, data={"chat_id": chat_id, "text": text}, timeout=15)
+        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
         if response.status_code == 200:
             data = response.json()
             if data.get('ok'):
-                logger.info("Уведомление отправлено через Telegram API")
+                logger.info(f"Уведомление отправлено через Telegram API пользователю {recipient_id}")
                 return True
             else:
                 logger.error(f"Ошибка Telegram API: {data.get('description')}")
@@ -120,10 +124,12 @@ def toggle_tracking():
 def manual_arrival():
     """Ручное уведомление о прибытии через веб-форму"""
     try:
-        if send_telegram_arrival():
+        telegram_id = session.get('telegram_id')
+        if not telegram_id:
+            message = "Необходимо авторизоваться через Telegram"
+        elif send_telegram_arrival(telegram_id):
             message = "Уведомление отправлено"
         else:
-            # Пробуем альтернативный способ
             if send_alternative_notification():
                 message = "Уведомление отправлено (альтернативный способ)"
             else:
@@ -238,10 +244,12 @@ def api_location():
 def api_notify():
     """API ручного уведомления"""
     try:
-        if send_telegram_arrival():
+        telegram_id = session.get('telegram_id')
+        if not telegram_id:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        if send_telegram_arrival(telegram_id):
             return jsonify({'success': True})
         else:
-            # Пробуем альтернативный способ
             if send_alternative_notification():
                 return jsonify({'success': True})
             else:
@@ -250,41 +258,46 @@ def api_notify():
         logger.error(f"Ошибка ручного уведомления: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/danya_wakeup', methods=['POST'])
-def api_danya_wakeup():
-    """API для кнопки 'Даня поднимается'"""
+@app.route('/api/user1', methods=['POST'])
+def api_user1():
     try:
+        telegram_id = session.get('telegram_id')
+        if not telegram_id:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        user = db.get_user_by_telegram_id(telegram_id)
+        recipient_id = user.get('recipient_telegram_id') or telegram_id
         greeting = get_greeting() + '!'
-        text = f"{greeting} Даня поднимается"
-        # Отправляем в Telegram
+        text = f"{greeting} {user.get('button_name_1') or 'Даня поднимается'}"
         token = config.TELEGRAM_TOKEN
-        chat_id = config.NOTIFICATION_CHAT_ID
         url = f"https://api.telegram.org/bot{token}/sendMessage"
-        response = requests.post(url, data={"chat_id": chat_id, "text": text}, timeout=15)
+        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
         if response.status_code == 200 and response.json().get('ok'):
             return jsonify({'success': True})
         else:
             return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
     except Exception as e:
-        logger.error(f"Ошибка danya_wakeup: {e}")
+        logger.error(f"Ошибка user1: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/liza_wakeup', methods=['POST'])
-def api_liza_wakeup():
-    """API для кнопки 'Лиза поднимается'"""
+@app.route('/api/user2', methods=['POST'])
+def api_user2():
     try:
+        telegram_id = session.get('telegram_id')
+        if not telegram_id:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        user = db.get_user_by_telegram_id(telegram_id)
+        recipient_id = user.get('recipient_telegram_id') or telegram_id
         greeting = get_greeting() + '!'
-        text = f"{greeting} Лиза поднимается"
+        text = f"{greeting} {user.get('button_name_2') or 'Лиза поднимается'}"
         token = config.TELEGRAM_TOKEN
-        chat_id = config.NOTIFICATION_CHAT_ID
         url = f"https://api.telegram.org/bot{token}/sendMessage"
-        response = requests.post(url, data={"chat_id": chat_id, "text": text}, timeout=15)
+        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
         if response.status_code == 200 and response.json().get('ok'):
             return jsonify({'success': True})
         else:
             return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
     except Exception as e:
-        logger.error(f"Ошибка liza_wakeup: {e}")
+        logger.error(f"Ошибка user2: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/test')
@@ -354,6 +367,35 @@ def telegram_auth():
     session['telegram_id'] = telegram_id
     session.permanent = True
     return redirect(url_for('settings'))
+
+@app.route('/invite')
+def invite():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return 'Некорректная ссылка приглашения', 400
+    telegram_bot_username = "my_clever_driver_bot"  # Замените на username вашего бота
+    return render_template('invite.html', user_id=user_id, telegram_bot_username=telegram_bot_username)
+
+@app.route('/invite_auth', methods=['POST', 'GET'])
+def invite_auth():
+    # Получаем user_id, которому будет назначен получатель
+    user_id = request.args.get('user_id') or request.form.get('user_id')
+    if not user_id:
+        return 'Некорректная ссылка приглашения', 400
+    # Проверка подписи Telegram
+    data = request.args if request.method == 'GET' else request.form
+    auth_data = dict(data)
+    hash_ = auth_data.pop('hash', None)
+    auth_data = {k: v for k, v in auth_data.items()}
+    data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
+    secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+    hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    if hmac_hash != hash_:
+        return 'Ошибка авторизации Telegram', 403
+    recipient_telegram_id = int(auth_data['id'])
+    # Сохраняем recipient_telegram_id в профиль пользователя
+    db.update_user_settings(user_id, recipient_telegram_id=recipient_telegram_id)
+    return render_template('invite_success.html')
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")

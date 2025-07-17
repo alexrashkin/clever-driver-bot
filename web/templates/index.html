@@ -240,7 +240,7 @@
             const originalText = button.textContent;
             button.textContent = 'Отправка...';
             button.disabled = true;
-            fetch('/api/danya_wakeup', {
+            fetch('/api/user1', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -267,7 +267,7 @@
             const originalText = button.textContent;
             button.textContent = 'Отправка...';
             button.disabled = true;
-            fetch('/api/liza_wakeup', {
+            fetch('/api/user2', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

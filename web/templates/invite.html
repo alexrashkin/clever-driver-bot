@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Подключение для получения уведомлений</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+            color: #222;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1 0 auto;
+            max-width: 420px;
+            margin: 48px auto 0 auto;
+            background: #f5f7fa;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
+            padding: 40px 28px 32px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            transition: background 0.3s, color 0.3s;
+            align-items: center;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .info {
+            color: #555;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Подключение для получения уведомлений</h2>
+        <div class="info">
+            Чтобы получать уведомления от сервиса «Умный водитель», авторизуйтесь через Telegram.<br>
+            После авторизации вы будете получать уведомления о прибытии и выезде.
+        </div>
+        <script async src="https://telegram.org/js/telegram-widget.js?7"
+                data-telegram-login="{{ telegram_bot_username }}"
+                data-size="large"
+                data-userpic="false"
+                data-request-access="write"
+                data-auth-url="{{ url_for('invite_auth', user_id=user_id, _external=True) }}">
+        </script>
+    </div>
+</body>
+</html> 
