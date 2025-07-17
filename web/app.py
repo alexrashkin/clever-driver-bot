@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session
 from config.settings import config
 from bot.database import db
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
@@ -6,6 +6,9 @@ import logging
 import requests
 from datetime import datetime
 import pytz
+import hashlib
+import hmac
+import time as pytime
 
 # Настройка логирования
 logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
@@ -58,7 +61,30 @@ def index():
     """Главная страница"""
     try:
         tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status, year=datetime.now().year)
+        telegram_id = session.get('telegram_id')
+        if telegram_id:
+            user = db.get_user_by_telegram_id(telegram_id)
+            button_name_1 = user.get('button_name_1') or 'Имя 1 (введите в настройках) поднимается'
+            button_name_2 = user.get('button_name_2') or 'Имя 2 (введите в настройках) поднимается'
+            work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
+            work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
+            work_radius = user.get('work_radius', config.WORK_RADIUS)
+        else:
+            button_name_1 = 'Имя 1 (введите в настройках) поднимается'
+            button_name_2 = 'Имя 2 (введите в настройках) поднимается'
+            work_latitude = config.WORK_LATITUDE
+            work_longitude = config.WORK_LONGITUDE
+            work_radius = config.WORK_RADIUS
+        return render_template(
+            'index.html',
+            tracking_status=tracking_status,
+            year=datetime.now().year,
+            button_name_1=button_name_1,
+            button_name_2=button_name_2,
+            work_latitude=work_latitude,
+            work_longitude=work_longitude,
+            work_radius=work_radius
+        )
     except Exception as e:
         logger.error(f"Ошибка загрузки главной страницы: {e}")
         return render_template('index.html', tracking_status=False, message="Ошибка загрузки статуса", year=datetime.now().year)
@@ -176,10 +202,21 @@ def api_location():
             latitude = data['lat']
             longitude = data['lon']
             tst = data['tst']
+            # Получаем индивидуальные настройки пользователя
+            telegram_id = session.get('telegram_id')
+            if telegram_id:
+                user = db.get_user_by_telegram_id(telegram_id)
+                work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
+                work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
+                work_radius = user.get('work_radius', config.WORK_RADIUS)
+            else:
+                work_latitude = config.WORK_LATITUDE
+                work_longitude = config.WORK_LONGITUDE
+                work_radius = config.WORK_RADIUS
             # Сохраняем в базу, если нужно
             if validate_coordinates(latitude, longitude):
-                distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
-                at_work = is_at_work(latitude, longitude)
+                distance = calculate_distance(latitude, longitude, work_latitude, work_longitude)
+                at_work = distance <= float(work_radius)
                 db.add_location(latitude, longitude, distance, at_work)
                 logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
             else:
@@ -251,6 +288,69 @@ def api_liza_wakeup():
 def test_route():
     """Тестовый маршрут для проверки обновления"""
     return "✅ Код обновлен! Время: " + str(datetime.now())
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    telegram_user = None
+    user = None
+    message = None
+    error = False
+    telegram_bot_username = config.TELEGRAM_TOKEN.split(':')[0]  # Для виджета нужен username, но временно подставим токен-ид
+    # Проверяем авторизацию
+    telegram_id = session.get('telegram_id')
+    if telegram_id:
+        telegram_user = True
+        user = db.get_user_by_telegram_id(telegram_id)
+        if request.method == 'POST':
+            # Получаем данные формы
+            button_name_1 = request.form.get('button_name_1')
+            button_name_2 = request.form.get('button_name_2')
+            work_latitude = request.form.get('work_latitude')
+            work_longitude = request.form.get('work_longitude')
+            work_radius = request.form.get('work_radius')
+            try:
+                db.update_user_settings(
+                    telegram_id,
+                    button_name_1=button_name_1,
+                    button_name_2=button_name_2,
+                    work_latitude=work_latitude,
+                    work_longitude=work_longitude,
+                    work_radius=work_radius
+                )
+                message = 'Настройки успешно сохранены'
+            except Exception as e:
+                message = f'Ошибка сохранения: {e}'
+                error = True
+            user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
+    else:
+        return render_template('settings.html', telegram_user=False, telegram_bot_username=telegram_bot_username)
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/telegram_auth', methods=['POST', 'GET'])
+def telegram_auth():
+    # Проверка подписи Telegram
+    data = request.args if request.method == 'GET' else request.form
+    auth_data = dict(data)
+    hash_ = auth_data.pop('hash', None)
+    auth_data = {k: v for k, v in auth_data.items()}
+    data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
+    secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+    hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    if hmac_hash != hash_:
+        return 'Ошибка авторизации Telegram', 403
+    telegram_id = int(auth_data['id'])
+    username = auth_data.get('username')
+    first_name = auth_data.get('first_name')
+    last_name = auth_data.get('last_name')
+    # Регистрируем пользователя, если его нет
+    db.create_user(telegram_id, username, first_name, last_name)
+    session['telegram_id'] = telegram_id
+    session.permanent = True
+    return redirect(url_for('settings'))
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")

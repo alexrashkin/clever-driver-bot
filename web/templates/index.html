@@ -183,13 +183,16 @@
             </button>
         </form>
         <button class="btn btn-manual" onclick="sendManualNotification()">Ожидаю</button>
-        <button class="btn btn-manual" onclick="sendDanyaWakeup()">Даня поднимается</button>
-        <button class="btn btn-manual" onclick="sendLizaWakeup()">Лиза поднимается</button>
+        <button class="btn btn-manual" onclick="sendDanyaWakeup()">{{ button_name_1 or 'Даня поднимается' }}</button>
+        <button class="btn btn-manual" onclick="sendLizaWakeup()">{{ button_name_2 or 'Лиза поднимается' }}</button>
         <div style="display: flex; justify-content: center;">
             <a href="/mobile_tracker.html" class="btn btn-toggle off btn" style="margin-top:8px; max-width: 320px;">
                 Резервный мобильный трекер
             </a>
         </div>
+    </div>
+    <div style="text-align:center; margin: 24px 0 0 0;">
+        <a href="/about" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(90deg,#818cf8 0%,#6366f1 100%);color:#fff;font-weight:600;text-decoration:none;box-shadow:0 2px 8px #6366f133;transition:background 0.3s;">О сервисе и FAQ</a>
     </div>
     <footer style="text-align:center; margin-top:32px; color:#888; font-size:14px;">
         © {{ year }} Все права защищены. Разработчик: Александр Рашкин

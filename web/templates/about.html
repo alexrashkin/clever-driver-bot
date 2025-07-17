@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>О сервисе | Умный водитель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+            color: #222;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1 0 auto;
+            max-width: 700px;
+            margin: 48px auto 0 auto;
+            background: #f5f7fa;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
+            padding: 40px 32px 32px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            transition: background 0.3s, color 0.3s;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .faq {
+            margin-top: 32px;
+        }
+        .faq-item {
+            margin-bottom: 22px;
+        }
+        .faq-q {
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .faq-a {
+            color: #444;
+        }
+        .contact {
+            margin-top: 32px;
+            text-align: center;
+            color: #666;
+            font-size: 1em;
+        }
+        a {
+            color: #6366f1;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>О сервисе «Умный водитель»</h1>
+        <p>
+            <b>«Умный водитель»</b> — это современный сервис для автоматического отслеживания геолокации, уведомлений и контроля статуса водителя. Сервис интегрируется с приложением OwnTracks, собственным веб-интерфейсом и Telegram-ботом для максимального удобства и надёжности.
+        </p>
+        <ul>
+            <li>Автоматические уведомления о прибытии и выезде из заданной зоны</li>
+            <li>Персональные настройки для каждого пользователя</li>
+            <li>Возможность резервного отслеживания через мобильный веб-трекер</li>
+            <li>Интуитивный и современный интерфейс</li>
+            <li>Безопасность и приватность данных</li>
+        </ul>
+        <div class="faq">
+            <h2>FAQ — Часто задаваемые вопросы</h2>
+            <div class="faq-item">
+                <div class="faq-q">Как работает сервис?</div>
+                <div class="faq-a">Сервис получает координаты от приложения OwnTracks или через мобильный веб-трекер, определяет ваше местоположение относительно заданной зоны (например, работы) и автоматически отправляет уведомления в Telegram.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Какие устройства поддерживаются?</div>
+                <div class="faq-a">Сервис работает с любыми смартфонами, поддерживающими OwnTracks (iOS, Android), а также через мобильный браузер (резервный трекер).</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Как настроить зону отслеживания?</div>
+                <div class="faq-a">В разделе «Настройки» вы можете указать координаты и радиус зоны, в пределах которой будут срабатывать автоматические уведомления.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Можно ли изменить имена на кнопках?</div>
+                <div class="faq-a">Да, вы можете задать любые имена для кнопок в настройках профиля. Это удобно для семей, коллег или групповых поездок.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Что делать, если нет интернета или OwnTracks не работает?</div>
+                <div class="faq-a">Вы можете воспользоваться резервным мобильным трекером прямо в браузере. Он отправляет координаты через веб-интерфейс.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Как обеспечивается безопасность моих данных?</div>
+                <div class="faq-a">Все данные передаются по защищённому соединению. Ваши координаты и настройки доступны только вам после авторизации через Telegram.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">Планируется ли платная подписка?</div>
+                <div class="faq-a">Да, в будущем появится система подписок с расширенными возможностями и приоритетной поддержкой.</div>
+            </div>
+        </div>
+        <div class="contact">
+            <b>Контакты для связи:</b><br>
+            Email: <a href="mailto:info@cleverdriver.ru">info@cleverdriver.ru</a><br>
+            Telegram: <a href="https://t.me/cleverdriver_support" target="_blank">@cleverdriver_support</a>
+        </div>
+    </div>
+</body>
+</html> 

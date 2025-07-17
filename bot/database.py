@@ -48,6 +48,25 @@ class Database:
             )
         ''')
         
+        # Таблица пользователей
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telegram_id BIGINT UNIQUE NOT NULL,
+                username TEXT,
+                first_name TEXT,
+                last_name TEXT,
+                button_name_1 TEXT DEFAULT 'Даня поднимается',
+                button_name_2 TEXT DEFAULT 'Лиза поднимается',
+                work_latitude REAL,
+                work_longitude REAL,
+                work_radius INTEGER DEFAULT 100,
+                subscription_status TEXT DEFAULT 'free',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_login TIMESTAMP
+            )
+        ''')
+        
         # Вставляем начальный статус (если не существует)
         c.execute('INSERT OR IGNORE INTO tracking_status (id, is_active) VALUES (1, 0)')
         
@@ -164,6 +183,58 @@ class Database:
     def get_connection(self):
         """Получение соединения с базой данных"""
         return sqlite3.connect(self.db_path)
+
+    def create_user(self, telegram_id, username=None, first_name=None, last_name=None):
+        """Создать нового пользователя"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''
+            INSERT OR IGNORE INTO users (telegram_id, username, first_name, last_name, button_name_1, button_name_2)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            telegram_id, username, first_name, last_name,
+            'Имя 1 (введите в настройках) поднимается',
+            'Имя 2 (введите в настройках) поднимается'
+        ))
+        conn.commit()
+        conn.close()
+        logger.info(f"Создан пользователь telegram_id={telegram_id}")
+
+    def get_user_by_telegram_id(self, telegram_id):
+        """Получить пользователя по telegram_id"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''
+            SELECT * FROM users WHERE telegram_id = ?
+        ''', (telegram_id,))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            columns = [desc[0] for desc in c.description]
+            return dict(zip(columns, row))
+        return None
+
+    def update_user_settings(self, telegram_id, **kwargs):
+        """Обновить настройки пользователя по telegram_id (имена кнопок, радиус, координаты)"""
+        if not kwargs:
+            return
+        # Если имя пустое — сохраняем None, чтобы отображалась подсказка
+        for key in ['button_name_1', 'button_name_2']:
+            if key in kwargs and (kwargs[key] is None or str(kwargs[key]).strip() == ''):
+                kwargs[key] = None
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        fields = []
+        values = []
+        for key, value in kwargs.items():
+            fields.append(f"{key} = ?")
+            values.append(value)
+        values.append(telegram_id)
+        sql = f"UPDATE users SET {', '.join(fields)} WHERE telegram_id = ?"
+        c.execute(sql, values)
+        conn.commit()
+        conn.close()
+        logger.info(f"Обновлены настройки пользователя telegram_id={telegram_id}: {kwargs}")
 
 # Создаем глобальный экземпляр базы данных
 db = Database() 
