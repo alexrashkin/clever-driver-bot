@@ -18,6 +18,12 @@
         body.dark {
             --bg: #18181b;
             --text: #f1f5ff;
+            --btn-bg: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+            --btn-bg-manual: linear-gradient(90deg, #16a34a 0%, #22d3ee 100%);
+            --btn-bg-toggle: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
+            --btn-off-bg: #27272a;
+            --btn-off-color: #a5b4fc;
+            --btn-shadow: 0 2px 8px #6366f144;
         }
         body, body.dark {
             background: var(--bg);
@@ -86,10 +92,10 @@
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+            background: var(--btn-bg, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
             color: #fff;
-            box-shadow: 0 2px 8px #6366f133;
-            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: var(--btn-shadow, 0 2px 8px #6366f133);
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.1s;
             outline: none;
         }
         .btn:hover, .btn:focus {
@@ -98,22 +104,22 @@
             box-shadow: 0 4px 16px #6366f144;
         }
         .btn-manual {
-            background: linear-gradient(90deg, #22c55e 0%, #4ade80 100%);
+            background: var(--btn-bg-manual, linear-gradient(90deg, #22c55e 0%, #4ade80 100%));
             color: #fff;
         }
         .btn-manual:hover, .btn-manual:focus {
-            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            background: var(--btn-bg-manual, linear-gradient(90deg, #4ade80 0%, #22c55e 100%));
         }
         .btn-toggle {
-            background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+            background: var(--btn-bg-toggle, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
         }
         .btn-toggle.off {
-            background: #e5e7eb;
-            color: #6366f1;
+            background: var(--btn-off-bg, #e5e7eb);
+            color: var(--btn-off-color, #6366f1);
         }
         .btn-toggle.off:hover, .btn-toggle.off:focus {
-            background: #c7d2fe;
-            color: #6366f1;
+            background: #4f46e5;
+            color: #fff;
         }
         a.btn {
             text-align: center;
