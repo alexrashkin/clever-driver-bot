@@ -42,6 +42,7 @@ def get_greeting():
     """
     from datetime import datetime
     import pytz
+    import logging
     now = datetime.now(pytz.timezone('Europe/Moscow'))
     current_hour = now.hour
     greeting = None
@@ -53,7 +54,7 @@ def get_greeting():
         greeting = "Добрый вечер"
     else:
         greeting = "Доброй ночи"
-    print(f"[DEBUG GREETING] Московское время: {now}, Час: {current_hour}, Приветствие: {greeting}")
+    logging.warning(f"[DEBUG GREETING] Московское время: {now}, Час: {current_hour}, Приветствие: {greeting}")
     return greeting
 
 def format_distance(distance):
