@@ -400,7 +400,10 @@ def invite_auth():
         return 'Ошибка авторизации Telegram: отсутствует auth_date', 400
     hash_ = auth_data.pop('hash')
     auth_data.pop('user_id', None)
-    data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
+    data_check_string = '\n'.join(
+        f"{k}={v[0] if isinstance(v, list) else v}"
+        for k, v in sorted(auth_data.items())
+    )
     secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
     hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
     logger.error(f"[invite_auth] user_id={user_id}, data_check_string={data_check_string}, hmac_hash={hmac_hash}, hash_={hash_}, token={config.TELEGRAM_TOKEN}")
