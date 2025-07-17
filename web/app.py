@@ -390,10 +390,9 @@ def invite_auth():
         logger.error('Некорректная ссылка приглашения: user_id отсутствует')
         return 'Некорректная ссылка приглашения', 400
     # Проверка подписи Telegram
-    data = request.args if request.method == 'GET' else request.form
-    auth_data = dict(data)
+    auth_data = {**request.args, **request.form}
     hash_ = auth_data.pop('hash', None)
-    auth_data = {k: v for k, v in auth_data.items()}
+    auth_data.pop('user_id', None)
     data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
     secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
     hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
