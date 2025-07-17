@@ -316,12 +316,16 @@ def settings():
     message = None
     error = False
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
-    # Проверяем авторизацию
     telegram_id = session.get('telegram_id')
     if telegram_id:
         telegram_user = True
         user = db.get_user_by_telegram_id(telegram_id)
-        if request.method == 'POST':
+        # Обработка отвязки получателя
+        if request.method == 'POST' and request.form.get('action') == 'unlink_recipient':
+            db.update_user_settings(telegram_id, recipient_telegram_id=None)
+            message = 'Получатель успешно отключён'
+            user = db.get_user_by_telegram_id(telegram_id)
+        elif request.method == 'POST':
             # Получаем данные формы
             button_name_1 = request.form.get('button_name_1')
             button_name_2 = request.form.get('button_name_2')
@@ -342,7 +346,13 @@ def settings():
                 message = f'Ошибка сохранения: {e}'
                 error = True
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
+        # Получаем имя получателя, если он есть
+        recipient_name = None
+        if user and user.get('recipient_telegram_id'):
+            recipient = db.get_user_by_telegram_id(user['recipient_telegram_id'])
+            if recipient:
+                recipient_name = recipient.get('first_name') or recipient.get('username')
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username, recipient_name=recipient_name)
     else:
         return render_template('settings.html', telegram_user=False, telegram_bot_username=telegram_bot_username)
 
