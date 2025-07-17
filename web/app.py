@@ -69,12 +69,14 @@ def index():
             work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
             work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
             work_radius = user.get('work_radius', config.WORK_RADIUS)
+            is_authorized = True
         else:
             button_name_1 = 'Имя 1 (введите в настройках) поднимается'
             button_name_2 = 'Имя 2 (введите в настройках) поднимается'
             work_latitude = config.WORK_LATITUDE
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
+            is_authorized = False
         return render_template(
             'index.html',
             tracking_status=tracking_status,
@@ -83,7 +85,8 @@ def index():
             button_name_2=button_name_2,
             work_latitude=work_latitude,
             work_longitude=work_longitude,
-            work_radius=work_radius
+            work_radius=work_radius,
+            is_authorized=is_authorized
         )
     except Exception as e:
         logger.error(f"Ошибка загрузки главной страницы: {e}")

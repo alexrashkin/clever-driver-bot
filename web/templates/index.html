@@ -163,6 +163,11 @@
         footer {
             flex-shrink: 0;
         }
+        .btn-disabled {
+            opacity: 0.6 !important;
+            cursor: not-allowed !important;
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 <body>
@@ -178,20 +183,25 @@
             <div class="msg">{{ message }}</div>
         {% endif %}
         <form method="post" action="/toggle">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% endif %}" type="submit">
+            <button class="btn btn-toggle {% if not tracking_status %}off{% endif %}{% if not is_authorized %} btn-disabled{% endif %}" type="submit" {% if not is_authorized %}disabled{% endif %} onclick="return onAuthRequired(event);">
                 {% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание
             </button>
         </form>
-        <button class="btn btn-manual" onclick="sendManualNotification()">Ожидаю</button>
-        <button class="btn btn-manual" onclick="sendDanyaWakeup()">{{ button_name_1 or 'Даня поднимается' }}</button>
-        <button class="btn btn-manual" onclick="sendLizaWakeup()">{{ button_name_2 or 'Лиза поднимается' }}</button>
+        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return onAuthRequired(event);" {% if not is_authorized %}disabled{% endif %}>Ожидаю</button>
+        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return onAuthRequired(event);" {% if not is_authorized %}disabled{% endif %}>{{ button_name_1 or 'Даня поднимается' }}</button>
+        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return onAuthRequired(event);" {% if not is_authorized %}disabled{% endif %}>{{ button_name_2 or 'Лиза поднимается' }}</button>
         <div style="display: flex; justify-content: center;">
-            <a href="/mobile_tracker.html" class="btn btn-toggle off btn" style="margin-top:8px; max-width: 320px;">
+            <a href="/mobile_tracker.html" class="btn btn-toggle off btn{% if not is_authorized %} btn-disabled{% endif %}" onclick="return onAuthRequired(event);">
                 Резервный мобильный трекер
             </a>
         </div>
     </div>
-    <div style="text-align:center; margin: 24px 0 0 0;">
+    <div style="text-align:center; margin: 24px 0 0 0; display: flex; flex-direction: row; justify-content: center; gap: 18px;">
+        {% if is_authorized %}
+        <a href="/settings" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(90deg,#6366f1 0%,#818cf8 100%);color:#fff;font-weight:600;text-decoration:none;box-shadow:0 2px 8px #6366f133;transition:background 0.3s;">Настройки</a>
+        {% else %}
+        <a href="/settings" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(90deg,#22c55e 0%,#4ade80 100%);color:#fff;font-weight:600;text-decoration:none;box-shadow:0 2px 8px #22c55e33;transition:background 0.3s;">Войти через Telegram</a>
+        {% endif %}
         <a href="/about" style="display:inline-block;padding:12px 28px;border-radius:10px;background:linear-gradient(90deg,#818cf8 0%,#6366f1 100%);color:#fff;font-weight:600;text-decoration:none;box-shadow:0 2px 8px #6366f133;transition:background 0.3s;">О сервисе и FAQ</a>
     </div>
     <footer style="text-align:center; margin-top:32px; color:#888; font-size:14px;">
@@ -295,6 +305,15 @@
                     msgDiv.remove();
                 }
             }, 3000);
+        }
+        window.IS_AUTHORIZED = {% if is_authorized %}true{% else %}false{% endif %};
+        function onAuthRequired(event) {
+            if (!window.IS_AUTHORIZED) {
+                showMessage('Пожалуйста, авторизуйтесь через Telegram для использования этой функции.', 'error');
+                event.preventDefault();
+                return false;
+            }
+            return true;
         }
     </script>
     <script>
