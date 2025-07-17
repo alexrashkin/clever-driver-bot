@@ -44,15 +44,17 @@ def get_greeting():
     import pytz
     now = datetime.now(pytz.timezone('Europe/Moscow'))
     current_hour = now.hour
-
+    greeting = None
     if 5 <= current_hour < 12:
-        return "Доброе утро"
+        greeting = "Доброе утро"
     elif 12 <= current_hour < 18:
-        return "Добрый день"
+        greeting = "Добрый день"
     elif 18 <= current_hour < 23:
-        return "Добрый вечер"
+        greeting = "Добрый вечер"
     else:
-        return "Доброй ночи"
+        greeting = "Доброй ночи"
+    print(f"[DEBUG GREETING] Московское время: {now}, Час: {current_hour}, Приветствие: {greeting}")
+    return greeting
 
 def format_distance(distance):
     """
