@@ -391,7 +391,14 @@ def invite_auth():
         return 'Некорректная ссылка приглашения', 400
     # Проверка подписи Telegram
     auth_data = {**request.args, **request.form}
-    hash_ = auth_data.pop('hash', None)
+    logger.error(f"[invite_auth] RAW data: {auth_data}")
+    if 'hash' not in auth_data:
+        logger.error(f"[invite_auth] Нет параметра hash в auth_data: {auth_data}")
+        return 'Ошибка авторизации Telegram: отсутствует hash', 400
+    if 'auth_date' not in auth_data:
+        logger.error(f"[invite_auth] Нет параметра auth_date в auth_data: {auth_data}")
+        return 'Ошибка авторизации Telegram: отсутствует auth_date', 400
+    hash_ = auth_data.pop('hash')
     auth_data.pop('user_id', None)
     data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
     secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
