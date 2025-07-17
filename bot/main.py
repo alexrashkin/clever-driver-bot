@@ -77,6 +77,32 @@ async def monitor_database(application: Application):
                                 logger.error(f"Ошибка отправки автоматического уведомления: {e}")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 60 минут")
+                # Только если был переход с 1 на 0 (выезд из радиуса)
+                if prev_is_at_work == 1 and curr_is_at_work == 0 and curr_id != last_checked_id:
+                    curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
+                    logger.info(f"DEBUG: переход 1→0, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
+                    if curr_ts - last_checked_time >= 60*60:  # 60 минут
+                        last_checked_id = curr_id
+                        save_last_checked_id(last_checked_id)
+                        save_last_checked_time(curr_ts)
+                        if db.get_tracking_status():
+                            try:
+                                notification = "Едем"
+                                logger.info(f"DEBUG: Пытаюсь отправить уведомление: '{notification}' в чат {config.NOTIFICATION_CHAT_ID}")
+                                await asyncio.wait_for(
+                                    application.bot.send_message(
+                                        chat_id=config.NOTIFICATION_CHAT_ID,
+                                        text=notification
+                                    ),
+                                    timeout=10.0
+                                )
+                                logger.info(f"Автоматическое уведомление 'Едем' отправлено для записи ID: {curr_id}")
+                            except asyncio.TimeoutError:
+                                logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {curr_id}")
+                            except Exception as e:
+                                logger.error(f"Ошибка отправки автоматического уведомления: {e}")
+                    else:
+                        logger.info(f"Переход из радиуса, но уведомление не отправлено: прошло меньше 60 минут")
             await asyncio.sleep(30)
         except Exception as e:
             logger.error(f"Ошибка мониторинга базы данных: {e}")
