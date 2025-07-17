@@ -58,15 +58,15 @@ def index():
     """Главная страница"""
     try:
         tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status)
+        return render_template('index.html', tracking_status=tracking_status, year=datetime.now().year)
     except Exception as e:
         logger.error(f"Ошибка загрузки главной страницы: {e}")
-        return render_template('index.html', tracking_status=False, message="Ошибка загрузки статуса")
+        return render_template('index.html', tracking_status=False, message="Ошибка загрузки статуса", year=datetime.now().year)
 
 @app.route('/mobile')
 def mobile_tracker():
     """Мобильный трекер"""
-    return render_template('mobile_tracker.html')
+    return render_template('mobile_tracker.html', year=datetime.now().year)
 
 @app.route('/mobile_tracker.html')
 def mobile_tracker_redirect():
@@ -82,10 +82,10 @@ def toggle_tracking():
         db.set_tracking_status(new_status)
         
         message = "Отслеживание включено" if new_status else "Отслеживание выключено"
-        return render_template('index.html', tracking_status=new_status, message=message)
+        return render_template('index.html', tracking_status=new_status, message=message, year=datetime.now().year)
     except Exception as e:
         logger.error(f"Ошибка переключения статуса: {e}")
-        return render_template('index.html', tracking_status=False, message="Ошибка переключения статуса")
+        return render_template('index.html', tracking_status=False, message="Ошибка переключения статуса", year=datetime.now().year)
 
 @app.route('/manual_arrival', methods=['POST'])
 def manual_arrival():
@@ -101,11 +101,11 @@ def manual_arrival():
                 message = "Ошибка отправки уведомления"
         
         tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status, message=message)
+        return render_template('index.html', tracking_status=tracking_status, message=message, year=datetime.now().year)
     except Exception as e:
         logger.error(f"Ошибка ручного уведомления: {e}")
         tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status, message="Ошибка отправки уведомления")
+        return render_template('index.html', tracking_status=tracking_status, message="Ошибка отправки уведомления", year=datetime.now().year)
 
 @app.route('/api/status')
 def api_status():
