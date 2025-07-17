@@ -356,6 +356,7 @@ def telegram_auth():
     data = request.args if request.method == 'GET' else request.form
     auth_data = dict(data)
     hash_ = auth_data.pop('hash', None)
+    auth_data.pop('user_id', None)  # Удаляем user_id, если есть
     auth_data = {k: v for k, v in auth_data.items()}
     data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
     secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
