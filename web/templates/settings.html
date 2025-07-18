@@ -215,8 +215,26 @@
             </script>
         {% endif %}
     </div>
-    <div style="text-align:center; margin: 18px 0 0 0;">
-        <a href="/" class="back-btn">← Назад на главную</a>
-    </div>
+    <a href="/" class="back-btn" style="position:absolute;top:18px;right:18px;z-index:30;">← Назад на главную</a>
+    <style>
+    .back-btn {
+        display: inline-block;
+        padding: 6px 18px;
+        font-size: 0.98em;
+        border-radius: 7px;
+        background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
+        color: #fff;
+        font-weight: 500;
+        text-decoration: none;
+        box-shadow: 0 1px 4px #6366f133;
+        transition: background 0.3s;
+        margin: 0;
+        min-width: 120px;
+        text-align: center;
+    }
+    .back-btn:hover, .back-btn:focus {
+        background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
+    }
+    </style>
 </body>
 </html> 
