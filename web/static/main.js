@@ -117,6 +117,36 @@ function sendLizaWakeup(event) {
     return false;
 }
 
+function sendDynamicButton(event, idx) {
+    if (!onAuthRequired(event)) return false;
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Отправка...';
+    button.disabled = true;
+    fetch(`/api/button/${idx}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Сообщение отправлено!', 'success');
+        } else {
+            showMessage('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'), 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Ошибка сети: ' + error.message, 'error');
+    })
+    .finally(() => {
+        button.textContent = originalText;
+        button.disabled = false;
+    });
+    return false;
+}
+
 // Тёмная/светлая тема + логотип
 const btn = document.getElementById('theme-toggle');
 const logoImg = document.getElementById('logo-img');

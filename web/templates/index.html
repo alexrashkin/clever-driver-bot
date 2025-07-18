@@ -7,203 +7,204 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <style>
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
-            color: #222;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        body.dark {
-            background: #18181b;
-            color: #f1f5ff;
-        }
-        .container {
-            flex: 1 0 auto;
-            max-width: 420px;
-            margin: 48px auto 0 auto;
-            background: #f5f7fa;
-            border-radius: 18px;
-            box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
-            padding: 40px 28px 32px 28px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            transition: background 0.3s, color 0.3s;
-        }
-        body.dark .container {
-            background: #23232b;
-            color: #f1f5ff;
-            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25), 0 1.5px 6px #6366f133;
-        }
-        .logo-wrap {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 18px;
-        }
-        .logo-img {
-            max-width: 480px;
-            max-height: 180px;
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 8px #6366f122);
-        }
-        .status {
-            text-align: center;
-            margin-bottom: 8px;
-            font-size: 1.15em;
-            font-weight: 500;
-            color: #6366f1;
-            background: #f1f5ff;
-            border-radius: 8px;
-            padding: 8px 0;
-            box-shadow: 0 1px 4px #6366f11a;
-            transition: background 0.3s, color 0.3s;
-        }
-        body.dark .status {
-            background: #35354a;
-            color: #a5b4fc;
-            box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
-        }
-        .msg {
-            text-align: center;
-            font-size: 1.05em;
-            font-weight: 500;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            padding: 10px 0;
-            background: #e0ffe7;
-            color: #22c55e;
-            box-shadow: 0 1px 4px #22c55e22;
-            transition: background 0.3s, color 0.3s;
-        }
-        body.dark .msg {
-            background: #35354a;
-            color: #4ade80;
-            box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
-        }
-        .msg.error {
-            background: #ffe0e0;
-            color: #ef4444;
-            box-shadow: 0 1px 4px #ef444422;
-        }
-        body.dark .msg.error {
-            background: #4b2323;
-            color: #ef4444;
-            box-shadow: 0 1px 4px #ef444422;
-        }
-        .btn {
-            display: block;
-            width: 100%;
-            margin-bottom: 12px;
-            padding: 16px;
-            font-size: 1.1em;
-            font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            background: var(--btn-bg, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
-            color: #fff;
-            box-shadow: var(--btn-shadow, 0 2px 8px #6366f133);
-            transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.1s;
-            outline: none;
-        }
-        .btn:hover, .btn:focus {
-            background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
-            transform: translateY(-2px) scale(1.03);
-            box-shadow: 0 4px 16px #6366f144;
-        }
-        .btn-manual {
-            background: var(--btn-bg-manual, linear-gradient(90deg, #7ed958 0%, #46c474 100%));
-            color: #fff;
-        }
-        .btn-manual:hover, .btn-manual:focus {
-            background: var(--btn-bg-manual, linear-gradient(90deg, #7ed958 0%, #46c474 100%));
-        }
-        .btn-toggle {
-            background: var(--btn-bg-toggle, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
-        }
-        .btn-toggle.off {
-            background: var(--btn-off-bg, #e5e7eb);
-            color: var(--btn-off-color, #6366f1);
-        }
-        .btn-toggle.off:hover, .btn-toggle.off:focus {
-            background: #4f46e5;
-            color: #fff;
-        }
-        a.btn {
-            text-align: center;
-            text-decoration: none;
-        }
-        @media (max-width: 600px) {
-            .container {
-                max-width: 98vw;
-                padding: 18px 4vw 18px 4vw;
-            }
-            .logo-img {
-                max-width: 270px;
-                max-height: 96px;
-            }
-        }
-        footer {
-            flex-shrink: 0;
-        }
-        .btn-disabled {
-            opacity: 0.6 !important;
-            cursor: not-allowed !important;
-            pointer-events: auto !important;
-        }
-    .nav-btn {
-        padding: 6px 16px;
-        font-size: 0.98em;
-        border-radius: 7px;
-        background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
-        color: #fff;
-        font-weight: 500;
-        text-decoration: none;
-        box-shadow: 0 1px 4px #6366f133;
-        transition: background 0.3s;
-        margin: 0;
-        min-width: 80px;
-        text-align: center;
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+    color: #222;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+body.dark {
+    background: #18181b;
+    color: #f1f5ff;
+}
+.container {
+    flex: 1 0 auto;
+    max-width: 420px;
+    margin: 48px auto 0 auto;
+    background: #f5f7fa;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
+    padding: 40px 28px 32px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    transition: background 0.3s, color 0.3s;
+}
+body.dark .container {
+    background: #23232b;
+    color: #f1f5ff;
+    box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25), 0 1.5px 6px #6366f133;
+}
+.logo-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 18px;
+}
+.logo-img {
+    max-width: 480px;
+    max-height: 180px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px #6366f122);
+}
+.status {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 1.15em;
+    font-weight: 500;
+    color: #6366f1;
+    background: #f1f5ff;
+    border-radius: 8px;
+    padding: 8px 0;
+    box-shadow: 0 1px 4px #6366f11a;
+    transition: background 0.3s, color 0.3s;
+}
+body.dark .status {
+    background: #35354a;
+    color: #a5b4fc;
+    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
+}
+.msg {
+    text-align: center;
+    font-size: 1.05em;
+    font-weight: 500;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    padding: 10px 0;
+    background: #e0ffe7;
+    color: #22c55e;
+    box-shadow: 0 1px 4px #22c55e22;
+    transition: background 0.3s, color 0.3s;
+}
+body.dark .msg {
+    background: #35354a;
+    color: #4ade80;
+    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
+}
+.msg.error {
+    background: #ffe0e0;
+    color: #ef4444;
+    box-shadow: 0 1px 4px #ef444422;
+}
+body.dark .msg.error {
+    background: #4b2323;
+    color: #ef4444;
+    box-shadow: 0 1px 4px #ef444422;
+}
+.btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 16px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: var(--btn-bg, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
+    color: #fff;
+    box-shadow: var(--btn-shadow, 0 2px 8px #6366f133);
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.1s;
+    outline: none;
+}
+.btn:hover, .btn:focus {
+    background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 4px 16px #6366f144;
+}
+.btn-manual {
+    background: var(--btn-bg-manual, linear-gradient(90deg, #7ed958 0%, #46c474 100%));
+    color: #fff;
+}
+.btn-manual:hover, .btn-manual:focus {
+    background: var(--btn-bg-manual, linear-gradient(90deg, #7ed958 0%, #46c474 100%));
+}
+.btn-toggle {
+    background: var(--btn-bg-toggle, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
+}
+.btn-toggle.off {
+    background: var(--btn-off-bg, #e5e7eb);
+    color: var(--btn-off-color, #6366f1);
+}
+.btn-toggle.off:hover, .btn-toggle.off:focus {
+    background: #4f46e5;
+    color: #fff;
+}
+a.btn {
+    text-align: center;
+    text-decoration: none;
+}
+.btn-disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    pointer-events: auto !important;
+}
+.nav-btn {
+    padding: 6px 16px;
+    font-size: 0.98em;
+    border-radius: 7px;
+    background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
+    color: #fff;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 1px 4px #6366f133;
+    transition: background 0.3s;
+    margin: 0;
+    min-width: 80px;
+    text-align: center;
+    border: none;
+}
+.nav-btn:hover, .nav-btn:focus {
+    background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
+}
+.theme-btn {
+    min-width: 40px;
+    max-height: 36px;
+    line-height: 1.1;
+    font-size: 1.1em;
+    box-shadow: none;
+    border: none;
+    background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
+    padding: 6px 16px;
+}
+.top-nav {
+    width: 100vw;
+    max-width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 0 auto 18px auto;
+    padding-top: 18px;
+    position: static;
+}
+@media (max-width: 600px) {
+    .container {
+        max-width: 98vw;
+        padding: 18px 4vw 18px 4vw;
     }
-    .nav-btn:hover, .nav-btn:focus {
-        background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
+    .logo-img {
+        max-width: 270px;
+        max-height: 96px;
     }
-    .theme-btn {
-        min-width: 40px;
-        max-height: 36px;
-        line-height: 1.1;
-        font-size: 1.1em;
-        box-shadow: none;
-        border: none;
-        background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
-        padding: 6px 16px;
-    }
+}
+@media (max-width: 700px) {
     .top-nav {
-        width: 100vw;
-        max-width: 100vw;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        margin: 0 auto 18px auto;
-        padding-top: 18px;
-        position: static;
+        gap: 6px;
+        padding-top: 12px;
+        margin-bottom: 12px;
     }
-    @media (max-width: 700px) {
-        .top-nav {
-            gap: 6px;
-            padding-top: 12px;
-            margin-bottom: 12px;
-        }
-    }
-    </style>
+}
+footer {
+    flex-shrink: 0;
+}
+</style>
 </head>
 <body>
     <div class="top-nav">
@@ -248,35 +249,6 @@
     </script>
     <script src="/static/main.js"></script>
     <script>
-    function sendDynamicButton(event, idx) {
-        if (!onAuthRequired(event)) return false;
-        const button = event.target;
-        const originalText = button.textContent;
-        button.textContent = 'Отправка...';
-        button.disabled = true;
-        fetch(`/api/button/${idx}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showMessage('Сообщение отправлено!', 'success');
-            } else {
-                showMessage('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'), 'error');
-            }
-        })
-        .catch(error => {
-            showMessage('Ошибка сети: ' + error.message, 'error');
-        })
-        .finally(() => {
-            button.textContent = originalText;
-            button.disabled = false;
-        });
-        return false;
-    }
     // Тёмная/светлая тема + логотип
     const btn = document.getElementById('theme-toggle');
     const logoImg = document.getElementById('logo-img');
