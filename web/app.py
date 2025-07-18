@@ -271,7 +271,10 @@ def api_user1():
         user = db.get_user_by_telegram_id(telegram_id)
         recipient_id = user.get('recipient_telegram_id') or telegram_id
         greeting = get_greeting() + '!'
-        text = f"{greeting} {user.get('button_name_1') or 'Даня поднимается'}"
+        name = user.get('button_name_1') or 'Даня'
+        if 'поднимается' not in name:
+            name = f"{name} поднимается"
+        text = f"{greeting} {name}"
         token = config.TELEGRAM_TOKEN
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
@@ -292,7 +295,10 @@ def api_user2():
         user = db.get_user_by_telegram_id(telegram_id)
         recipient_id = user.get('recipient_telegram_id') or telegram_id
         greeting = get_greeting() + '!'
-        text = f"{greeting} {user.get('button_name_2') or 'Лиза поднимается'}"
+        name = user.get('button_name_2') or 'Лиза'
+        if 'поднимается' not in name:
+            name = f"{name} поднимается"
+        text = f"{greeting} {name}"
         token = config.TELEGRAM_TOKEN
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
