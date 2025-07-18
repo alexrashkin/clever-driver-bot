@@ -117,9 +117,41 @@ def toggle_tracking():
         current_status = db.get_tracking_status()
         new_status = not current_status
         db.set_tracking_status(new_status)
-        
+
         message = "Отслеживание включено" if new_status else "Отслеживание выключено"
-        return render_template('index.html', tracking_status=new_status, message=message, year=datetime.now().year)
+
+        telegram_id = session.get('telegram_id')
+        if telegram_id:
+            user = db.get_user_by_telegram_id(telegram_id)
+            button_name_1 = (
+                f"{user.get('button_name_1')} поднимается" if user.get('button_name_1') and user.get('button_name_1') != 'Имя 1 (введите в настройках) поднимается' else 'Имя 1 (введите в настройках) поднимается'
+            )
+            button_name_2 = (
+                f"{user.get('button_name_2')} поднимается" if user.get('button_name_2') and user.get('button_name_2') != 'Имя 2 (введите в настройках) поднимается' else 'Имя 2 (введите в настройках) поднимается'
+            )
+            work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
+            work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
+            work_radius = user.get('work_radius', config.WORK_RADIUS)
+            is_authorized = True
+        else:
+            button_name_1 = 'Имя 1 (введите в настройках) поднимается'
+            button_name_2 = 'Имя 2 (введите в настройках) поднимается'
+            work_latitude = config.WORK_LATITUDE
+            work_longitude = config.WORK_LONGITUDE
+            work_radius = config.WORK_RADIUS
+            is_authorized = False
+        return render_template(
+            'index.html',
+            tracking_status=new_status,
+            message=message,
+            year=datetime.now().year,
+            button_name_1=button_name_1,
+            button_name_2=button_name_2,
+            work_latitude=work_latitude,
+            work_longitude=work_longitude,
+            work_radius=work_radius,
+            is_authorized=is_authorized
+        )
     except Exception as e:
         logger.error(f"Ошибка переключения статуса: {e}")
         return render_template('index.html', tracking_status=False, message="Ошибка переключения статуса", year=datetime.now().year)
