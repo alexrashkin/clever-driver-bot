@@ -58,6 +58,7 @@ class Database:
                 last_name TEXT,
                 button_name_1 TEXT DEFAULT 'Имя 1 (введите в настройках) поднимается',
                 button_name_2 TEXT DEFAULT 'Имя 2 (введите в настройках) поднимается',
+                buttons TEXT DEFAULT NULL,
                 work_latitude REAL,
                 work_longitude REAL,
                 work_radius INTEGER DEFAULT 100,
@@ -79,6 +80,17 @@ class Database:
         c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', 
                  ('work_radius', str(config.WORK_RADIUS)))
         
+        # Миграция: добавляем поле buttons, если его нет
+        c.execute("PRAGMA table_info(users)")
+        columns = [row[1] for row in c.fetchall()]
+        if 'buttons' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN buttons TEXT DEFAULT NULL")
+            # Переносим button_name_1/2 в buttons для всех пользователей
+            c.execute("SELECT id, button_name_1, button_name_2 FROM users")
+            for row in c.fetchall():
+                btns = [row[1], row[2]]
+                import json
+                c.execute("UPDATE users SET buttons = ? WHERE id = ?", (json.dumps(btns, ensure_ascii=False), row[0]))
         conn.commit()
         conn.close()
         logger.info("База данных инициализирована")
@@ -189,13 +201,19 @@ class Database:
         """Создать нового пользователя"""
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
+        import json
+        default_buttons = json.dumps([
+            'Имя 1 (введите в настройках) поднимается',
+            'Имя 2 (введите в настройках) поднимается'
+        ], ensure_ascii=False)
         c.execute('''
-            INSERT OR IGNORE INTO users (telegram_id, username, first_name, last_name, button_name_1, button_name_2)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO users (telegram_id, username, first_name, last_name, button_name_1, button_name_2, buttons)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             telegram_id, username, first_name, last_name,
             'Имя 1 (введите в настройках) поднимается',
-            'Имя 2 (введите в настройках) поднимается'
+            'Имя 2 (введите в настройках) поднимается',
+            default_buttons
         ))
         conn.commit()
         conn.close()
@@ -209,10 +227,16 @@ class Database:
             SELECT * FROM users WHERE telegram_id = ?
         ''', (telegram_id,))
         row = c.fetchone()
+        columns = [desc[0] for desc in c.description]
         conn.close()
         if row:
-            columns = [desc[0] for desc in c.description]
-            return dict(zip(columns, row))
+            user = dict(zip(columns, row))
+            import json
+            try:
+                user['buttons'] = json.loads(user['buttons']) if user['buttons'] else []
+            except Exception:
+                user['buttons'] = []
+            return user
         return None
 
     def update_user_settings(self, telegram_id, **kwargs):
@@ -223,6 +247,10 @@ class Database:
         for key in ['button_name_1', 'button_name_2']:
             if key in kwargs and (kwargs[key] is None or str(kwargs[key]).strip() == ''):
                 kwargs[key] = None
+        # Сериализация массива кнопок
+        if 'buttons' in kwargs and isinstance(kwargs['buttons'], list):
+            import json
+            kwargs['buttons'] = json.dumps(kwargs['buttons'], ensure_ascii=False)
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         fields = []
