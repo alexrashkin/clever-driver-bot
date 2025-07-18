@@ -188,14 +188,14 @@
     </style>
 </head>
 <body>
-    <button id="theme-toggle" style="position:absolute;top:12px;right:12px;z-index:10;">🌙</button>
-    <div style="position: absolute; right: 60px; top: 12px; z-index: 20; display: flex; gap: 10px; align-items: center;">
+    <div style="position: absolute; right: 18px; top: 12px; z-index: 20; display: flex; gap: 10px; align-items: center;">
         <a href="/about" class="top-link nav-btn">О сервисе</a>
         {% if is_authorized %}
         <a href="/settings" class="top-link nav-btn">Настройки</a>
         {% else %}
         <a href="/settings" class="top-link nav-btn">Войти через Telegram</a>
         {% endif %}
+        <button id="theme-toggle" class="nav-btn" style="padding:6px 16px;min-width:40px;max-height:36px;line-height:1.1;font-size:1.1em;">🌙</button>
     </div>
     <div class="container">
         <div class="logo-wrap">
