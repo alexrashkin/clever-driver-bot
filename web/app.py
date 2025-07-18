@@ -68,19 +68,13 @@ def index():
         telegram_id = session.get('telegram_id')
         if telegram_id:
             user = db.get_user_by_telegram_id(telegram_id)
-            button_name_1 = (
-                f"{user.get('button_name_1')} поднимается" if user.get('button_name_1') and user.get('button_name_1') != 'Имя 1 (введите в настройках) поднимается' else 'Имя 1 (введите в настройках) поднимается'
-            )
-            button_name_2 = (
-                f"{user.get('button_name_2')} поднимается" if user.get('button_name_2') and user.get('button_name_2') != 'Имя 2 (введите в настройках) поднимается' else 'Имя 2 (введите в настройках) поднимается'
-            )
+            buttons = user.get('buttons', [])
             work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
             work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
             work_radius = user.get('work_radius', config.WORK_RADIUS)
             is_authorized = True
         else:
-            button_name_1 = 'Имя 1 (введите в настройках) поднимается'
-            button_name_2 = 'Имя 2 (введите в настройках) поднимается'
+            buttons = ['Имя 1 (введите в настройках) поднимается', 'Имя 2 (введите в настройках) поднимается']
             work_latitude = config.WORK_LATITUDE
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
@@ -89,8 +83,7 @@ def index():
             'index.html',
             tracking_status=tracking_status,
             year=datetime.now().year,
-            button_name_1=button_name_1,
-            button_name_2=button_name_2,
+            buttons=buttons,
             work_latitude=work_latitude,
             work_longitude=work_longitude,
             work_radius=work_radius,
@@ -342,6 +335,31 @@ def api_user2():
         logger.error(f"Ошибка user2: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/button/<int:idx>', methods=['POST'])
+def api_button(idx):
+    try:
+        telegram_id = session.get('telegram_id')
+        if not telegram_id:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        user = db.get_user_by_telegram_id(telegram_id)
+        buttons = user.get('buttons', [])
+        if idx < 0 or idx >= len(buttons):
+            return jsonify({'success': False, 'error': 'Некорректный номер кнопки'}), 400
+        recipient_id = user.get('recipient_telegram_id') or telegram_id
+        greeting = get_greeting() + '!'
+        name = buttons[idx]
+        text = f"{greeting} {name}"
+        token = config.TELEGRAM_TOKEN
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
+        if response.status_code == 200 and response.json().get('ok'):
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
+    except Exception as e:
+        logger.error(f"Ошибка api_button: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/test')
 def test_route():
     """Тестовый маршрут для проверки обновления"""
@@ -365,16 +383,19 @@ def settings():
             user = db.get_user_by_telegram_id(telegram_id)
         elif request.method == 'POST':
             # Получаем данные формы
-            button_name_1 = request.form.get('button_name_1')
-            button_name_2 = request.form.get('button_name_2')
+            import json
+            buttons_json = request.form.get('buttons')
+            try:
+                buttons = json.loads(buttons_json) if buttons_json else []
+            except Exception:
+                buttons = []
             work_latitude = request.form.get('work_latitude')
             work_longitude = request.form.get('work_longitude')
             work_radius = request.form.get('work_radius')
             try:
                 db.update_user_settings(
                     telegram_id,
-                    button_name_1=button_name_1,
-                    button_name_2=button_name_2,
+                    buttons=buttons,
                     work_latitude=work_latitude,
                     work_longitude=work_longitude,
                     work_radius=work_radius

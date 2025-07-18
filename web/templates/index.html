@@ -231,8 +231,9 @@
             </button>
         </form>
         <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendManualNotification(event);" {% if not is_authorized %}disabled{% endif %}>Ожидаю</button>
-        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendDanyaWakeup(event);" {% if not is_authorized %}disabled{% endif %}>{{ button_name_1 or 'Даня поднимается' }}</button>
-        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendLizaWakeup(event);" {% if not is_authorized %}disabled{% endif %}>{{ button_name_2 or 'Лиза поднимается' }}</button>
+        {% for btn in buttons %}
+        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendDynamicButton(event, {{ loop.index0 }});" {% if not is_authorized %}disabled{% endif %}>{{ btn }}</button>
+        {% endfor %}
         <div style="display: flex; justify-content: center;">
             <a href="/mobile_tracker.html" class="btn btn-toggle off btn{% if not is_authorized %} btn-disabled{% endif %}" onclick="return onAuthRequired(event);">
                 Резервный мобильный трекер
@@ -247,6 +248,35 @@
     </script>
     <script src="/static/main.js"></script>
     <script>
+    function sendDynamicButton(event, idx) {
+        if (!onAuthRequired(event)) return false;
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Отправка...';
+        button.disabled = true;
+        fetch(`/api/button/${idx}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage('Сообщение отправлено!', 'success');
+            } else {
+                showMessage('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'), 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Ошибка сети: ' + error.message, 'error');
+        })
+        .finally(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+        });
+        return false;
+    }
     // Тёмная/светлая тема + логотип
     const btn = document.getElementById('theme-toggle');
     const logoImg = document.getElementById('logo-img');
