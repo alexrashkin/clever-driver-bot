@@ -116,19 +116,13 @@ def toggle_tracking():
         telegram_id = session.get('telegram_id')
         if telegram_id:
             user = db.get_user_by_telegram_id(telegram_id)
-            button_name_1 = (
-                f"{user.get('button_name_1')} поднимается" if user.get('button_name_1') and user.get('button_name_1') != 'Имя 1 (введите в настройках) поднимается' else 'Имя 1 (введите в настройках) поднимается'
-            )
-            button_name_2 = (
-                f"{user.get('button_name_2')} поднимается" if user.get('button_name_2') and user.get('button_name_2') != 'Имя 2 (введите в настройках) поднимается' else 'Имя 2 (введите в настройках) поднимается'
-            )
+            buttons = user.get('buttons', [])
             work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
             work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
             work_radius = user.get('work_radius', config.WORK_RADIUS)
             is_authorized = True
         else:
-            button_name_1 = 'Имя 1 (введите в настройках) поднимается'
-            button_name_2 = 'Имя 2 (введите в настройках) поднимается'
+            buttons = ['Имя 1 (введите в настройках) поднимается', 'Имя 2 (введите в настройках) поднимается']
             work_latitude = config.WORK_LATITUDE
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
@@ -138,8 +132,7 @@ def toggle_tracking():
             tracking_status=new_status,
             message=message,
             year=datetime.now().year,
-            button_name_1=button_name_1,
-            button_name_2=button_name_2,
+            buttons=buttons,
             work_latitude=work_latitude,
             work_longitude=work_longitude,
             work_radius=work_radius,
