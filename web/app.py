@@ -68,6 +68,10 @@ def index():
     """Главная страница"""
     try:
         tracking_status = db.get_tracking_status()
+        
+        # Получаем flash сообщение из сессии (если есть) и сразу удаляем его
+        message = session.pop('flash_message', None)
+        
         telegram_id = session.get('telegram_id')
         if telegram_id:
             user = db.get_user_by_telegram_id(telegram_id)
@@ -85,6 +89,7 @@ def index():
         return render_template(
             'index.html',
             tracking_status=tracking_status,
+            message=message,  # Передаем flash сообщение в шаблон
             year=datetime.now().year,
             buttons=buttons,
             work_latitude=work_latitude,
@@ -114,41 +119,59 @@ def mobile_tracker_redirect():
 @app.route('/toggle', methods=['POST'])
 def toggle_tracking():
     """Переключение отслеживания через веб-форму"""
+    print("=== TOGGLE_TRACKING ВЫЗВАНА ===")
     try:
+        print("=== В TRY БЛОКЕ ===")
+        logger.info("toggle_tracking: Начало выполнения")
         current_status = db.get_tracking_status()
         new_status = not current_status
         db.set_tracking_status(new_status)
 
+        # Сохраняем сообщение в сессии для отображения после редиректа
         message = "Отслеживание включено" if new_status else "Отслеживание выключено"
-
-        telegram_id = session.get('telegram_id')
-        if telegram_id:
-            user = db.get_user_by_telegram_id(telegram_id)
-            buttons = user.get('buttons', [])
-            work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
-            work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
-            work_radius = user.get('work_radius', config.WORK_RADIUS)
-            is_authorized = True
-        else:
-            buttons = ['Имя 1 (введите в настройках) поднимается', 'Имя 2 (введите в настройках) поднимается']
-            work_latitude = config.WORK_LATITUDE
-            work_longitude = config.WORK_LONGITUDE
-            work_radius = config.WORK_RADIUS
-            is_authorized = False
-        return render_template(
-            'index.html',
-            tracking_status=new_status,
-            message=message,
-            year=datetime.now().year,
-            buttons=buttons,
-            work_latitude=work_latitude,
-            work_longitude=work_longitude,
-            work_radius=work_radius,
-            is_authorized=is_authorized
-        )
+        session['flash_message'] = message
+        
+        logger.info(f"toggle_tracking: Выполняем редирект, статус изменен на {new_status}")
+        print(f"=== ВЫПОЛНЯЕМ REDIRECT, статус: {new_status} ===")
+        
+        # АЛЬТЕРНАТИВНОЕ РЕШЕНИЕ: JavaScript редирект
+        # Flask redirect почему-то не работает, используем JS
+        redirect_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <script>
+                // Заменяем текущую запись в истории, чтобы предотвратить повторную отправку формы
+                window.location.replace('/');
+            </script>
+        </head>
+        <body>
+            <p>Перенаправление...</p>
+        </body>
+        </html>
+        """
+        return redirect_html
+        
     except Exception as e:
+        print(f"=== EXCEPTION: {e} ===")
         logger.error(f"Ошибка переключения статуса: {e}")
-        return render_template('index.html', tracking_status=False, message="Ошибка переключения статуса", year=datetime.now().year)
+        session['flash_message'] = "Ошибка переключения статуса"
+        redirect_html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <script>
+                window.location.replace('/');
+            </script>
+        </head>
+        <body>
+            <p>Ошибка. Перенаправление...</p>
+        </body>
+        </html>
+        """
+        return redirect_html
 
 @app.route('/manual_arrival', methods=['POST'])
 def manual_arrival():
@@ -165,12 +188,14 @@ def manual_arrival():
             else:
                 message = "Ошибка отправки уведомления"
         
-        tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status, message=message, year=datetime.now().year)
+        # Сохраняем сообщение в сессии и делаем редирект
+        session['flash_message'] = message
+        return redirect(url_for('index'))
+        
     except Exception as e:
         logger.error(f"Ошибка ручного уведомления: {e}")
-        tracking_status = db.get_tracking_status()
-        return render_template('index.html', tracking_status=tracking_status, message="Ошибка отправки уведомления", year=datetime.now().year)
+        session['flash_message'] = "Ошибка отправки уведомления"
+        return redirect(url_for('index'))
 
 @app.route('/api/status')
 def api_status():
