@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session
 from config.settings import config
-from bot.database import db
+from bot.database import Database  # Импортируем класс, а не экземпляр
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
 import logging
 import requests
@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = config.WEB_SECRET_KEY
+
+# Создаем новый экземпляр базы данных
+db = Database()
 
 def send_telegram_arrival(user_telegram_id):
     """Отправка уведомления о прибытии для конкретного пользователя или его получателя."""
@@ -199,16 +202,17 @@ def api_history():
     try:
         limit = request.args.get('limit', 10, type=int)
         history = db.get_history(limit)
+        logger.info(f"DEBUG: history = {history}")
         
         formatted_history = []
         for record in history:
+            logger.info(f"DEBUG: record = {record}")
             formatted_history.append({
-                'id': record[0],
-                'latitude': record[1],
-                'longitude': record[2],
-                'distance': format_distance(record[3]),
-                'is_at_work': bool(record[4]),
-                'timestamp': format_timestamp(record[5])
+                'latitude': record['latitude'],
+                'longitude': record['longitude'],
+                'distance': format_distance(record['distance']) if record['distance'] else '0 м',
+                'is_at_work': bool(record['is_at_work']),
+                'timestamp': format_timestamp(record['timestamp'])
             })
         
         return jsonify({
@@ -228,11 +232,21 @@ def api_location():
             logger.warning('Нет данных в POST /api/location')
             return jsonify({'_type': 'status'}), 200
 
-        # Если это location и есть все нужные поля
+        # Поддерживаем два формата: стандартный (latitude/longitude) и OwnTracks (_type/lat/lon)
+        latitude = longitude = tst = None
+        
+        # Формат OwnTracks
         if data.get('_type') == 'location' and all(k in data for k in ('lat', 'lon', 'tst')):
             latitude = data['lat']
             longitude = data['lon']
             tst = data['tst']
+        # Стандартный формат
+        elif 'latitude' in data and 'longitude' in data:
+            latitude = data['latitude']
+            longitude = data['longitude']
+            tst = pytime.time()
+        
+        if latitude is not None and longitude is not None:
             # Получаем индивидуальные настройки пользователя
             telegram_id = session.get('telegram_id')
             if telegram_id:
@@ -244,16 +258,28 @@ def api_location():
                 work_latitude = config.WORK_LATITUDE
                 work_longitude = config.WORK_LONGITUDE
                 work_radius = config.WORK_RADIUS
-            # Сохраняем в базу, если нужно
+            
+            # Сохраняем в базу, если координаты валидны
             if validate_coordinates(latitude, longitude):
                 distance = calculate_distance(latitude, longitude, work_latitude, work_longitude)
                 at_work = distance <= float(work_radius)
                 db.add_location(latitude, longitude, distance, at_work)
                 logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
+                
+                # Возвращаем успешный результат в зависимости от формата запроса
+                if data.get('_type') == 'location':
+                    return jsonify({'_type': 'location', 'lat': latitude, 'lon': longitude, 'tst': tst}), 200
+                else:
+                    return jsonify({
+                        'success': True, 
+                        'is_at_work': at_work, 
+                        'distance': distance,
+                        'latitude': latitude,
+                        'longitude': longitude
+                    }), 200
             else:
                 logger.warning(f"Неверные координаты: latitude={latitude}, longitude={longitude}")
-            # Возвращаем валидный ответ location
-            return jsonify({'_type': 'location', 'lat': latitude, 'lon': longitude, 'tst': tst}), 200
+                return jsonify({'success': False, 'error': 'Invalid coordinates'}), 400
         else:
             # Для всех остальных случаев (status, служебные и ошибки) — status
             logger.info(f"Игнорируем служебное сообщение или не хватает полей: _type={data.get('_type')}")

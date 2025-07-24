@@ -74,18 +74,41 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.info(f"DEBUG: last_checked_time={last_checked_time}, curr_ts={curr_ts}, diff={curr_ts - last_checked_time}")
             if curr_ts - last_checked_time >= 60*60:  # 60 минут
                 notification = create_work_notification()
-                logger.info(f"DEBUG: Пытаюсь отправить уведомление: '{notification}' в чат {config.NOTIFICATION_CHAT_ID}")
-                try:
-                    await context.bot.send_message(chat_id=config.NOTIFICATION_CHAT_ID, text=notification)
-                    logger.info("DEBUG: уведомление отправлено")
+                
+                # Отправляем уведомления всем авторизованным пользователям
+                conn = db.get_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT telegram_id, recipient_telegram_id FROM users")
+                users = cursor.fetchall()
+                conn.close()
+                
+                sent_count = 0
+                for user_telegram_id, recipient_telegram_id in users:
+                    recipient_id = recipient_telegram_id or user_telegram_id
+                    try:
+                        logger.info(f"DEBUG: Отправляю уведомление пользователю {recipient_id}: '{notification}'")
+                        await context.bot.send_message(chat_id=recipient_id, text=notification)
+                        sent_count += 1
+                        logger.info(f"Уведомление отправлено пользователю {recipient_id}")
+                    except Exception as e:
+                        logger.error(f"Ошибка отправки уведомления пользователю {recipient_id}: {e}")
+                
+                if sent_count > 0:
                     save_last_checked_time(curr_ts)
-                    logger.info(f"DEBUG: save_last_checked_time({curr_ts})")
-                    logger.info("Отправлено уведомление о прибытии на работу")
-                except Exception as e:
-                    logger.error(f"Ошибка отправки уведомления: {e}")
+                    logger.info(f"Отправлены уведомления о прибытии на работу {sent_count} пользователям")
+                else:
+                    logger.warning("Нет авторизованных пользователей для отправки уведомлений")
             else:
                 logger.info("Переход в радиус, но уведомление не отправлено: прошло меньше 60 минут")
     # Если записей меньше двух, просто ничего не делаем (без уведомления)
+    
+    # Отправляем ответ пользователю с информацией о местоположении
+    message = f"📍 Местоположение получено!\n"
+    message += f"Координаты: {latitude:.6f}, {longitude:.6f}\n"
+    message += f"Расстояние до работы: {distance:.0f}м\n"
+    message += f"Статус: {'🏢 На работе' if at_work else '🚗 В пути'}"
+    
+    await update.message.reply_text(message)
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
