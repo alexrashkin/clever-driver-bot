@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отладка статуса отслеживания</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f8f9fa;
+        }
+        .monitor-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .status-display {
+            font-size: 24px;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-on { background: #d4edda; color: #155724; }
+        .status-off { background: #f8d7da; color: #721c24; }
+        .status-unknown { background: #e2e3e5; color: #383d41; }
+        
+        .log-entry {
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-left: 4px solid #dee2e6;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .log-success { border-color: #28a745; background: #d4edda; }
+        .log-error { border-color: #dc3545; background: #f8d7da; }
+        .log-warning { border-color: #ffc107; background: #fff3cd; }
+        .log-critical { border-color: #dc3545; background: #f5c6cb; }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        
+        button:hover { opacity: 0.8; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        #log {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Отладка статуса отслеживания</h1>
+    
+    <div class="monitor-section">
+        <h3>📊 Текущий статус</h3>
+        <div id="current-status" class="status-display status-unknown">Загрузка...</div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div id="total-checks" class="stat-value">0</div>
+                <div class="stat-label">Всего проверок</div>
+            </div>
+            <div class="stat-card">
+                <div id="status-changes" class="stat-value">0</div>
+                <div class="stat-label">Изменений статуса</div>
+            </div>
+            <div class="stat-card">
+                <div id="api-calls" class="stat-value">0</div>
+                <div class="stat-label">API вызовов</div>
+            </div>
+            <div class="stat-card">
+                <div id="page-reloads" class="stat-value">0</div>
+                <div class="stat-label">Перезагрузок страницы</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="monitor-section">
+        <h3>🎮 Управление</h3>
+        <div class="controls">
+            <button id="start-monitor" class="btn-success">▶️ Начать мониторинг</button>
+            <button id="stop-monitor" class="btn-danger" disabled>⏹️ Остановить мониторинг</button>
+            <button id="manual-check" class="btn-primary">🔍 Ручная проверка</button>
+            <button id="simulate-reload" class="btn-warning">🔄 Имитация перезагрузки</button>
+            <button id="clear-log" class="btn-primary">🧹 Очистить лог</button>
+        </div>
+        
+        <div style="margin: 15px 0;">
+            <label>
+                <input type="checkbox" id="api-monitoring" checked> Мониторинг API каждые 2 секунды
+            </label>
+        </div>
+        <div style="margin: 15px 0;">
+            <label>
+                <input type="checkbox" id="page-monitoring"> Мониторинг перезагрузки страницы каждые 10 секунд
+            </label>
+        </div>
+    </div>
+
+    <div class="monitor-section">
+        <h3>📝 Лог событий</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let monitoring = false;
+        let monitoringInterval = null;
+        let pageMonitoringInterval = null;
+        let lastStatus = null;
+        
+        // Статистика
+        let stats = {
+            totalChecks: 0,
+            statusChanges: 0,
+            apiCalls: 0,
+            pageReloads: 0
+        };
+        
+        function updateStats() {
+            document.getElementById('total-checks').textContent = stats.totalChecks;
+            document.getElementById('status-changes').textContent = stats.statusChanges;
+            document.getElementById('api-calls').textContent = stats.apiCalls;
+            document.getElementById('page-reloads').textContent = stats.pageReloads;
+        }
+        
+        function log(message, level = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            
+            const levelClass = `log-${level}`;
+            logEntry.className = `log-entry ${levelClass}`;
+            
+            const levelEmoji = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'critical': '🚨'
+            };
+            
+            logEntry.textContent = `[${timestamp}] ${levelEmoji[level] || 'ℹ️'} ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatusDisplay(status, source = '') {
+            const statusDiv = document.getElementById('current-status');
+            
+            if (status === true) {
+                statusDiv.textContent = `Автоотслеживание: ВКЛЮЧЕНО ${source}`;
+                statusDiv.className = 'status-display status-on';
+            } else if (status === false) {
+                statusDiv.textContent = `Автоотслеживание: ВЫКЛЮЧЕНО ${source}`;
+                statusDiv.className = 'status-display status-off';
+            } else {
+                statusDiv.textContent = `Статус: НЕИЗВЕСТЕН ${source}`;
+                statusDiv.className = 'status-display status-unknown';
+            }
+        }
+        
+        async function checkApiStatus() {
+            try {
+                stats.apiCalls++;
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                const status = data.tracking_active || data.tracking;
+                log(`API статус: ${status}`, 'info');
+                
+                return status;
+            } catch (error) {
+                log(`Ошибка API: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        async function checkPageStatus() {
+            try {
+                stats.pageReloads++;
+                // Получаем текущую страницу
+                const response = await fetch(window.location.href, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                
+                const html = await response.text();
+                
+                // Ищем статус в HTML
+                let pageStatus = null;
+                if (html.includes('Автоотслеживание: <b>Включено</b>')) {
+                    pageStatus = true;
+                } else if (html.includes('Автоотслеживание: <b>Выключено</b>')) {
+                    pageStatus = false;
+                } else if (html.includes('Остановить автоотслеживание')) {
+                    pageStatus = true;
+                } else if (html.includes('Включить автоотслеживание')) {
+                    pageStatus = false;
+                }
+                
+                log(`Страница статус: ${pageStatus}`, 'info');
+                return pageStatus;
+            } catch (error) {
+                log(`Ошибка проверки страницы: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        async function performCheck() {
+            stats.totalChecks++;
+            
+            const apiStatus = await checkApiStatus();
+            let pageStatus = null;
+            
+            // Проверяем страницу только если включен соответствующий мониторинг
+            if (document.getElementById('page-monitoring').checked) {
+                pageStatus = await checkPageStatus();
+            }
+            
+            // Используем API статус как основной
+            const currentStatus = apiStatus !== null ? apiStatus : pageStatus;
+            
+            if (currentStatus !== null) {
+                // Проверяем изменение
+                if (lastStatus !== null && lastStatus !== currentStatus) {
+                    stats.statusChanges++;
+                    log(`🚨 ИЗМЕНЕНИЕ СТАТУСА: ${lastStatus} → ${currentStatus}`, 'critical');
+                }
+                
+                updateStatusDisplay(currentStatus, apiStatus !== null ? '(API)' : '(Страница)');
+                lastStatus = currentStatus;
+            }
+            
+            updateStats();
+        }
+        
+        function startMonitoring() {
+            if (monitoring) return;
+            
+            monitoring = true;
+            document.getElementById('start-monitor').disabled = true;
+            document.getElementById('stop-monitor').disabled = false;
+            
+            log('🚀 Мониторинг запущен', 'success');
+            
+            // API мониторинг каждые 2 секунды
+            if (document.getElementById('api-monitoring').checked) {
+                monitoringInterval = setInterval(performCheck, 2000);
+            }
+            
+            // Мониторинг перезагрузки страницы каждые 10 секунд
+            if (document.getElementById('page-monitoring').checked) {
+                pageMonitoringInterval = setInterval(async () => {
+                    await checkPageStatus();
+                }, 10000);
+            }
+        }
+        
+        function stopMonitoring() {
+            if (!monitoring) return;
+            
+            monitoring = false;
+            document.getElementById('start-monitor').disabled = false;
+            document.getElementById('stop-monitor').disabled = true;
+            
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+            }
+            
+            if (pageMonitoringInterval) {
+                clearInterval(pageMonitoringInterval);
+                pageMonitoringInterval = null;
+            }
+            
+            log('⏹️ Мониторинг остановлен', 'warning');
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('🧹 Лог очищен', 'info');
+        }
+        
+        // Обработчики событий
+        document.getElementById('start-monitor').addEventListener('click', startMonitoring);
+        document.getElementById('stop-monitor').addEventListener('click', stopMonitoring);
+        document.getElementById('manual-check').addEventListener('click', performCheck);
+        document.getElementById('clear-log').addEventListener('click', clearLog);
+        
+        document.getElementById('simulate-reload').addEventListener('click', async () => {
+            log('🔄 Имитация перезагрузки страницы...', 'info');
+            const pageStatus = await checkPageStatus();
+            if (pageStatus !== null) {
+                updateStatusDisplay(pageStatus, '(Перезагрузка)');
+            }
+        });
+        
+        // Начальная проверка при загрузке
+        window.addEventListener('load', () => {
+            log('🚀 Отладочная страница загружена', 'success');
+            performCheck();
+        });
+        
+        // Автоматический запуск мониторинга через 2 секунды
+        setTimeout(() => {
+            startMonitoring();
+        }, 2000);
+    </script>
+</body>
+</html> 
