@@ -114,7 +114,7 @@ async def monitor_database(application: Application):
                             users = cursor.fetchall()
                             conn.close()
                             
-                            notification = "Едем"
+                            notification = "Выехали"
                             sent_count = 0
                             
                             for user_telegram_id, recipient_telegram_id in users:
@@ -129,7 +129,7 @@ async def monitor_database(application: Application):
                                         timeout=10.0
                                     )
                                     sent_count += 1
-                                    logger.info(f"Автоматическое уведомление 'Едем' отправлено пользователю {recipient_id}")
+                                    logger.info(f"Автоматическое уведомление 'Выехали' отправлено пользователю {recipient_id}")
                                 except asyncio.TimeoutError:
                                     logger.error(f"Таймаут при отправке автоматического уведомления пользователю {recipient_id}")
                                 except Exception as e:
