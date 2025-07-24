@@ -2,7 +2,12 @@ import logging
 import asyncio
 import contextlib
 import os
+import sys
 import time
+
+# Добавляем путь к корневой директории проекта
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters, ContextTypes
 )
@@ -26,8 +31,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=getattr(logging, config.LOG_LEVEL),
     handlers=[
-        logging.FileHandler(config.LOG_FILE),
-        logging.StreamHandler()
+        logging.StreamHandler()  # Временно только консольный вывод
     ]
 )
 logger = logging.getLogger(__name__)
