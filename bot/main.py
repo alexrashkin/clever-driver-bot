@@ -60,21 +60,38 @@ async def monitor_database(application: Application):
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
                         if db.get_tracking_status():
-                            try:
-                                notification = create_work_notification()
-                                logger.info(f"DEBUG: Пытаюсь отправить уведомление: '{notification}' в чат {config.NOTIFICATION_CHAT_ID}")
-                                await asyncio.wait_for(
-                                    application.bot.send_message(
-                                        chat_id=config.NOTIFICATION_CHAT_ID,
-                                        text=notification
-                                    ),
-                                    timeout=10.0
-                                )
-                                logger.info(f"Автоматическое уведомление отправлено для записи ID: {curr_id}")
-                            except asyncio.TimeoutError:
-                                logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {curr_id}")
-                            except Exception as e:
-                                logger.error(f"Ошибка отправки автоматического уведомления: {e}")
+                            # Отправляем уведомления всем авторизованным пользователям
+                            conn = db.get_connection()
+                            cursor = conn.cursor()
+                            cursor.execute("SELECT telegram_id, recipient_telegram_id FROM users")
+                            users = cursor.fetchall()
+                            conn.close()
+                            
+                            notification = create_work_notification()
+                            sent_count = 0
+                            
+                            for user_telegram_id, recipient_telegram_id in users:
+                                recipient_id = recipient_telegram_id or user_telegram_id
+                                try:
+                                    logger.info(f"DEBUG: Отправляю уведомление пользователю {recipient_id}: '{notification}'")
+                                    await asyncio.wait_for(
+                                        application.bot.send_message(
+                                            chat_id=recipient_id,
+                                            text=notification
+                                        ),
+                                        timeout=10.0
+                                    )
+                                    sent_count += 1
+                                    logger.info(f"Автоматическое уведомление отправлено пользователю {recipient_id}")
+                                except asyncio.TimeoutError:
+                                    logger.error(f"Таймаут при отправке автоматического уведомления пользователю {recipient_id}")
+                                except Exception as e:
+                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {recipient_id}: {e}")
+                            
+                            if sent_count > 0:
+                                logger.info(f"Автоматические уведомления отправлены {sent_count} пользователям для записи ID: {curr_id}")
+                            else:
+                                logger.warning("Нет авторизованных пользователей для отправки автоматических уведомлений")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 60 минут")
                 # Только если был переход с 1 на 0 (выезд из радиуса)
@@ -86,21 +103,38 @@ async def monitor_database(application: Application):
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
                         if db.get_tracking_status():
-                            try:
-                                notification = "Едем"
-                                logger.info(f"DEBUG: Пытаюсь отправить уведомление: '{notification}' в чат {config.NOTIFICATION_CHAT_ID}")
-                                await asyncio.wait_for(
-                                    application.bot.send_message(
-                                        chat_id=config.NOTIFICATION_CHAT_ID,
-                                        text=notification
-                                    ),
-                                    timeout=10.0
-                                )
-                                logger.info(f"Автоматическое уведомление 'Едем' отправлено для записи ID: {curr_id}")
-                            except asyncio.TimeoutError:
-                                logger.error(f"Таймаут при отправке автоматического уведомления для записи ID: {curr_id}")
-                            except Exception as e:
-                                logger.error(f"Ошибка отправки автоматического уведомления: {e}")
+                            # Отправляем уведомления о выезде всем авторизованным пользователям
+                            conn = db.get_connection()
+                            cursor = conn.cursor()
+                            cursor.execute("SELECT telegram_id, recipient_telegram_id FROM users")
+                            users = cursor.fetchall()
+                            conn.close()
+                            
+                            notification = "Едем"
+                            sent_count = 0
+                            
+                            for user_telegram_id, recipient_telegram_id in users:
+                                recipient_id = recipient_telegram_id or user_telegram_id
+                                try:
+                                    logger.info(f"DEBUG: Отправляю уведомление о выезде пользователю {recipient_id}: '{notification}'")
+                                    await asyncio.wait_for(
+                                        application.bot.send_message(
+                                            chat_id=recipient_id,
+                                            text=notification
+                                        ),
+                                        timeout=10.0
+                                    )
+                                    sent_count += 1
+                                    logger.info(f"Автоматическое уведомление 'Едем' отправлено пользователю {recipient_id}")
+                                except asyncio.TimeoutError:
+                                    logger.error(f"Таймаут при отправке автоматического уведомления пользователю {recipient_id}")
+                                except Exception as e:
+                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {recipient_id}: {e}")
+                            
+                            if sent_count > 0:
+                                logger.info(f"Автоматические уведомления о выезде отправлены {sent_count} пользователям для записи ID: {curr_id}")
+                            else:
+                                logger.warning("Нет авторизованных пользователей для отправки автоматических уведомлений о выезде")
                     else:
                         logger.info(f"Переход из радиуса, но уведомление не отправлено: прошло меньше 60 минут")
             await asyncio.sleep(30)

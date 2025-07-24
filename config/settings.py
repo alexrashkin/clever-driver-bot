@@ -11,6 +11,9 @@ class Config:
     TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN', '7824059826:AAEQx8WETTaAE4iU-tC58fT9ODkotjo-Enc')
     TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME', 'Clever_driver_bot')
     
+    # Chat ID для уведомлений
+    NOTIFICATION_CHAT_ID = os.getenv('NOTIFICATION_CHAT_ID', '')
+    
     # Прокси настройки (для обхода блокировки)
     USE_PROXY = os.getenv('USE_PROXY', 'false').lower() == 'true'
     PROXY_URL = os.getenv('PROXY_URL', '')  # например: socks5://127.0.0.1:1080

@@ -172,6 +172,10 @@ class Database:
         conn.close()
         return history
     
+    def get_history(self, limit=10):
+        """Алиас для get_location_history для совместимости"""
+        return self.get_location_history(limit)
+    
     def get_setting(self, key, default=None):
         """Получение настройки"""
         conn = sqlite3.connect(self.db_path)
