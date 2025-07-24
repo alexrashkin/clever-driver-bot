@@ -174,7 +174,8 @@ def api_status():
         tracking_active = db.get_tracking_status()
         return jsonify({
             'success': True,
-            'tracking_active': tracking_active
+            'tracking_active': tracking_active,
+            'tracking': tracking_active  # Добавляем поле для совместимости с JavaScript
         })
     except Exception as e:
         logger.error(f"Ошибка получения статуса: {e}")
