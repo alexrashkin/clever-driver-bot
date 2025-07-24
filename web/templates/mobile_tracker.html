@@ -14,12 +14,20 @@
             flex-direction: column;
             min-height: 100vh;
             font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
             margin: 0;
             padding: 0;
             align-items: center;
+            /* Переменные для светлой темы */
+            --bg: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+            --text: #222;
+            --btn-bg: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+            --btn-bg-active: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+            --block-bg: #f5f7fa;
+            --block-color: #222;
+            --info-color: #6366f1;
         }
         body.dark {
+            /* Переменные для тёмной темы */
             --bg: #18181b;
             --text: #f1f5ff;
             --btn-bg: linear-gradient(90deg, #6366f1 0%, #60a5fa 100%);
