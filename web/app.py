@@ -80,12 +80,15 @@ def index():
             work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
             work_radius = user.get('work_radius', config.WORK_RADIUS)
             is_authorized = True
+            # Получаем имя пользователя для отображения
+            user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
         else:
             buttons = ['Имя 1 (введите в настройках) поднимается', 'Имя 2 (введите в настройках) поднимается']
             work_latitude = config.WORK_LATITUDE
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
             is_authorized = False
+            user_name = None
         return render_template(
             'index.html',
             tracking_status=tracking_status,
@@ -95,7 +98,8 @@ def index():
             work_latitude=work_latitude,
             work_longitude=work_longitude,
             work_radius=work_radius,
-            is_authorized=is_authorized
+            is_authorized=is_authorized,
+            user_name=user_name
         )
     except Exception as e:
         logger.error(f"Ошибка загрузки главной страницы: {e}")
