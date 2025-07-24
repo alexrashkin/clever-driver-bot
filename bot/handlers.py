@@ -72,7 +72,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
             curr_ts = time.time()
             last_checked_time = load_last_checked_time()
             logger.info(f"DEBUG: last_checked_time={last_checked_time}, curr_ts={curr_ts}, diff={curr_ts - last_checked_time}")
-            if curr_ts - last_checked_time >= 60*60:  # 60 минут
+            if curr_ts - last_checked_time >= 10:  # 10 секунд
                 notification = create_work_notification()
                 
                 # Отправляем уведомления всем авторизованным пользователям
@@ -99,7 +99,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     logger.warning("Нет авторизованных пользователей для отправки уведомлений")
             else:
-                logger.info("Переход в радиус, но уведомление не отправлено: прошло меньше 60 минут")
+                logger.info("Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
     # Если записей меньше двух, просто ничего не делаем (без уведомления)
     
     # Отправляем ответ пользователю с информацией о местоположении

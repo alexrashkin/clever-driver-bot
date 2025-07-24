@@ -59,7 +59,7 @@ async def monitor_database(application: Application):
                     curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 0→1, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
                     # Проверяем интервал
-                    if curr_ts - last_checked_time >= 60*60:  # 60 минут
+                    if curr_ts - last_checked_time >= 10:  # 10 секунд
                         last_checked_id = curr_id
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
@@ -97,12 +97,12 @@ async def monitor_database(application: Application):
                             else:
                                 logger.warning("Нет авторизованных пользователей для отправки автоматических уведомлений")
                     else:
-                        logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 60 минут")
+                        logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
                 # Только если был переход с 1 на 0 (выезд из радиуса)
                 if prev_is_at_work == 1 and curr_is_at_work == 0 and curr_id != last_checked_id:
                     curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 1→0, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
-                    if curr_ts - last_checked_time >= 60*60:  # 60 минут
+                    if curr_ts - last_checked_time >= 10:  # 10 секунд
                         last_checked_id = curr_id
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
@@ -140,8 +140,8 @@ async def monitor_database(application: Application):
                             else:
                                 logger.warning("Нет авторизованных пользователей для отправки автоматических уведомлений о выезде")
                     else:
-                        logger.info(f"Переход из радиуса, но уведомление не отправлено: прошло меньше 60 минут")
-            await asyncio.sleep(30)
+                        logger.info(f"Переход из радиуса, но уведомление не отправлено: прошло меньше 10 секунд")
+            await asyncio.sleep(2)
         except Exception as e:
             logger.error(f"Ошибка мониторинга базы данных: {e}")
             await asyncio.sleep(60)  # При ошибке ждём дольше
