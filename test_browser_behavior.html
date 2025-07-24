@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест JavaScript редиректа</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background: #f8f9fa;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #0056b3; }
+        .status { 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 10px 0; 
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Тест исправления "Подтвердите повторную отправку формы"</h1>
+    
+    <div class="test-section">
+        <h3>📋 Инструкции для тестирования:</h3>
+        
+        <div class="info status">
+            <strong>ШАГ 1:</strong> Нажмите кнопку "Переключить статус"
+        </div>
+        
+        <form action="http://localhost:5000/toggle" method="post">
+            <button type="submit">🔄 Переключить статус отслеживания</button>
+        </form>
+        
+        <div class="info status">
+            <strong>ШАГ 2:</strong> После переключения нажмите F5 или кнопку обновления в браузере
+        </div>
+        
+        <div class="success status">
+            <strong>✅ ОЖИДАЕМЫЙ РЕЗУЛЬТАТ:</strong><br>
+            • Диалог "Подтвердите повторную отправку формы" НЕ появляется<br>
+            • Статус отслеживания не меняется при F5<br>
+            • Страница просто перезагружается
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button onclick="window.open('http://localhost:5000/', '_blank')">
+                🌐 Открыть сайт в новой вкладке
+            </button>
+            
+            <button onclick="checkStatus()">
+                📊 Проверить текущий статус
+            </button>
+        </div>
+        
+        <div id="status-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Техническая информация:</h3>
+        <div class="info status">
+            <strong>Что исправлено:</strong><br>
+            • POST запрос к /toggle теперь возвращает HTML с JavaScript<br>
+            • JavaScript выполняет window.location.replace('/')<br>
+            • Это заменяет текущую запись в истории браузера<br>
+            • При F5 повторяется GET запрос, а не POST
+        </div>
+    </div>
+
+    <script>
+        function checkStatus() {
+            fetch('http://localhost:5000/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = document.getElementById('status-result');
+                    statusDiv.innerHTML = `
+                        <div class="success status">
+                            <strong>Текущий статус:</strong> ${data.tracking_active ? 'Включено' : 'Выключено'}
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('status-result').innerHTML = `
+                        <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px;">
+                            <strong>Ошибка:</strong> ${error.message}
+                        </div>
+                    `;
+                });
+        }
+        
+        // Проверяем статус при загрузке
+        window.onload = checkStatus;
+    </script>
+</body>
+</html> 
