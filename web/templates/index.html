@@ -53,6 +53,23 @@ body.dark .container {
     object-fit: contain;
     filter: drop-shadow(0 2px 8px #6366f122);
 }
+.user-info {
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #059669;
+    background: #ecfdf5;
+    border-radius: 8px;
+    padding: 8px 0;
+    box-shadow: 0 1px 4px #0596691a;
+    transition: background 0.3s, color 0.3s;
+}
+body.dark .user-info {
+    background: #064e3b;
+    color: #6ee7b7;
+    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
+}
 .status {
     text-align: center;
     margin-bottom: 8px;
@@ -220,6 +237,11 @@ footer {
         <div class="logo-wrap">
             <img id="logo-img" src="/static/logo_light.png" alt="Driver Bot" class="logo-img">
         </div>
+        {% if is_authorized and user_name %}
+        <div class="user-info">
+            👤 Пользователь: <b>{{ user_name }}</b>
+        </div>
+        {% endif %}
         <div class="status">
             Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
         </div>
