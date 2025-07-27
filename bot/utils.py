@@ -28,7 +28,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 def is_at_work(latitude, longitude):
     """
-    Проверка, находится ли водитель на работе
+    Проверка, ожидает ли водитель (находится в рабочей зоне)
     """
     distance = calculate_distance(
         latitude, longitude,
