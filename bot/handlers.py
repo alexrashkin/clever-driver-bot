@@ -106,7 +106,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = f"📍 Местоположение получено!\n"
     message += f"Координаты: {latitude:.6f}, {longitude:.6f}\n"
     message += f"Расстояние до работы: {distance:.0f}м\n"
-    message += f"Статус: {'🏢 На работе' if at_work else '🚗 В пути'}"
+    message += f"Статус: {'🏢 Водитель ожидает' if at_work else '🚗 В пути'}"
     
     await update.message.reply_text(message)
 
