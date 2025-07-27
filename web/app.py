@@ -532,6 +532,71 @@ def invite_auth():
     except Exception as e:
         return 'Internal Server Error', 500
 
+@app.route('/api/current_location')
+def current_location():
+    """API для получения текущего местоположения автомобиля"""
+    try:
+        # Получаем последнее местоположение из базы данных
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT latitude, longitude, distance, is_at_work, timestamp 
+            FROM locations 
+            ORDER BY id DESC LIMIT 1
+        """)
+        location = cursor.fetchone()
+        conn.close()
+        
+        if location:
+            lat, lon, distance, is_at_work, timestamp = location
+            
+            # Получаем координаты рабочей зоны
+            work_lat = config.WORK_LATITUDE
+            work_lon = config.WORK_LONGITUDE
+            work_radius = config.WORK_RADIUS
+            
+            return jsonify({
+                'success': True,
+                'location': {
+                    'latitude': lat,
+                    'longitude': lon,
+                    'distance_to_work': distance,
+                    'is_at_work': bool(is_at_work),
+                    'timestamp': timestamp,
+                    'formatted_time': datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").strftime("%H:%M:%S")
+                },
+                'work_zone': {
+                    'latitude': work_lat,
+                    'longitude': work_lon,
+                    'radius': work_radius
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Нет данных о местоположении'
+            }), 404
+            
+    except Exception as e:
+        logger.error(f"Ошибка получения текущего местоположения: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Ошибка сервера'
+        }), 500
+
+@app.route('/tracker')
+def real_time_tracker():
+    """Страница отслеживания в реальном времени"""
+    try:
+        return render_template('real_time_tracker.html', 
+                             year=datetime.now().year,
+                             work_lat=config.WORK_LATITUDE,
+                             work_lon=config.WORK_LONGITUDE,
+                             work_radius=config.WORK_RADIUS)
+    except Exception as e:
+        logger.error(f"Ошибка загрузки страницы трекера: {e}")
+        return 'Ошибка загрузки страницы', 500
+
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
     print(f"📍 Адрес: http://{config.WEB_HOST}:{config.WEB_PORT}")

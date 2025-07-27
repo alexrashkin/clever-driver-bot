@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отслеживание автомобиля | Driver Bot</title>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=YOUR_API_KEY&lang=ru_RU" type="text/javascript"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .status-panel {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f56565;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.at-work {
+            background: #48bb78;
+        }
+
+        .status-indicator.moving {
+            background: #ed8936;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            margin: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            max-width: 280px;
+            z-index: 1000;
+        }
+
+        .info-panel h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            color: #2d3748;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .distance-to-user {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .distance-to-user .label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .distance-to-user .value {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2d3748;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .control-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .error {
+            color: #e53e3e;
+            text-align: center;
+            padding: 10px;
+            background: rgba(254, 178, 178, 0.1);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .last-update {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 10px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .status-panel {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .info-panel {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 20px;
+                max-width: none;
+            }
+
+            .map-container {
+                margin: 10px;
+            }
+
+            .controls {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                margin: 20px;
+                justify-content: center;
+            }
+
+            #map {
+                min-height: 400px;
+            }
+        }
+
+        /* Темная тема для ночного режима */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            }
+
+            .header {
+                background: rgba(45, 55, 72, 0.95);
+            }
+
+            .header h1 {
+                color: #f7fafc;
+            }
+
+            .status-item {
+                background: rgba(45, 55, 72, 0.9);
+                color: #f7fafc;
+            }
+
+            .info-panel {
+                background: rgba(45, 55, 72, 0.95);
+            }
+
+            .info-panel h3 {
+                color: #f7fafc;
+            }
+
+            .info-label {
+                color: #a0aec0;
+            }
+
+            .info-value {
+                color: #f7fafc;
+            }
+
+            .control-btn {
+                background: rgba(45, 55, 72, 0.95);
+                color: #f7fafc;
+            }
+
+            .control-btn:hover {
+                background: #4a5568;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 Отслеживание автомобиля</h1>
+        <div class="status-panel">
+            <div class="status-item">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Загрузка...</span>
+            </div>
+            <div class="status-item">
+                <span>🕐</span>
+                <span id="lastUpdateTime">--:--:--</span>
+            </div>
+            <div class="status-item">
+                <span>📍</span>
+                <span id="workZoneDistance">-- м</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="map-container">
+        <div id="map"></div>
+        
+        <div class="info-panel">
+            <h3>📊 Информация</h3>
+            <div class="info-item">
+                <span class="info-label">Статус:</span>
+                <span class="info-value" id="detailedStatus">Загрузка...</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Координаты:</span>
+                <span class="info-value" id="coordinates">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">До работы:</span>
+                <span class="info-value" id="distanceToWork">-- м</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Обновлено:</span>
+                <span class="info-value" id="lastUpdate">--</span>
+            </div>
+            
+            <div class="distance-to-user" id="distanceToUser" style="display: none;">
+                <div class="label">Расстояние до вас</div>
+                <div class="value" id="userDistance">-- км</div>
+            </div>
+            
+            <div class="last-update">
+                <span>Обновление каждые 5 секунд</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn active" id="followBtn" onclick="toggleFollow()">
+                📍 Следить
+            </button>
+            <button class="control-btn" id="centerBtn" onclick="centerOnCar()">
+                🎯 К авто
+            </button>
+            <button class="control-btn" id="workBtn" onclick="showWorkZone()">
+                🏢 Работа
+            </button>
+            <button class="control-btn" id="geoBtn" onclick="toggleUserLocation()">
+                📱 Моё место
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let carPlacemark;
+        let workZonePlacemark;
+        let workZoneCircle;
+        let userPlacemark;
+        let userLocation = null;
+        let following = true;
+        let updateInterval;
+
+        // Конфигурация
+        const WORK_LAT = {{ work_lat }};
+        const WORK_LON = {{ work_lon }};
+        const WORK_RADIUS = {{ work_radius }};
+        const UPDATE_INTERVAL = 5000; // 5 секунд
+
+        // Инициализация карты
+        ymaps.ready(init);
+
+        function init() {
+            map = new ymaps.Map('map', {
+                center: [WORK_LAT, WORK_LON],
+                zoom: 15,
+                controls: ['zoomControl', 'typeSelector']
+            });
+
+            // Создаем объекты на карте
+            createWorkZone();
+            
+            // Первоначальная загрузка данных
+            updateLocation();
+            
+            // Запускаем автообновление
+            startAutoUpdate();
+            
+            // Пытаемся получить местоположение пользователя
+            requestUserLocation();
+        }
+
+        function createWorkZone() {
+            // Метка рабочей зоны
+            workZonePlacemark = new ymaps.Placemark([WORK_LAT, WORK_LON], {
+                balloonContent: '🏢 Рабочая зона',
+                hintContent: 'Рабочая зона'
+            }, {
+                preset: 'islands#workIcon',
+                iconColor: '#1e88e5'
+            });
+
+            // Круг рабочей зоны
+            workZoneCircle = new ymaps.Circle([
+                [WORK_LAT, WORK_LON], WORK_RADIUS
+            ], {
+                balloonContent: `Рабочая зона (радиус ${WORK_RADIUS}м)`
+            }, {
+                fillColor: '#1e88e520',
+                strokeColor: '#1e88e5',
+                strokeOpacity: 0.8,
+                strokeWidth: 2
+            });
+
+            map.geoObjects.add(workZonePlacemark);
+            map.geoObjects.add(workZoneCircle);
+        }
+
+        function updateLocation() {
+            fetch('/api/current_location')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateCarPosition(data.location);
+                        updateUI(data.location);
+                        calculateUserDistance(data.location);
+                    } else {
+                        showError('Нет данных о местоположении');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки местоположения:', error);
+                    showError('Ошибка загрузки данных');
+                });
+        }
+
+        function updateCarPosition(location) {
+            const position = [location.latitude, location.longitude];
+            
+            if (carPlacemark) {
+                map.geoObjects.remove(carPlacemark);
+            }
+
+            // Определяем иконку в зависимости от статуса
+            const iconColor = location.is_at_work ? '#4caf50' : '#ff9800';
+            const iconPreset = location.is_at_work ? 'islands#carIcon' : 'islands#carIcon';
+
+            carPlacemark = new ymaps.Placemark(position, {
+                balloonContent: `
+                    <div style="padding: 10px;">
+                        <h4>🚗 Автомобиль</h4>
+                        <p><strong>Статус:</strong> ${location.is_at_work ? 'На работе' : 'Не на работе'}</p>
+                        <p><strong>Расстояние до работы:</strong> ${Math.round(location.distance_to_work)}м</p>
+                        <p><strong>Время:</strong> ${location.formatted_time}</p>
+                        <p><strong>Координаты:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
+                    </div>
+                `,
+                hintContent: `Автомобиль (${location.formatted_time})`
+            }, {
+                preset: iconPreset,
+                iconColor: iconColor
+            });
+
+            map.geoObjects.add(carPlacemark);
+
+            // Центрируем карту на машине, если включено следование
+            if (following) {
+                map.setCenter(position, undefined, {
+                    duration: 1000
+                });
+            }
+        }
+
+        function updateUI(location) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const lastUpdateTime = document.getElementById('lastUpdateTime');
+            const workZoneDistance = document.getElementById('workZoneDistance');
+
+            // Обновляем статус
+            if (location.is_at_work) {
+                statusIndicator.className = 'status-indicator at-work';
+                statusText.textContent = 'На работе';
+                document.getElementById('detailedStatus').textContent = '🟢 На работе';
+            } else {
+                statusIndicator.className = 'status-indicator moving';
+                statusText.textContent = 'В пути';
+                document.getElementById('detailedStatus').textContent = '🟡 В пути';
+            }
+
+            // Обновляем время
+            lastUpdateTime.textContent = location.formatted_time;
+            document.getElementById('lastUpdate').textContent = location.formatted_time;
+
+            // Обновляем расстояние
+            const distance = Math.round(location.distance_to_work);
+            workZoneDistance.textContent = `${distance} м`;
+            document.getElementById('distanceToWork').textContent = `${distance} м`;
+
+            // Обновляем координаты
+            document.getElementById('coordinates').textContent = 
+                `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+        }
+
+        function calculateUserDistance(carLocation) {
+            if (!userLocation) return;
+
+            const carPos = [carLocation.latitude, carLocation.longitude];
+            const userPos = [userLocation.latitude, userLocation.longitude];
+            
+            const distance = ymaps.coordSystem.geo.getDistance(carPos, userPos);
+            const distanceKm = (distance / 1000).toFixed(1);
+            
+            document.getElementById('userDistance').textContent = `${distanceKm} км`;
+            document.getElementById('distanceToUser').style.display = 'block';
+        }
+
+        function requestUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        userLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+                        
+                        // Показываем метку пользователя
+                        if (userPlacemark) {
+                            map.geoObjects.remove(userPlacemark);
+                        }
+
+                        userPlacemark = new ymaps.Placemark([userLocation.latitude, userLocation.longitude], {
+                            balloonContent: '📱 Ваше местоположение',
+                            hintContent: 'Вы здесь'
+                        }, {
+                            preset: 'islands#personIcon',
+                            iconColor: '#e91e63'
+                        });
+
+                        map.geoObjects.add(userPlacemark);
+                        
+                        // Обновляем расстояние, если есть данные о машине
+                        updateLocation();
+                    },
+                    function(error) {
+                        console.log('Не удалось получить местоположение пользователя:', error);
+                    }
+                );
+            }
+        }
+
+        function startAutoUpdate() {
+            updateInterval = setInterval(updateLocation, UPDATE_INTERVAL);
+        }
+
+        function stopAutoUpdate() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        }
+
+        function toggleFollow() {
+            following = !following;
+            const btn = document.getElementById('followBtn');
+            if (following) {
+                btn.classList.add('active');
+                btn.textContent = '📍 Следить';
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = '📍 Свободно';
+            }
+        }
+
+        function centerOnCar() {
+            if (carPlacemark) {
+                map.setCenter(carPlacemark.geometry.getCoordinates(), 16, {
+                    duration: 1000
+                });
+            }
+        }
+
+        function showWorkZone() {
+            map.setCenter([WORK_LAT, WORK_LON], 16, {
+                duration: 1000
+            });
+        }
+
+        function toggleUserLocation() {
+            if (userPlacemark) {
+                map.setCenter(userPlacemark.geometry.getCoordinates(), 16, {
+                    duration: 1000
+                });
+            } else {
+                requestUserLocation();
+            }
+        }
+
+        function showError(message) {
+            console.error(message);
+            document.getElementById('statusText').textContent = 'Ошибка';
+            document.getElementById('detailedStatus').textContent = '❌ ' + message;
+        }
+
+        // Очистка при закрытии страницы
+        window.addEventListener('beforeunload', function() {
+            stopAutoUpdate();
+        });
+
+        // Пауза обновлений при скрытии вкладки
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoUpdate();
+            } else {
+                startAutoUpdate();
+            }
+        });
+    </script>
+</body>
+</html> 
