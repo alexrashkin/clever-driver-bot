@@ -89,7 +89,7 @@ def create_location_message(latitude, longitude, distance=None, is_at_work=False
             config.WORK_LATITUDE, config.WORK_LONGITUDE
         )
     
-    status = "📍 На работе" if is_at_work else "🚗 В пути"
+    status = "📍 Водитель ожидает" if is_at_work else "🚗 В пути"
     distance_text = format_distance(distance)
     
     message = f"{status}\n"

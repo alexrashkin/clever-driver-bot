@@ -460,7 +460,7 @@
                 balloonContent: `
                     <div style="padding: 10px;">
                         <h4>🚗 Автомобиль</h4>
-                        <p><strong>Статус:</strong> ${location.is_at_work ? 'На работе' : 'Не на работе'}</p>
+                        <p><strong>Статус:</strong> ${location.is_at_work ? 'Водитель ожидает' : 'Не на работе'}</p>
                         <p><strong>Расстояние до работы:</strong> ${Math.round(location.distance_to_work)}м</p>
                         <p><strong>Время:</strong> ${location.formatted_time}</p>
                         <p><strong>Координаты:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
@@ -491,8 +491,8 @@
             // Обновляем статус
             if (location.is_at_work) {
                 statusIndicator.className = 'status-indicator at-work';
-                statusText.textContent = 'На работе';
-                document.getElementById('detailedStatus').textContent = '🟢 На работе';
+                statusText.textContent = 'Водитель ожидает';
+                document.getElementById('detailedStatus').textContent = '🟢 Водитель ожидает';
             } else {
                 statusIndicator.className = 'status-indicator moving';
                 statusText.textContent = 'В пути';
