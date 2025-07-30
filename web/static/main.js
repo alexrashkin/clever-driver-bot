@@ -57,65 +57,8 @@ function sendManualNotification(event) {
     return false;
 }
 
-function sendDanyaWakeup(event) {
-    if (!onAuthRequired(event)) return false;
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = 'Отправка...';
-    button.disabled = true;
-    fetch('/api/user1', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showMessage('Сообщение отправлено!', 'success');
-        } else {
-            showMessage('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'), 'error');
-        }
-    })
-    .catch(error => {
-        showMessage('Ошибка сети: ' + error.message, 'error');
-    })
-    .finally(() => {
-        button.textContent = originalText;
-        button.disabled = false;
-    });
-    return false;
-}
-
-function sendLizaWakeup(event) {
-    if (!onAuthRequired(event)) return false;
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = 'Отправка...';
-    button.disabled = true;
-    fetch('/api/user2', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showMessage('Сообщение отправлено!', 'success');
-        } else {
-            showMessage('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'), 'error');
-        }
-    })
-    .catch(error => {
-        showMessage('Ошибка сети: ' + error.message, 'error');
-    })
-    .finally(() => {
-        button.textContent = originalText;
-        button.disabled = false;
-    });
-    return false;
-}
+// Устаревшие функции sendDanyaWakeup и sendLizaWakeup удалены
+// Теперь используется универсальная функция sendDynamicButton
 
 function sendDynamicButton(event, idx) {
     if (!onAuthRequired(event)) return false;
