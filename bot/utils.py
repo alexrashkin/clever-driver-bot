@@ -108,7 +108,7 @@ def create_work_notification():
     Создание уведомления о прибытии на работу
     """
     greeting = get_greeting()
-    return f"{greeting}! У подъезда, ожидаю"
+    return f"{greeting}! Ожидаю у подъезда"
 
 def validate_coordinates(latitude, longitude):
     """
