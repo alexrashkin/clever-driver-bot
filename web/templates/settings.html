@@ -117,9 +117,30 @@
                         </form>
                     </div>
                 {% else %}
+                    <div class="instruction-block" style="margin-bottom: 20px; padding: 18px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border-left: 4px solid #22c55e;">
+                        <div style="font-weight: 600; color: #15803d; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>📱</span> Как подключить получателя уведомлений
+                        </div>
+                        <div style="color: #374151; font-size: 0.9em; line-height: 1.5; margin-bottom: 15px;">
+                            <strong>Получатель сможет:</strong>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li>Получать автоматические уведомления о прибытии/выезде</li>
+                                <li>Отслеживать ваше местоположение в реальном времени</li>
+                                <li>Видеть статус (в пути/ожидает) на карте</li>
+                                <li>Использовать все возможности веб-интерфейса</li>
+                            </ul>
+                        </div>
+                        <div style="color: #6b7280; font-size: 0.85em; background: rgba(255, 255, 255, 0.7); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                            <strong>💡 Инструкция:</strong><br>
+                            1. Нажмите кнопку "Пригласить получателя"<br>
+                            2. Отправьте ссылку человеку, которого хотите подключить<br>
+                            3. Он должен авторизоваться через свой Telegram<br>
+                            4. После этого он автоматически получит доступ ко всем функциям
+                        </div>
+                    </div>
                     <form method="get" action="/invite">
                         <input type="hidden" name="user_id" value="{{ user.telegram_id }}">
-                        <button class="btn" type="submit">Пригласить получателя уведомлений</button>
+                        <button class="btn" type="submit" style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: white; font-weight: 500;">📱 Пригласить получателя уведомлений</button>
                     </form>
                 {% endif %}
             {% endif %}
