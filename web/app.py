@@ -117,7 +117,9 @@ def index():
             user_name = user.get('first_name') or user.get('last_name') or user_login
             auth_type = 'login'
             telegram_id = None  # Для совместимости
-            
+        
+        # Общая обработка ролей для всех типов авторизации
+        if telegram_id or user_login:
             if user_role == 'recipient':
                 # Получатель уведомлений - упрощенный интерфейс
                 buttons = []
@@ -915,7 +917,8 @@ def current_location():
     """API для получения текущего местоположения автомобиля"""
     try:
         # Получаем последнее местоположение из базы данных
-        conn = db.get_connection()
+        import sqlite3
+        conn = sqlite3.connect('driver.db')
         cursor = conn.cursor()
         cursor.execute("""
             SELECT latitude, longitude, distance, is_at_work, timestamp 
@@ -933,6 +936,19 @@ def current_location():
             work_lon = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
             
+            # Безопасное форматирование времени
+            try:
+                if timestamp:
+                    if isinstance(timestamp, str):
+                        dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+                    else:
+                        dt = timestamp
+                    formatted_time = (dt + timedelta(hours=3)).strftime("%H:%M:%S")
+                else:
+                    formatted_time = "--:--:--"
+            except:
+                formatted_time = "--:--:--"
+            
             return jsonify({
                 'success': True,
                 'location': {
@@ -941,26 +957,46 @@ def current_location():
                     'distance_to_work': distance,
                     'is_at_work': bool(is_at_work),
                     'timestamp': timestamp,
-                    'formatted_time': (datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S") + timedelta(hours=3)).strftime("%H:%M:%S")
+                    'formatted_time': formatted_time
                 },
                 'work_zone': {
                     'latitude': work_lat,
                     'longitude': work_lon,
                     'radius': work_radius
-                }
+                },
+                'status': 'В пути' if distance and distance > work_radius else 'Водитель ожидает'
             })
         else:
             return jsonify({
-                'success': False,
-                'error': 'Нет данных о местоположении'
-            }), 404
+                'success': True,
+                'location': {
+                    'latitude': None,
+                    'longitude': None,
+                    'distance_to_work': None,
+                    'is_at_work': False,
+                    'timestamp': None,
+                    'formatted_time': '--:--:--'
+                },
+                'work_zone': {
+                    'latitude': config.WORK_LATITUDE,
+                    'longitude': config.WORK_LONGITUDE,
+                    'radius': config.WORK_RADIUS
+                },
+                'status': 'Нет данных о местоположении'
+            })
             
     except Exception as e:
         logger.error(f"Ошибка получения текущего местоположения: {e}")
         return jsonify({
             'success': False,
-            'error': 'Ошибка сервера'
-        }), 500
+            'error': 'Ошибка сервера',
+            'location': {
+                'latitude': None,
+                'longitude': None,
+                'formatted_time': '--:--:--'
+            },
+            'status': 'Ошибка загрузки'
+        }), 200
 
 @app.route('/tracker')
 def real_time_tracker():
