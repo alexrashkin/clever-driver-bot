@@ -78,20 +78,19 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # Отправляем уведомления всем авторизованным пользователям
                 conn = db.get_connection()
                 cursor = conn.cursor()
-                cursor.execute("SELECT telegram_id, recipient_telegram_id FROM users")
+                cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
                 users = cursor.fetchall()
                 conn.close()
                 
                 sent_count = 0
-                for user_telegram_id, recipient_telegram_id in users:
-                    recipient_id = recipient_telegram_id or user_telegram_id
+                for (telegram_id,) in users:
                     try:
-                        logger.info(f"DEBUG: Отправляю уведомление пользователю {recipient_id}: '{notification}'")
-                        await context.bot.send_message(chat_id=recipient_id, text=notification)
+                        logger.info(f"DEBUG: Отправляю уведомление пользователю {telegram_id}: '{notification}'")
+                        await context.bot.send_message(chat_id=telegram_id, text=notification)
                         sent_count += 1
-                        logger.info(f"Уведомление отправлено пользователю {recipient_id}")
+                        logger.info(f"Уведомление отправлено пользователю {telegram_id}")
                     except Exception as e:
-                        logger.error(f"Ошибка отправки уведомления пользователю {recipient_id}: {e}")
+                        logger.error(f"Ошибка отправки уведомления пользователю {telegram_id}: {e}")
                 
                 if sent_count > 0:
                     save_last_checked_time(curr_ts)

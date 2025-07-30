@@ -56,13 +56,11 @@ class Database:
                 username TEXT,
                 first_name TEXT,
                 last_name TEXT,
-                button_name_1 TEXT DEFAULT 'Имя 1 (введите в настройках) поднимается',
-                button_name_2 TEXT DEFAULT 'Имя 2 (введите в настройках) поднимается',
+                role TEXT DEFAULT NULL,
                 buttons TEXT DEFAULT NULL,
                 work_latitude REAL,
                 work_longitude REAL,
                 work_radius INTEGER DEFAULT 100,
-                recipient_telegram_id BIGINT,
                 subscription_status TEXT DEFAULT 'free',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP
@@ -91,6 +89,79 @@ class Database:
                 btns = [row[1], row[2]]
                 import json
                 c.execute("UPDATE users SET buttons = ? WHERE id = ?", (json.dumps(btns, ensure_ascii=False), row[0]))
+        
+        # Миграция: добавляем поле role, если его нет
+        if 'role' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT NULL")
+        
+        # Миграция: удаляем поле recipient_telegram_id, если оно есть (больше не используется)
+        if 'recipient_telegram_id' in columns:
+            # SQLite не поддерживает DROP COLUMN, поэтому пересоздаем таблицу
+            c.execute('''
+                CREATE TABLE users_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id BIGINT UNIQUE NOT NULL,
+                    username TEXT,
+                                    first_name TEXT,
+                last_name TEXT,
+                role TEXT DEFAULT NULL,
+                buttons TEXT DEFAULT NULL,
+                    work_latitude REAL,
+                    work_longitude REAL,
+                    work_radius INTEGER DEFAULT 100,
+                    subscription_status TEXT DEFAULT 'free',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP
+                )
+            ''')
+            # Копируем данные (без recipient_telegram_id и устаревших button_name полей)
+            c.execute('''
+                INSERT INTO users_new 
+                (id, telegram_id, username, first_name, last_name, role, 
+                 buttons, work_latitude, work_longitude, work_radius, subscription_status, created_at, last_login)
+                SELECT id, telegram_id, username, first_name, last_name, role,
+                       buttons, work_latitude, work_longitude, work_radius, subscription_status, created_at, last_login
+                FROM users
+            ''')
+            # Удаляем старую таблицу и переименовываем новую
+            c.execute('DROP TABLE users')
+            c.execute('ALTER TABLE users_new RENAME TO users')
+        
+        # Миграция: удаляем поля button_name_1 и button_name_2, если они есть (устарели после перехода на buttons)
+        c.execute("PRAGMA table_info(users)")
+        columns = [row[1] for row in c.fetchall()]
+        if 'button_name_1' in columns or 'button_name_2' in columns:
+            # Пересоздаем таблицу без устаревших полей
+            c.execute('''
+                CREATE TABLE users_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id BIGINT UNIQUE NOT NULL,
+                    username TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    role TEXT DEFAULT NULL,
+                    buttons TEXT DEFAULT NULL,
+                    work_latitude REAL,
+                    work_longitude REAL,
+                    work_radius INTEGER DEFAULT 100,
+                    subscription_status TEXT DEFAULT 'free',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP
+                )
+            ''')
+            # Копируем данные (без устаревших button_name полей)
+            c.execute('''
+                INSERT INTO users_new 
+                (id, telegram_id, username, first_name, last_name, role, 
+                 buttons, work_latitude, work_longitude, work_radius, subscription_status, created_at, last_login)
+                SELECT id, telegram_id, username, first_name, last_name, role,
+                       buttons, work_latitude, work_longitude, work_radius, subscription_status, created_at, last_login
+                FROM users
+            ''')
+            # Удаляем старую таблицу и переименовываем новую
+            c.execute('DROP TABLE users')
+            c.execute('ALTER TABLE users_new RENAME TO users')
+        
         conn.commit()
         conn.close()
         logger.info("База данных инициализирована")
@@ -207,16 +278,14 @@ class Database:
         c = conn.cursor()
         import json
         default_buttons = json.dumps([
-            'Имя 1 (введите в настройках) поднимается',
-            'Имя 2 (введите в настройках) поднимается'
+            '📍 Еду на работу',
+            '🚗 Подъезжаю к дому'
         ], ensure_ascii=False)
         c.execute('''
-            INSERT OR IGNORE INTO users (telegram_id, username, first_name, last_name, button_name_1, button_name_2, buttons)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO users (telegram_id, username, first_name, last_name, buttons)
+            VALUES (?, ?, ?, ?, ?)
         ''', (
             telegram_id, username, first_name, last_name,
-            'Имя 1 (введите в настройках) поднимается',
-            'Имя 2 (введите в настройках) поднимается',
             default_buttons
         ))
         conn.commit()
@@ -243,34 +312,38 @@ class Database:
             return user
         return None
 
-    def is_recipient_only(self, telegram_id):
-        """Проверить, является ли пользователь только получателем уведомлений (не владельцем аккаунта)"""
+    def get_user_role(self, telegram_id):
+        """Получить роль пользователя"""
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
-        # Проверяем, есть ли пользователь с таким telegram_id как получатель
         c.execute('''
-            SELECT COUNT(*) FROM users WHERE recipient_telegram_id = ?
+            SELECT role FROM users WHERE telegram_id = ?
         ''', (telegram_id,))
-        recipient_count = c.fetchone()[0]
-        
-        # Проверяем, есть ли пользователь с таким telegram_id как владелец
-        c.execute('''
-            SELECT COUNT(*) FROM users WHERE telegram_id = ?
-        ''', (telegram_id,))
-        owner_count = c.fetchone()[0]
+        result = c.fetchone()
         conn.close()
-        
-        # Если он получатель, но не владелец - значит только получатель
-        return recipient_count > 0 and owner_count == 0
+        return result[0] if result else None
+    
+    def set_user_role(self, telegram_id, role):
+        """Установить роль пользователя (admin, driver, recipient)"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''
+            UPDATE users SET role = ? WHERE telegram_id = ?
+        ''', (role, telegram_id))
+        conn.commit()
+        conn.close()
+        logger.info(f"Роль пользователя {telegram_id} установлена как: {role}")
+    
+    def is_recipient_only(self, telegram_id):
+        """Проверить, является ли пользователь только получателем уведомлений"""
+        role = self.get_user_role(telegram_id)
+        return role == 'recipient'
 
     def update_user_settings(self, telegram_id, **kwargs):
         """Обновить настройки пользователя по telegram_id (имена кнопок, радиус, координаты)"""
         if not kwargs:
             return
-        # Если имя пустое — сохраняем None, чтобы отображалась подсказка
-        for key in ['button_name_1', 'button_name_2']:
-            if key in kwargs and (kwargs[key] is None or str(kwargs[key]).strip() == ''):
-                kwargs[key] = None
+        # Устаревшая логика button_name_1/2 удалена - теперь используется только buttons массив
         # Сериализация массива кнопок
         if 'buttons' in kwargs and isinstance(kwargs['buttons'], list):
             import json

@@ -21,37 +21,41 @@ app.secret_key = config.WEB_SECRET_KEY
 db = Database()
 
 def send_telegram_arrival(user_telegram_id):
-    """Отправка уведомления о прибытии для конкретного пользователя или его получателя."""
-    token = config.TELEGRAM_TOKEN
-    user = db.get_user_by_telegram_id(user_telegram_id)
-    if not user:
-        logger.error(f"Пользователь с telegram_id={user_telegram_id} не найден")
+    """Отправка ручного уведомления о прибытии всем пользователям с ролями."""
+    # Проверяем, что отправитель имеет права отправлять уведомления
+    user_role = db.get_user_role(user_telegram_id)
+    if user_role not in ['admin', 'driver']:
+        logger.error(f"Пользователь {user_telegram_id} с ролью {user_role} не может отправлять ручные уведомления")
         return False
-    recipient_id = user.get('recipient_telegram_id') or user_telegram_id
+    
+    token = config.TELEGRAM_TOKEN
     text = create_work_notification()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    try:
-        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('ok'):
-                logger.info(f"Уведомление отправлено через Telegram API пользователю {recipient_id}")
-                return True
+    
+    # Получаем всех пользователей с ролями
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+    users = cursor.fetchall()
+    conn.close()
+    
+    sent_count = 0
+    for (telegram_id,) in users:
+        try:
+            response = requests.post(url, data={"chat_id": telegram_id, "text": text}, timeout=15)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('ok'):
+                    logger.info(f"Ручное уведомление отправлено пользователю {telegram_id}")
+                    sent_count += 1
+                else:
+                    logger.error(f"Ошибка Telegram API для пользователя {telegram_id}: {data.get('description')}")
             else:
-                logger.error(f"Ошибка Telegram API: {data.get('description')}")
-                return False
-        else:
-            logger.error(f"HTTP ошибка Telegram: {response.status_code}")
-            return False
-    except requests.exceptions.Timeout:
-        logger.error("Таймаут при отправке в Telegram")
-        return False
-    except requests.exceptions.ConnectionError:
-        logger.error("Ошибка подключения к Telegram API")
-        return False
-    except Exception as e:
-        logging.error(f"Ошибка отправки сообщения в Telegram: {e}")
-        return False
+                logger.error(f"HTTP ошибка Telegram для пользователя {telegram_id}: {response.status_code}")
+        except Exception as e:
+            logger.error(f"Ошибка отправки уведомления пользователю {telegram_id}: {e}")
+    
+    return sent_count > 0
 
 def send_alternative_notification():
     """Альтернативный способ отправки уведомления (логирование)"""
@@ -74,28 +78,48 @@ def index():
         
         telegram_id = session.get('telegram_id')
         if telegram_id:
-            # Проверяем, является ли пользователь только получателем уведомлений
-            is_recipient_only = db.is_recipient_only(telegram_id)
+            # Получаем роль пользователя
+            user_role = db.get_user_role(telegram_id)
             
-            if is_recipient_only:
-                # Получатель уведомлений - показываем упрощенный интерфейс
+            # Если роли нет - отправляем на выбор роли
+            if not user_role:
+                return redirect('/select_role')
+            
+            # Получаем информацию о пользователе
+            user = db.get_user_by_telegram_id(telegram_id)
+            is_authorized = True
+            user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
+            
+            if user_role == 'recipient':
+                # Получатель уведомлений - упрощенный интерфейс
                 buttons = []
                 work_latitude = config.WORK_LATITUDE
                 work_longitude = config.WORK_LONGITUDE
                 work_radius = config.WORK_RADIUS
-                is_authorized = True
-                user_name = "Получатель уведомлений"
-                user = None
-            else:
-                # Обычный пользователь/владелец аккаунта
-                user = db.get_user_by_telegram_id(telegram_id)
+                is_recipient_only = True
+                is_admin = False
+                is_driver = False
+            elif user_role == 'admin':
+                # Администратор - полный доступ ко всем функциям
                 buttons = user.get('buttons', [])
                 work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
                 work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
                 work_radius = user.get('work_radius', config.WORK_RADIUS)
-                is_authorized = True
-                # Получаем имя пользователя для отображения
-                user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
+                is_recipient_only = False
+                is_admin = True
+                is_driver = False
+            elif user_role == 'driver':
+                # Водитель (владелец аккаунта) - стандартные функции
+                buttons = user.get('buttons', [])
+                work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
+                work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
+                work_radius = user.get('work_radius', config.WORK_RADIUS)
+                is_recipient_only = False
+                is_admin = False
+                is_driver = True
+            else:
+                # Неизвестная роль - отправляем на выбор роли
+                return redirect('/select_role')
         else:
             buttons = ['📍 Еду на работу', '🚗 Подъезжаю к дому', '⏰ Опаздываю на 10 минут']
             work_latitude = config.WORK_LATITUDE
@@ -103,6 +127,8 @@ def index():
             work_radius = config.WORK_RADIUS
             is_authorized = False
             is_recipient_only = False
+            is_admin = False
+            is_driver = False
             user_name = None
         return render_template(
             'index.html',
@@ -115,6 +141,8 @@ def index():
             work_radius=work_radius,
             is_authorized=is_authorized,
             is_recipient_only=is_recipient_only if telegram_id else False,
+            is_admin=is_admin if telegram_id else False,
+            is_driver=is_driver if telegram_id else False,
             user_name=user_name
         )
     except Exception as e:
@@ -152,9 +180,11 @@ def mobile_tracker_redirect():
 def toggle_tracking():
     """Переключение отслеживания через веб-форму"""
     telegram_id = session.get('telegram_id')
-    if telegram_id and db.is_recipient_only(telegram_id):
-        session['flash_message'] = "Получатели уведомлений не могут управлять отслеживанием"
-        return redirect('/')
+    if telegram_id:
+        user_role = db.get_user_role(telegram_id)
+        if user_role == 'recipient':
+            session['flash_message'] = "Получатели уведомлений не могут управлять отслеживанием"
+            return redirect('/')
     
     print("=== TOGGLE_TRACKING ВЫЗВАНА ===")
     try:
@@ -217,7 +247,7 @@ def manual_arrival():
         telegram_id = session.get('telegram_id')
         if not telegram_id:
             message = "Необходимо авторизоваться через Telegram"
-        elif db.is_recipient_only(telegram_id):
+        elif db.get_user_role(telegram_id) == 'recipient':
             message = "Получатели уведомлений не могут отправлять ручные уведомления"
         elif send_telegram_arrival(telegram_id):
             message = "Уведомление отправлено"
@@ -255,7 +285,7 @@ def api_toggle():
     """API переключения отслеживания"""
     try:
         telegram_id = session.get('telegram_id')
-        if telegram_id and db.is_recipient_only(telegram_id):
+        if telegram_id and db.get_user_role(telegram_id) == 'recipient':
             return jsonify({'success': False, 'error': 'Получатели уведомлений не могут управлять отслеживанием'}), 403
         current_status = db.get_tracking_status()
         new_status = not current_status
@@ -368,7 +398,7 @@ def api_notify():
         telegram_id = session.get('telegram_id')
         if not telegram_id:
             return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
-        if db.is_recipient_only(telegram_id):
+        if db.get_user_role(telegram_id) == 'recipient':
             return jsonify({'success': False, 'error': 'Получатели уведомлений не могут отправлять ручные уведомления'}), 403
         if send_telegram_arrival(telegram_id):
             return jsonify({'success': True})
@@ -387,20 +417,42 @@ def api_user1():
         telegram_id = session.get('telegram_id')
         if not telegram_id:
             return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        
+        # Проверяем права пользователя
+        user_role = db.get_user_role(telegram_id)
+        if user_role not in ['admin', 'driver']:
+            return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
+        
         user = db.get_user_by_telegram_id(telegram_id)
-        recipient_id = user.get('recipient_telegram_id') or telegram_id
+        buttons = user.get('buttons', [])
         greeting = get_greeting() + '!'
-        name = user.get('button_name_1') or 'Даня'
-        if 'поднимается' not in name:
-            name = f"{name} поднимается"
+        # Используем первую кнопку или дефолтное значение
+        name = buttons[0] if buttons else '📍 Еду на работу'
         text = f"{greeting} {name}"
+        
+        # Отправляем уведомления всем пользователям с ролями
         token = config.TELEGRAM_TOKEN
         url = f"https://api.telegram.org/bot{token}/sendMessage"
-        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
-        if response.status_code == 200 and response.json().get('ok'):
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+        users = cursor.fetchall()
+        conn.close()
+        
+        sent_count = 0
+        for (user_telegram_id,) in users:
+            try:
+                response = requests.post(url, data={"chat_id": user_telegram_id, "text": text}, timeout=15)
+                if response.status_code == 200 and response.json().get('ok'):
+                    sent_count += 1
+            except Exception as e:
+                logger.error(f"Ошибка отправки уведомления пользователю {user_telegram_id}: {e}")
+        
+        if sent_count > 0:
             return jsonify({'success': True})
         else:
-            return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
+            return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
     except Exception as e:
         logger.error(f"Ошибка user1: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -411,20 +463,42 @@ def api_user2():
         telegram_id = session.get('telegram_id')
         if not telegram_id:
             return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        
+        # Проверяем права пользователя
+        user_role = db.get_user_role(telegram_id)
+        if user_role not in ['admin', 'driver']:
+            return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
+        
         user = db.get_user_by_telegram_id(telegram_id)
-        recipient_id = user.get('recipient_telegram_id') or telegram_id
+        buttons = user.get('buttons', [])
         greeting = get_greeting() + '!'
-        name = user.get('button_name_2') or 'Лиза'
-        if 'поднимается' not in name:
-            name = f"{name} поднимается"
+        # Используем вторую кнопку или дефолтное значение
+        name = buttons[1] if len(buttons) > 1 else '🚗 Подъезжаю к дому'
         text = f"{greeting} {name}"
+        
+        # Отправляем уведомления всем пользователям с ролями
         token = config.TELEGRAM_TOKEN
         url = f"https://api.telegram.org/bot{token}/sendMessage"
-        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
-        if response.status_code == 200 and response.json().get('ok'):
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+        users = cursor.fetchall()
+        conn.close()
+        
+        sent_count = 0
+        for (user_telegram_id,) in users:
+            try:
+                response = requests.post(url, data={"chat_id": user_telegram_id, "text": text}, timeout=15)
+                if response.status_code == 200 and response.json().get('ok'):
+                    sent_count += 1
+            except Exception as e:
+                logger.error(f"Ошибка отправки уведомления пользователю {user_telegram_id}: {e}")
+        
+        if sent_count > 0:
             return jsonify({'success': True})
         else:
-            return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
+            return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
     except Exception as e:
         logger.error(f"Ошибка user2: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -435,21 +509,43 @@ def api_button(idx):
         telegram_id = session.get('telegram_id')
         if not telegram_id:
             return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        # Проверяем права пользователя
+        user_role = db.get_user_role(telegram_id)
+        if user_role not in ['admin', 'driver']:
+            return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
+        
         user = db.get_user_by_telegram_id(telegram_id)
         buttons = user.get('buttons', [])
         if idx < 0 or idx >= len(buttons):
             return jsonify({'success': False, 'error': 'Некорректный номер кнопки'}), 400
-        recipient_id = user.get('recipient_telegram_id') or telegram_id
+        
+        # Отправляем уведомления всем пользователям с ролями
         greeting = get_greeting() + '!'
         name = buttons[idx]
         text = f"{greeting} {name}"
         token = config.TELEGRAM_TOKEN
         url = f"https://api.telegram.org/bot{token}/sendMessage"
-        response = requests.post(url, data={"chat_id": recipient_id, "text": text}, timeout=15)
-        if response.status_code == 200 and response.json().get('ok'):
+        
+        # Получаем всех пользователей с ролями
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+        users = cursor.fetchall()
+        conn.close()
+        
+        sent_count = 0
+        for (user_telegram_id,) in users:
+            try:
+                response = requests.post(url, data={"chat_id": user_telegram_id, "text": text}, timeout=15)
+                if response.status_code == 200 and response.json().get('ok'):
+                    sent_count += 1
+            except Exception as e:
+                logger.error(f"Ошибка отправки уведомления пользователю {user_telegram_id}: {e}")
+        
+        if sent_count > 0:
             return jsonify({'success': True})
         else:
-            return jsonify({'success': False, 'error': 'Ошибка Telegram API'}), 500
+            return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
     except Exception as e:
         logger.error(f"Ошибка api_button: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -468,19 +564,17 @@ def settings():
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
     telegram_id = session.get('telegram_id')
     if telegram_id:
-        # Проверяем, является ли пользователь только получателем уведомлений
-        if db.is_recipient_only(telegram_id):
+        # Проверяем роль пользователя
+        user_role = db.get_user_role(telegram_id)
+        if user_role == 'recipient':
             session['flash_message'] = "Получатели уведомлений не имеют доступа к настройкам"
             return redirect('/')
         
         telegram_user = True
         user = db.get_user_by_telegram_id(telegram_id)
-        # Обработка отвязки получателя
-        if request.method == 'POST' and request.form.get('action') == 'unlink_recipient':
-            db.update_user_settings(telegram_id, recipient_telegram_id=None)
-            message = 'Получатель успешно отключён'
-            user = db.get_user_by_telegram_id(telegram_id)
-        elif request.method == 'POST':
+        # Функция отвязки получателя больше не актуальна с системой ролей
+        # Получатели теперь независимые пользователи с ролью 'recipient'
+        if request.method == 'POST':
             # Получаем данные формы
             import json
             buttons_json = request.form.get('buttons')
@@ -504,13 +598,8 @@ def settings():
                 message = f'Ошибка сохранения: {e}'
                 error = True
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
-        # Получаем имя получателя, если он есть
-        recipient_name = None
-        if user and user.get('recipient_telegram_id'):
-            recipient = db.get_user_by_telegram_id(user['recipient_telegram_id'])
-            if recipient:
-                recipient_name = recipient.get('first_name') or recipient.get('username')
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username, recipient_name=recipient_name)
+        # Логика получателя больше не нужна с системой ролей
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
     else:
         return render_template('settings.html', telegram_user=False, telegram_bot_username=telegram_bot_username)
 
@@ -539,7 +628,46 @@ def telegram_auth():
     db.create_user(telegram_id, username, first_name, last_name)
     session['telegram_id'] = telegram_id
     session.permanent = True
-    return redirect(url_for('settings'))
+    
+    # Проверяем, есть ли у пользователя роль
+    user_role = db.get_user_role(telegram_id)
+    if not user_role:
+        # Если роли нет - отправляем на страницу выбора роли
+        return redirect(url_for('select_role'))
+    else:
+        # Если роль есть - отправляем на главную или в настройки
+        return redirect(url_for('index'))
+
+@app.route('/select_role', methods=['GET', 'POST'])
+def select_role():
+    """Выбор роли пользователя"""
+    telegram_id = session.get('telegram_id')
+    if not telegram_id:
+        session['flash_message'] = "Необходимо авторизоваться через Telegram"
+        return redirect('/')
+    
+    # Получаем информацию о пользователе
+    user = db.get_user_by_telegram_id(telegram_id)
+    if not user:
+        session['flash_message'] = "Пользователь не найден"
+        return redirect('/')
+    
+    if request.method == 'POST':
+        selected_role = request.form.get('selected_role')
+        if selected_role in ['admin', 'driver', 'recipient']:
+            # Устанавливаем роль пользователю
+            db.set_user_role(telegram_id, selected_role)
+            session['flash_message'] = f"Роль '{selected_role}' успешно установлена"
+            return redirect('/')
+        else:
+            session['flash_message'] = "Некорректная роль"
+            return redirect('/select_role')
+    
+    # GET запрос - показываем страницу выбора роли
+    user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
+    return render_template('select_role.html', 
+                         user_name=user_name, 
+                         telegram_id=telegram_id)
 
 @app.route('/invite')
 def invite():
@@ -570,9 +698,17 @@ def invite_auth():
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         if hmac_hash != hash_:
             return 'Ошибка авторизации Telegram', 403
-        recipient_telegram_id = int(auth_data['id'])
-        db.update_user_settings(user_id, recipient_telegram_id=recipient_telegram_id)
-        # logger.error(f"[invite_auth] Успешная авторизация. user_id={user_id}, recipient_telegram_id={recipient_telegram_id}")
+        # Создаем нового пользователя с ролью 'recipient'
+        new_user_telegram_id = int(auth_data['id'])
+        username = auth_data.get('username')
+        first_name = auth_data.get('first_name')
+        last_name = auth_data.get('last_name')
+        
+        # Регистрируем пользователя как получателя уведомлений
+        db.create_user(new_user_telegram_id, username, first_name, last_name)
+        db.set_user_role(new_user_telegram_id, 'recipient')
+        
+        logger.info(f"Новый получатель уведомлений зарегистрирован: {new_user_telegram_id}")
         return render_template('invite_success.html')
     except Exception as e:
         return 'Internal Server Error', 500
