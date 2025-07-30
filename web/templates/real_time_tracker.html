@@ -320,7 +320,10 @@
 </head>
 <body>
     <div class="header">
-        <h1>🚗 Отслеживание автомобиля</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <h1>🚗 Отслеживание автомобиля</h1>
+            <a href="/" class="back-btn" style="margin-left: auto;">← Назад на главную</a>
+        </div>
         <div class="status-panel">
             <div class="status-item">
                 <div class="status-indicator" id="statusIndicator"></div>
@@ -382,10 +385,6 @@
             <button class="control-btn" id="geoBtn" onclick="toggleUserLocation()">
                 📱 Моё место
             </button>
-        </div>
-        
-        <div style="margin-top: 20px; text-align: center;">
-            <a href="/" class="back-btn">← Назад на главную</a>
         </div>
     </div>
 
