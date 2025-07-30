@@ -243,6 +243,26 @@ class Database:
             return user
         return None
 
+    def is_recipient_only(self, telegram_id):
+        """Проверить, является ли пользователь только получателем уведомлений (не владельцем аккаунта)"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        # Проверяем, есть ли пользователь с таким telegram_id как получатель
+        c.execute('''
+            SELECT COUNT(*) FROM users WHERE recipient_telegram_id = ?
+        ''', (telegram_id,))
+        recipient_count = c.fetchone()[0]
+        
+        # Проверяем, есть ли пользователь с таким telegram_id как владелец
+        c.execute('''
+            SELECT COUNT(*) FROM users WHERE telegram_id = ?
+        ''', (telegram_id,))
+        owner_count = c.fetchone()[0]
+        conn.close()
+        
+        # Если он получатель, но не владелец - значит только получатель
+        return recipient_count > 0 and owner_count == 0
+
     def update_user_settings(self, telegram_id, **kwargs):
         """Обновить настройки пользователя по telegram_id (имена кнопок, радиус, координаты)"""
         if not kwargs:

@@ -74,20 +74,35 @@ def index():
         
         telegram_id = session.get('telegram_id')
         if telegram_id:
-            user = db.get_user_by_telegram_id(telegram_id)
-            buttons = user.get('buttons', [])
-            work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
-            work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
-            work_radius = user.get('work_radius', config.WORK_RADIUS)
-            is_authorized = True
-            # Получаем имя пользователя для отображения
-            user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
+            # Проверяем, является ли пользователь только получателем уведомлений
+            is_recipient_only = db.is_recipient_only(telegram_id)
+            
+            if is_recipient_only:
+                # Получатель уведомлений - показываем упрощенный интерфейс
+                buttons = []
+                work_latitude = config.WORK_LATITUDE
+                work_longitude = config.WORK_LONGITUDE
+                work_radius = config.WORK_RADIUS
+                is_authorized = True
+                user_name = "Получатель уведомлений"
+                user = None
+            else:
+                # Обычный пользователь/владелец аккаунта
+                user = db.get_user_by_telegram_id(telegram_id)
+                buttons = user.get('buttons', [])
+                work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
+                work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
+                work_radius = user.get('work_radius', config.WORK_RADIUS)
+                is_authorized = True
+                # Получаем имя пользователя для отображения
+                user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
         else:
             buttons = ['📍 Еду на работу', '🚗 Подъезжаю к дому', '⏰ Опаздываю на 10 минут']
             work_latitude = config.WORK_LATITUDE
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
             is_authorized = False
+            is_recipient_only = False
             user_name = None
         return render_template(
             'index.html',
@@ -99,6 +114,7 @@ def index():
             work_longitude=work_longitude,
             work_radius=work_radius,
             is_authorized=is_authorized,
+            is_recipient_only=is_recipient_only if telegram_id else False,
             user_name=user_name
         )
     except Exception as e:
@@ -135,6 +151,11 @@ def mobile_tracker_redirect():
 @app.route('/toggle', methods=['POST'])
 def toggle_tracking():
     """Переключение отслеживания через веб-форму"""
+    telegram_id = session.get('telegram_id')
+    if telegram_id and db.is_recipient_only(telegram_id):
+        session['flash_message'] = "Получатели уведомлений не могут управлять отслеживанием"
+        return redirect('/')
+    
     print("=== TOGGLE_TRACKING ВЫЗВАНА ===")
     try:
         print("=== В TRY БЛОКЕ ===")
@@ -196,6 +217,8 @@ def manual_arrival():
         telegram_id = session.get('telegram_id')
         if not telegram_id:
             message = "Необходимо авторизоваться через Telegram"
+        elif db.is_recipient_only(telegram_id):
+            message = "Получатели уведомлений не могут отправлять ручные уведомления"
         elif send_telegram_arrival(telegram_id):
             message = "Уведомление отправлено"
         else:
@@ -231,6 +254,9 @@ def api_status():
 def api_toggle():
     """API переключения отслеживания"""
     try:
+        telegram_id = session.get('telegram_id')
+        if telegram_id and db.is_recipient_only(telegram_id):
+            return jsonify({'success': False, 'error': 'Получатели уведомлений не могут управлять отслеживанием'}), 403
         current_status = db.get_tracking_status()
         new_status = not current_status
         db.set_tracking_status(new_status)
@@ -342,6 +368,8 @@ def api_notify():
         telegram_id = session.get('telegram_id')
         if not telegram_id:
             return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        if db.is_recipient_only(telegram_id):
+            return jsonify({'success': False, 'error': 'Получатели уведомлений не могут отправлять ручные уведомления'}), 403
         if send_telegram_arrival(telegram_id):
             return jsonify({'success': True})
         else:
@@ -440,6 +468,11 @@ def settings():
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
     telegram_id = session.get('telegram_id')
     if telegram_id:
+        # Проверяем, является ли пользователь только получателем уведомлений
+        if db.is_recipient_only(telegram_id):
+            session['flash_message'] = "Получатели уведомлений не имеют доступа к настройкам"
+            return redirect('/')
+        
         telegram_user = True
         user = db.get_user_by_telegram_id(telegram_id)
         # Обработка отвязки получателя
