@@ -83,7 +83,7 @@ def index():
             # Получаем имя пользователя для отображения
             user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
         else:
-            buttons = ['Имя 1 (введите в настройках) поднимается', 'Имя 2 (введите в настройках) поднимается']
+            buttons = ['📍 Еду на работу', '🚗 Подъезжаю к дому', '⏰ Опаздываю на 10 минут']
             work_latitude = config.WORK_LATITUDE
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS

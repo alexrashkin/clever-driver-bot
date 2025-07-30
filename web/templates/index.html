@@ -277,6 +277,43 @@ footer {
     background: rgba(45, 55, 72, 0.9);
     color: #e2e8f0;
 }
+
+/* Информационный блок */
+.info-block {
+    margin: 20px auto;
+    max-width: 400px;
+    padding: 15px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    border-left: 4px solid #6366f1;
+    text-align: center;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+.dark .info-block {
+    background: rgba(99, 102, 241, 0.2);
+    border-left-color: #818cf8;
+}
+
+.info-block-title {
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #4338ca;
+}
+
+.dark .info-block-title {
+    color: #a5b4fc;
+}
+
+.info-block-text {
+    font-size: 0.9em;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.dark .info-block-text {
+    color: #94a3b8;
+}
 </style>
 </head>
 <body>
@@ -395,6 +432,18 @@ footer {
         {% for btn in buttons %}
         <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendDynamicButton(event, {{ loop.index0 }});" {% if not is_authorized %}disabled{% endif %}>{{ btn }}</button>
         {% endfor %}
+        
+        {% if not is_authorized %}
+        <div class="info-block">
+            <div class="info-block-title">
+                💡 Это примеры кнопок
+            </div>
+            <div class="info-block-text">
+                После авторизации через Telegram вы сможете настроить до 6 собственных кнопок с любым текстом в разделе «Настройки»
+            </div>
+        </div>
+        {% endif %}
+        
         <div style="display: flex; justify-content: center;">
             <a href="/mobile_tracker.html" class="btn btn-toggle off btn{% if not is_authorized %} btn-disabled{% endif %}" onclick="return onAuthRequired(event);">
                 Резервный мобильный трекер
