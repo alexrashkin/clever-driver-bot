@@ -1,4 +1,8 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from config.settings import config
 from bot.database import Database  # Импортируем класс, а не экземпляр
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
