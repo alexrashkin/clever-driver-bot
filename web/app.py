@@ -749,6 +749,61 @@ def logout():
     session['flash_message'] = "Вы успешно вышли из системы"
     return redirect('/')
 
+@app.route('/admin/users')
+def admin_users():
+    """Администрирование пользователей"""
+    # Проверяем авторизацию и права администратора
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Необходимо авторизоваться"
+        return redirect('/login')
+    
+    # Проверяем роль
+    if telegram_id:
+        user_role = db.get_user_role(telegram_id)
+    else:
+        user_role = db.get_user_role_by_login(user_login)
+    
+    if user_role != 'admin':
+        session['flash_message'] = "Доступ запрещен. Требуются права администратора"
+        return redirect('/')
+    
+    # Получаем всех пользователей
+    users = db.get_all_users()
+    
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+def admin_delete_user(user_id):
+    """Удаление пользователя администратором"""
+    # Проверяем авторизацию и права администратора
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Необходимо авторизоваться"
+        return redirect('/login')
+    
+    # Проверяем роль
+    if telegram_id:
+        user_role = db.get_user_role(telegram_id)
+    else:
+        user_role = db.get_user_role_by_login(user_login)
+    
+    if user_role != 'admin':
+        session['flash_message'] = "Доступ запрещен"
+        return redirect('/')
+    
+    # Удаляем пользователя
+    if db.delete_user_by_id(user_id):
+        session['flash_message'] = f"Пользователь с ID {user_id} удален"
+    else:
+        session['flash_message'] = f"Ошибка удаления пользователя"
+    
+    return redirect('/admin/users')
+
 @app.route('/telegram_auth', methods=['POST', 'GET'])
 def telegram_auth():
     # Проверка подписи Telegram

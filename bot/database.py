@@ -427,6 +427,36 @@ class Database:
         """Получить роль пользователя по логину"""
         user = self.get_user_by_login(login)
         return user.get('role') if user else None
+    
+    def get_all_users(self):
+        """Получить всех пользователей для администрирования"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''
+            SELECT id, telegram_id, login, first_name, last_name, auth_type, role, created_at, last_login
+            FROM users ORDER BY created_at DESC
+        ''')
+        rows = c.fetchall()
+        columns = [desc[0] for desc in c.description]
+        conn.close()
+        
+        users = []
+        for row in rows:
+            user = dict(zip(columns, row))
+            users.append(user)
+        return users
+    
+    def delete_user_by_id(self, user_id):
+        """Удалить пользователя по ID"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('DELETE FROM users WHERE id = ?', (user_id,))
+        deleted = c.rowcount > 0
+        conn.commit()
+        conn.close()
+        if deleted:
+            logger.info(f"Пользователь с ID {user_id} удален")
+        return deleted
 
     def update_user_settings(self, telegram_id, **kwargs):
         """Обновить настройки пользователя по telegram_id (имена кнопок, радиус, координаты)"""
