@@ -221,6 +221,62 @@ a.btn {
 footer {
     flex-shrink: 0;
 }
+
+/* Панель статуса */
+.status-panel {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #f56565;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.at-work {
+    background: #48bb78;
+}
+
+.status-indicator.moving {
+    background: #ed8936;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(245, 101, 101, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 101, 101, 0);
+    }
+}
+
+/* Темная тема для статус-панели */
+.dark .status-item {
+    background: rgba(45, 55, 72, 0.9);
+    color: #e2e8f0;
+}
 </style>
 </head>
 <body>
@@ -243,6 +299,19 @@ footer {
             👤 Пользователь: <b>{{ user_name }}</b>
         </div>
         {% endif %}
+        
+        <!-- Панель статуса и времени -->
+        <div class="status-panel">
+            <div class="status-item">
+                <span>🕐</span>
+                <span id="currentTime">--:--:--</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="driverStatusIndicator"></div>
+                <span id="driverStatusText">Загрузка...</span>
+            </div>
+        </div>
+        
         <div class="status">
             Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
         </div>
@@ -293,6 +362,52 @@ footer {
       btn.textContent = '☀️';
     }
     updateLogo();
+    
+    // Функция обновления текущего времени
+    function updateCurrentTime() {
+        const now = new Date();
+        // Добавляем 3 часа для московского времени
+        const moscowTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+        const timeString = moscowTime.toTimeString().split(' ')[0]; // HH:MM:SS
+        document.getElementById('currentTime').textContent = timeString;
+    }
+    
+    // Функция обновления статуса водителя
+    function updateDriverStatus() {
+        fetch('/api/current_location')
+            .then(response => response.json())
+            .then(data => {
+                const statusIndicator = document.getElementById('driverStatusIndicator');
+                const statusText = document.getElementById('driverStatusText');
+                
+                if (data.success && data.location) {
+                    if (data.location.is_at_work) {
+                        statusIndicator.className = 'status-indicator at-work';
+                        statusText.textContent = 'Водитель ожидает';
+                    } else {
+                        statusIndicator.className = 'status-indicator moving';
+                        statusText.textContent = 'В пути';
+                    }
+                } else {
+                    statusIndicator.className = 'status-indicator';
+                    statusText.textContent = 'Нет данных';
+                }
+            })
+            .catch(error => {
+                const statusIndicator = document.getElementById('driverStatusIndicator');
+                const statusText = document.getElementById('driverStatusText');
+                statusIndicator.className = 'status-indicator';
+                statusText.textContent = 'Ошибка';
+            });
+    }
+    
+    // Запускаем обновление времени каждую секунду
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    
+    // Запускаем обновление статуса сразу и каждые 10 секунд
+    updateDriverStatus();
+    setInterval(updateDriverStatus, 10000);
     </script>
 </body>
 </html> 
