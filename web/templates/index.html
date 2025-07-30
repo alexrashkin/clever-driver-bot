@@ -417,15 +417,33 @@ footer {
         }
     }
     
-    // Ждем полной загрузки страницы
+    // Ждем полной загрузки страницы и принудительно запускаем обновления
     setTimeout(function() {
-        updateCurrentTime();
-        updateDriverStatus();
+        console.log('Запуск обновлений главной страницы...');
         
-        // Запускаем периодические обновления
-        setInterval(updateCurrentTime, 1000);
-        setInterval(updateDriverStatus, 10000);
-    }, 100);
+        // Проверяем наличие элементов
+        const timeEl = document.getElementById('currentTime');
+        const statusIndicatorEl = document.getElementById('driverStatusIndicator');
+        const statusTextEl = document.getElementById('driverStatusText');
+        
+        console.log('Элементы найдены:', {
+            time: !!timeEl,
+            indicator: !!statusIndicatorEl, 
+            statusText: !!statusTextEl
+        });
+        
+        if (timeEl && statusIndicatorEl && statusTextEl) {
+            updateCurrentTime();
+            updateDriverStatus();
+            
+            // Запускаем периодические обновления
+            setInterval(updateCurrentTime, 1000);
+            setInterval(updateDriverStatus, 10000);
+            console.log('Обновления запущены успешно!');
+        } else {
+            console.error('Не найдены элементы для обновления!');
+        }
+    }, 500);
     </script>
 </body>
 </html> 
