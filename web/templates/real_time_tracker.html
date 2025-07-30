@@ -293,6 +293,29 @@
                 background: #4a5568;
             }
         }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #2d3748;
+            font-weight: 500;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .back-btn:hover, .back-btn:focus {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+            color: #2d3748;
+        }
     </style>
 </head>
 <body>
@@ -359,6 +382,10 @@
             <button class="control-btn" id="geoBtn" onclick="toggleUserLocation()">
                 📱 Моё место
             </button>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="/" class="back-btn">← Назад на главную</a>
         </div>
     </div>
 
