@@ -317,6 +317,11 @@ footer {
             Диагностика: элементы не найдены
         </div>
         
+        <!-- Простой тест JavaScript -->
+        <script>
+        document.getElementById('diagnostic').innerHTML = '🟡 JavaScript запустился! Время: ' + new Date().toLocaleTimeString();
+        </script>
+        
         <div class="status">
             Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
         </div>
