@@ -320,6 +320,76 @@ footer {
         <!-- Простой тест JavaScript -->
         <script>
         document.getElementById('diagnostic').innerHTML = '🟡 JavaScript запустился! Время: ' + new Date().toLocaleTimeString();
+        
+        // Функция обновления времени
+        function updateCurrentTime() {
+            try {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('ru-RU', { 
+                    timeZone: 'Europe/Moscow',
+                    hour12: false 
+                });
+                const timeElement = document.getElementById('currentTime');
+                if (timeElement) {
+                    timeElement.textContent = timeString;
+                    document.getElementById('diagnostic').innerHTML += '<br>⏰ Время обновлено: ' + timeString;
+                }
+            } catch (error) {
+                document.getElementById('diagnostic').innerHTML += '<br>❌ Ошибка времени: ' + error.message;
+            }
+        }
+        
+        // Функция обновления статуса
+        function updateDriverStatus() {
+            try {
+                fetch('/api/current_location')
+                    .then(response => response.json())
+                    .then(data => {
+                        const statusIndicator = document.getElementById('driverStatusIndicator');
+                        const statusText = document.getElementById('driverStatusText');
+                        
+                        if (statusIndicator && statusText) {
+                            if (data.success && data.location) {
+                                if (data.location.is_at_work) {
+                                    statusIndicator.className = 'status-indicator at-work';
+                                    statusText.textContent = 'Водитель ожидает';
+                                } else {
+                                    statusIndicator.className = 'status-indicator moving';
+                                    statusText.textContent = 'В пути';
+                                }
+                                document.getElementById('diagnostic').innerHTML += '<br>📡 Статус обновлен: ' + statusText.textContent;
+                            } else {
+                                statusIndicator.className = 'status-indicator';
+                                statusText.textContent = 'Нет данных';
+                                document.getElementById('diagnostic').innerHTML += '<br>📡 Нет данных от API';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        const statusIndicator = document.getElementById('driverStatusIndicator');
+                        const statusText = document.getElementById('driverStatusText');
+                        if (statusIndicator && statusText) {
+                            statusIndicator.className = 'status-indicator';
+                            statusText.textContent = 'Ошибка подключения';
+                        }
+                        document.getElementById('diagnostic').innerHTML += '<br>❌ Ошибка API: ' + error.message;
+                    });
+            } catch (error) {
+                document.getElementById('diagnostic').innerHTML += '<br>❌ Ошибка статуса: ' + error.message;
+            }
+        }
+        
+        // Запускаем обновления
+        setTimeout(function() {
+            updateCurrentTime();
+            updateDriverStatus();
+            
+            // Периодические обновления
+            setInterval(updateCurrentTime, 1000);
+            setInterval(updateDriverStatus, 10000);
+            
+            document.getElementById('diagnostic').innerHTML += '<br>✅ Обновления запущены!';
+        }, 100);
         </script>
         
         <div class="status">
