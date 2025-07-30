@@ -365,79 +365,67 @@ footer {
     
     // Функция обновления текущего времени
     function updateCurrentTime() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('ru-RU', { 
-            timeZone: 'Europe/Moscow',
-            hour12: false 
-        });
-        const timeElement = document.getElementById('currentTime');
-        if (timeElement) {
-            timeElement.textContent = timeString;
+        try {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ru-RU', { 
+                timeZone: 'Europe/Moscow',
+                hour12: false 
+            });
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        } catch (error) {
+            console.error('Ошибка обновления времени:', error);
         }
     }
     
     // Функция обновления статуса водителя
     function updateDriverStatus() {
-        console.log('Обновляем статус водителя...');
-        fetch('/api/current_location')
-            .then(response => {
-                console.log('Ответ от сервера:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Данные от API:', data);
-                const statusIndicator = document.getElementById('driverStatusIndicator');
-                const statusText = document.getElementById('driverStatusText');
-                
-                if (statusIndicator && statusText) {
-                    if (data.success && data.location) {
-                        if (data.location.is_at_work) {
-                            statusIndicator.className = 'status-indicator at-work';
-                            statusText.textContent = 'Водитель ожидает';
+        try {
+            fetch('/api/current_location')
+                .then(response => response.json())
+                .then(data => {
+                    const statusIndicator = document.getElementById('driverStatusIndicator');
+                    const statusText = document.getElementById('driverStatusText');
+                    
+                    if (statusIndicator && statusText) {
+                        if (data.success && data.location) {
+                            if (data.location.is_at_work) {
+                                statusIndicator.className = 'status-indicator at-work';
+                                statusText.textContent = 'Водитель ожидает';
+                            } else {
+                                statusIndicator.className = 'status-indicator moving';
+                                statusText.textContent = 'В пути';
+                            }
                         } else {
-                            statusIndicator.className = 'status-indicator moving';
-                            statusText.textContent = 'В пути';
+                            statusIndicator.className = 'status-indicator';
+                            statusText.textContent = 'Нет данных';
                         }
-                    } else {
-                        statusIndicator.className = 'status-indicator';
-                        statusText.textContent = 'Нет данных';
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при обновлении статуса:', error);
-                const statusIndicator = document.getElementById('driverStatusIndicator');
-                const statusText = document.getElementById('driverStatusText');
-                if (statusIndicator && statusText) {
-                    statusIndicator.className = 'status-indicator';
-                    statusText.textContent = 'Ошибка';
-                }
-            });
+                })
+                .catch(error => {
+                    const statusIndicator = document.getElementById('driverStatusIndicator');
+                    const statusText = document.getElementById('driverStatusText');
+                    if (statusIndicator && statusText) {
+                        statusIndicator.className = 'status-indicator';
+                        statusText.textContent = 'Ошибка подключения';
+                    }
+                });
+        } catch (error) {
+            console.error('Ошибка при обновлении статуса:', error);
+        }
     }
     
-    // Запускаем функции после загрузки DOM
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM загружен, запускаем обновления...');
-        // Запускаем обновление времени каждую секунду
+    // Ждем полной загрузки страницы
+    setTimeout(function() {
         updateCurrentTime();
-        setInterval(updateCurrentTime, 1000);
+        updateDriverStatus();
         
-        // Запускаем обновление статуса сразу и каждые 10 секунд
-        updateDriverStatus();
-        setInterval(updateDriverStatus, 10000);
-    });
-    
-    // Если DOM уже загружен, запускаем сразу
-    if (document.readyState === 'loading') {
-        // DOM еще не загружен
-    } else {
-        // DOM уже загружен
-        console.log('DOM уже загружен, запускаем обновления сразу...');
-        updateCurrentTime();
+        // Запускаем периодические обновления
         setInterval(updateCurrentTime, 1000);
-        updateDriverStatus();
         setInterval(updateDriverStatus, 10000);
-    }
+    }, 100);
     </script>
 </body>
 </html> 
