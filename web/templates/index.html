@@ -301,7 +301,7 @@ footer {
         {% endif %}
         
         <!-- Панель статуса и времени -->
-        <div class="status-panel">
+        <div class="status-panel" style="border: 2px solid red; margin: 10px 0; padding: 10px;">
             <div class="status-item">
                 <span>🕐</span>
                 <span id="currentTime">--:--:--</span>
@@ -310,6 +310,11 @@ footer {
                 <div class="status-indicator" id="driverStatusIndicator"></div>
                 <span id="driverStatusText">Загрузка...</span>
             </div>
+        </div>
+        
+        <!-- Диагностика -->
+        <div id="diagnostic" style="background: yellow; padding: 10px; margin: 10px 0;">
+            Диагностика: элементы не найдены
         </div>
         
         <div class="status">
@@ -425,12 +430,21 @@ footer {
         const timeEl = document.getElementById('currentTime');
         const statusIndicatorEl = document.getElementById('driverStatusIndicator');
         const statusTextEl = document.getElementById('driverStatusText');
+        const diagnosticEl = document.getElementById('diagnostic');
         
-        console.log('Элементы найдены:', {
+        const elementsFound = {
             time: !!timeEl,
             indicator: !!statusIndicatorEl, 
             statusText: !!statusTextEl
-        });
+        };
+        
+        console.log('Элементы найдены:', elementsFound);
+        
+        // Обновляем диагностику
+        if (diagnosticEl) {
+            diagnosticEl.innerHTML = 'Диагностика: ' + JSON.stringify(elementsFound) + 
+                '<br>Время выполнения: ' + new Date().toLocaleTimeString();
+        }
         
         if (timeEl && statusIndicatorEl && statusTextEl) {
             updateCurrentTime();
@@ -440,8 +454,17 @@ footer {
             setInterval(updateCurrentTime, 1000);
             setInterval(updateDriverStatus, 10000);
             console.log('Обновления запущены успешно!');
+            
+            if (diagnosticEl) {
+                diagnosticEl.style.background = 'lightgreen';
+                diagnosticEl.innerHTML += '<br>✅ Обновления запущены успешно!';
+            }
         } else {
             console.error('Не найдены элементы для обновления!');
+            if (diagnosticEl) {
+                diagnosticEl.style.background = 'lightcoral';
+                diagnosticEl.innerHTML += '<br>❌ Элементы не найдены!';
+            }
         }
     }, 500);
     </script>
