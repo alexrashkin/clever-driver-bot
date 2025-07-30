@@ -64,33 +64,32 @@ async def monitor_database(application: Application):
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
                         if db.get_tracking_status():
-                            # Отправляем уведомления всем авторизованным пользователям
+                            # Отправляем уведомления всем пользователям (админы, водители и получатели)
                             conn = db.get_connection()
                             cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id, recipient_telegram_id FROM users")
+                            cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
                             users = cursor.fetchall()
                             conn.close()
                             
                             notification = create_work_notification()
                             sent_count = 0
                             
-                            for user_telegram_id, recipient_telegram_id in users:
-                                recipient_id = recipient_telegram_id or user_telegram_id
+                            for (telegram_id,) in users:
                                 try:
-                                    logger.info(f"DEBUG: Отправляю уведомление пользователю {recipient_id}: '{notification}'")
+                                    logger.info(f"DEBUG: Отправляю уведомление пользователю {telegram_id}: '{notification}'")
                                     await application.bot.send_message(
-                                        chat_id=recipient_id,
+                                        chat_id=telegram_id,
                                         text=notification
                                     )
                                     sent_count += 1
-                                    logger.info(f"Автоматическое уведомление отправлено пользователю {recipient_id}")
+                                    logger.info(f"Автоматическое уведомление отправлено пользователю {telegram_id}")
                                 except Exception as e:
-                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {recipient_id}: {e}")
+                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {telegram_id}: {e}")
                             
                             if sent_count > 0:
                                 logger.info(f"Автоматические уведомления отправлены {sent_count} пользователям для записи ID: {curr_id}")
                             else:
-                                logger.warning("Нет авторизованных пользователей для отправки автоматических уведомлений")
+                                logger.warning("Нет пользователей с ролями для отправки автоматических уведомлений")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
                 # Только если был переход с 1 на 0 (выезд из радиуса)
@@ -102,33 +101,32 @@ async def monitor_database(application: Application):
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
                         if db.get_tracking_status():
-                            # Отправляем уведомления о выезде всем авторизованным пользователям
+                            # Отправляем уведомления о выезде всем пользователям (админы, водители и получатели)
                             conn = db.get_connection()
                             cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id, recipient_telegram_id FROM users")
+                            cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
                             users = cursor.fetchall()
                             conn.close()
                             
                             notification = "Выехали"
                             sent_count = 0
                             
-                            for user_telegram_id, recipient_telegram_id in users:
-                                recipient_id = recipient_telegram_id or user_telegram_id
+                            for (telegram_id,) in users:
                                 try:
-                                    logger.info(f"DEBUG: Отправляю уведомление о выезде пользователю {recipient_id}: '{notification}'")
+                                    logger.info(f"DEBUG: Отправляю уведомление о выезде пользователю {telegram_id}: '{notification}'")
                                     await application.bot.send_message(
-                                        chat_id=recipient_id,
+                                        chat_id=telegram_id,
                                         text=notification
                                     )
                                     sent_count += 1
-                                    logger.info(f"Автоматическое уведомление 'Выехали' отправлено пользователю {recipient_id}")
+                                    logger.info(f"Автоматическое уведомление 'Выехали' отправлено пользователю {telegram_id}")
                                 except Exception as e:
-                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {recipient_id}: {e}")
+                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {telegram_id}: {e}")
                             
                             if sent_count > 0:
                                 logger.info(f"Автоматические уведомления о выезде отправлены {sent_count} пользователям для записи ID: {curr_id}")
                             else:
-                                logger.warning("Нет авторизованных пользователей для отправки автоматических уведомлений о выезде")
+                                logger.warning("Нет пользователей с ролями для отправки автоматических уведомлений о выезде")
                     else:
                         logger.info(f"Переход из радиуса, но уведомление не отправлено: прошло меньше 10 секунд")
             await asyncio.sleep(2)
