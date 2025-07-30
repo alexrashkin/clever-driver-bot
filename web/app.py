@@ -597,11 +597,6 @@ def real_time_tracker():
         logger.error(f"Ошибка загрузки страницы трекера: {e}")
         return 'Ошибка загрузки страницы', 500
 
-@app.route('/test_time')
-def test_time():
-    """Тестовая страница для проверки JavaScript и API"""
-    return render_template('test_time.html')
-
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
     print(f"📍 Адрес: http://{config.WEB_HOST}:{config.WEB_PORT}")
