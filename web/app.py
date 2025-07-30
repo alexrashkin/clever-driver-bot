@@ -20,12 +20,19 @@ app.secret_key = config.WEB_SECRET_KEY
 # Создаем новый экземпляр базы данных
 db = Database()
 
-def send_telegram_arrival(user_telegram_id):
+def send_telegram_arrival(user_id):
     """Отправка ручного уведомления о прибытии всем пользователям с ролями."""
     # Проверяем, что отправитель имеет права отправлять уведомления
-    user_role = db.get_user_role(user_telegram_id)
+    # user_id может быть telegram_id (число) или login (строка)
+    if isinstance(user_id, (int, str)) and str(user_id).isdigit():
+        # Это telegram_id
+        user_role = db.get_user_role(int(user_id))
+    else:
+        # Это login
+        user_role = db.get_user_role_by_login(user_id)
+    
     if user_role not in ['admin', 'driver']:
-        logger.error(f"Пользователь {user_telegram_id} с ролью {user_role} не может отправлять ручные уведомления")
+        logger.error(f"Пользователь {user_id} с ролью {user_role} не может отправлять ручные уведомления")
         return False
     
     token = config.TELEGRAM_TOKEN
@@ -76,19 +83,36 @@ def index():
         # Получаем flash сообщение из сессии (если есть) и сразу удаляем его
         message = session.pop('flash_message', None)
         
+        # Проверяем авторизацию (Telegram или логин/пароль)
         telegram_id = session.get('telegram_id')
+        user_login = session.get('user_login')
+        
         if telegram_id:
-            # Получаем роль пользователя
+            # Авторизация через Telegram
             user_role = db.get_user_role(telegram_id)
             
             # Если роли нет - отправляем на выбор роли
             if not user_role:
                 return redirect('/select_role')
             
-            # Получаем информацию о пользователе
             user = db.get_user_by_telegram_id(telegram_id)
             is_authorized = True
             user_name = user.get('first_name') or user.get('username') or f"ID: {telegram_id}"
+            auth_type = 'telegram'
+        elif user_login:
+            # Авторизация через логин/пароль
+            user_role = db.get_user_role_by_login(user_login)
+            
+            if not user_role:
+                # Пользователь удален или роль сброшена
+                session.pop('user_login', None)
+                return redirect('/login')
+            
+            user = db.get_user_by_login(user_login)
+            is_authorized = True
+            user_name = user.get('first_name') or user.get('last_name') or user_login
+            auth_type = 'login'
+            telegram_id = None  # Для совместимости
             
             if user_role == 'recipient':
                 # Получатель уведомлений - упрощенный интерфейс
@@ -143,6 +167,7 @@ def index():
             is_recipient_only=is_recipient_only if telegram_id else False,
             is_admin=is_admin if telegram_id else False,
             is_driver=is_driver if telegram_id else False,
+            auth_type=auth_type if is_authorized else None,
             user_name=user_name
         )
     except Exception as e:
@@ -179,12 +204,23 @@ def mobile_tracker_redirect():
 @app.route('/toggle', methods=['POST'])
 def toggle_tracking():
     """Переключение отслеживания через веб-форму"""
+    # Проверяем авторизацию
     telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Необходимо авторизоваться"
+        return redirect('/login')
+    
+    # Получаем роль пользователя
     if telegram_id:
         user_role = db.get_user_role(telegram_id)
-        if user_role == 'recipient':
-            session['flash_message'] = "Получатели уведомлений не могут управлять отслеживанием"
-            return redirect('/')
+    else:
+        user_role = db.get_user_role_by_login(user_login)
+    
+    if user_role == 'recipient':
+        session['flash_message'] = "Получатели уведомлений не могут управлять отслеживанием"
+        return redirect('/')
     
     print("=== TOGGLE_TRACKING ВЫЗВАНА ===")
     try:
@@ -245,17 +281,28 @@ def manual_arrival():
     """Ручное уведомление о прибытии через веб-форму"""
     try:
         telegram_id = session.get('telegram_id')
-        if not telegram_id:
-            message = "Необходимо авторизоваться через Telegram"
-        elif db.get_user_role(telegram_id) == 'recipient':
-            message = "Получатели уведомлений не могут отправлять ручные уведомления"
-        elif send_telegram_arrival(telegram_id):
-            message = "Уведомление отправлено"
+        user_login = session.get('user_login')
+        
+        if not telegram_id and not user_login:
+            message = "Необходимо авторизоваться"
         else:
-            if send_alternative_notification():
-                message = "Уведомление отправлено (альтернативный способ)"
+            # Получаем роль пользователя
+            if telegram_id:
+                user_role = db.get_user_role(telegram_id)
+                user_id = telegram_id
             else:
-                message = "Ошибка отправки уведомления"
+                user_role = db.get_user_role_by_login(user_login)
+                user_id = user_login
+            
+            if user_role == 'recipient':
+                message = "Получатели уведомлений не могут отправлять ручные уведомления"
+            elif send_telegram_arrival(user_id):
+                message = "Уведомление отправлено"
+            else:
+                if send_alternative_notification():
+                    message = "Уведомление отправлено (альтернативным способом)"
+                else:
+                    message = "Ошибка отправки уведомления"
         
         # Сохраняем сообщение в сессии и делаем редирект
         session['flash_message'] = message
@@ -627,6 +674,76 @@ def static_files(filename):
         response.headers['Expires'] = '0'
     
     return response
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """Регистрация нового пользователя"""
+    if request.method == 'POST':
+        login = request.form.get('login', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        first_name = request.form.get('first_name', '').strip() or None
+        last_name = request.form.get('last_name', '').strip() or None
+        role = request.form.get('role', 'driver')
+        
+        # Валидация
+        if not login or len(login) < 3:
+            return render_template('register.html', error="Логин должен содержать минимум 3 символа")
+        
+        if not password or len(password) < 6:
+            return render_template('register.html', error="Пароль должен содержать минимум 6 символов")
+        
+        if password != confirm_password:
+            return render_template('register.html', error="Пароли не совпадают")
+        
+        if role not in ['admin', 'driver', 'recipient']:
+            return render_template('register.html', error="Некорректная роль")
+        
+        # Проверка логина на допустимые символы
+        import re
+        if not re.match(r'^[a-zA-Z0-9_-]+$', login):
+            return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -")
+        
+        # Создание пользователя
+        success, result = db.create_user_with_login(login, password, first_name, last_name, role)
+        
+        if success:
+            # Автоматический вход после регистрации
+            session['user_login'] = login
+            session.permanent = True
+            return redirect('/')
+        else:
+            return render_template('register.html', error=result)
+    
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Вход в систему"""
+    if request.method == 'POST':
+        login = request.form.get('login', '').strip()
+        password = request.form.get('password', '')
+        
+        if not login or not password:
+            return render_template('login.html', error="Введите логин и пароль")
+        
+        # Проверяем логин и пароль
+        if db.verify_password(login, password):
+            session['user_login'] = login
+            session.permanent = True
+            return redirect('/')
+        else:
+            return render_template('login.html', error="Неверный логин или пароль")
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Выход из системы"""
+    session.pop('user_login', None)
+    session.pop('telegram_id', None)
+    session['flash_message'] = "Вы успешно вышли из системы"
+    return redirect('/')
 
 @app.route('/telegram_auth', methods=['POST', 'GET'])
 def telegram_auth():
