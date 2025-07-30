@@ -56,6 +56,9 @@ class Database:
                 username TEXT,
                 first_name TEXT,
                 last_name TEXT,
+                login TEXT UNIQUE,
+                password_hash TEXT,
+                auth_type TEXT DEFAULT 'telegram',
                 role TEXT DEFAULT NULL,
                 buttons TEXT DEFAULT NULL,
                 work_latitude REAL,
@@ -93,6 +96,14 @@ class Database:
         # Миграция: добавляем поле role, если его нет
         if 'role' not in columns:
             c.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT NULL")
+        
+        # Миграция: добавляем поля для логин/пароль авторизации
+        if 'login' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN login TEXT UNIQUE")
+        if 'password_hash' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+        if 'auth_type' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN auth_type TEXT DEFAULT 'telegram'")
         
         # Миграция: удаляем поле recipient_telegram_id, если оно есть (больше не используется)
         if 'recipient_telegram_id' in columns:
@@ -338,6 +349,84 @@ class Database:
         """Проверить, является ли пользователь только получателем уведомлений"""
         role = self.get_user_role(telegram_id)
         return role == 'recipient'
+    
+    def create_user_with_login(self, login, password, first_name=None, last_name=None, role='driver'):
+        """Создать пользователя с логином и паролем"""
+        import hashlib
+        import secrets
+        import json
+        
+        # Проверяем, что пользователь с таким логином не существует
+        if self.get_user_by_login(login):
+            return False, "Пользователь с таким логином уже существует"
+        
+        # Хешируем пароль с солью
+        salt = secrets.token_hex(16)
+        password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+        password_hash_hex = salt + password_hash.hex()
+        
+        # Дефолтные кнопки
+        default_buttons = json.dumps([
+            '📍 Еду на работу',
+            '🚗 Подъезжаю к дому'
+        ], ensure_ascii=False)
+        
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        try:
+            c.execute('''
+                INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, buttons)
+                VALUES (?, ?, ?, ?, 'login', ?, ?)
+            ''', (login, password_hash_hex, first_name, last_name, role, default_buttons))
+            conn.commit()
+            user_id = c.lastrowid
+            conn.close()
+            logger.info(f"Создан пользователь с логином: {login}")
+            return True, user_id
+        except sqlite3.IntegrityError:
+            conn.close()
+            return False, "Пользователь с таким логином уже существует"
+    
+    def get_user_by_login(self, login):
+        """Получить пользователя по логину"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''
+            SELECT * FROM users WHERE login = ?
+        ''', (login,))
+        row = c.fetchone()
+        columns = [desc[0] for desc in c.description]
+        conn.close()
+        if row:
+            user = dict(zip(columns, row))
+            import json
+            try:
+                user['buttons'] = json.loads(user['buttons']) if user['buttons'] else []
+            except Exception:
+                user['buttons'] = []
+            return user
+        return None
+    
+    def verify_password(self, login, password):
+        """Проверить пароль пользователя"""
+        user = self.get_user_by_login(login)
+        if not user or not user.get('password_hash'):
+            return False
+        
+        import hashlib
+        password_hash_hex = user['password_hash']
+        salt = password_hash_hex[:32]  # Первые 32 символа - это соль
+        stored_hash = password_hash_hex[32:]  # Остальное - хеш
+        
+        # Хешируем введенный пароль с той же солью
+        computed_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+        
+        return computed_hash.hex() == stored_hash
+    
+    def get_user_role_by_login(self, login):
+        """Получить роль пользователя по логину"""
+        user = self.get_user_by_login(login)
+        return user.get('role') if user else None
 
     def update_user_settings(self, telegram_id, **kwargs):
         """Обновить настройки пользователя по telegram_id (имена кнопок, радиус, координаты)"""

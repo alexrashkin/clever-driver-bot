@@ -320,20 +320,26 @@ footer {
     <div class="top-nav">
         <a href="/about" class="top-link nav-btn">О сервисе</a>
         <a href="/tracker" class="top-link nav-btn">Трекер</a>
-        {% if is_recipient_only %}
-        <!-- Получатель уведомлений - показываем только основные ссылки -->
-        <span class="top-link nav-btn" style="color: #22c55e; font-weight: 600;">📱 Получатель</span>
-        {% elif is_admin %}
-        <!-- Администратор - показываем полные настройки -->
-        <a href="/settings" class="top-link nav-btn">Настройки</a>
-        <span class="top-link nav-btn" style="color: #ef4444; font-weight: 600;">👑 Админ</span>
-        {% elif is_driver %}
-        <!-- Водитель - стандартные настройки -->
-        <a href="/settings" class="top-link nav-btn">Настройки</a>
-        <span class="top-link nav-btn" style="color: #3b82f6; font-weight: 600;">🚗 Водитель</span>
+        {% if is_authorized %}
+            {% if is_recipient_only %}
+            <!-- Получатель уведомлений - показываем только основные ссылки -->
+            <span class="top-link nav-btn" style="color: #22c55e; font-weight: 600;">📱 Получатель</span>
+            {% elif is_admin %}
+            <!-- Администратор - показываем полные настройки -->
+            <a href="/settings" class="top-link nav-btn">Настройки</a>
+            <span class="top-link nav-btn" style="color: #ef4444; font-weight: 600;">👑 Админ</span>
+            {% elif is_driver %}
+            <!-- Водитель - стандартные настройки -->
+            <a href="/settings" class="top-link nav-btn">Настройки</a>
+            <span class="top-link nav-btn" style="color: #3b82f6; font-weight: 600;">🚗 Водитель</span>
+            {% endif %}
+            <!-- Кнопка выхода для всех авторизованных -->
+            <a href="/logout" class="top-link nav-btn" style="color: #dc2626;">Выход</a>
         {% else %}
         <!-- Неавторизованный пользователь -->
-        <a href="/settings" class="top-link nav-btn">Войти через Telegram</a>
+        <a href="/login" class="top-link nav-btn">Вход</a>
+        <a href="/register" class="top-link nav-btn">Регистрация</a>
+        <a href="/settings" class="top-link nav-btn">Telegram</a>
         {% endif %}
         <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
     </div>
