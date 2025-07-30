@@ -1,5 +1,5 @@
 // Service Worker для фонового отслеживания
-const CACHE_NAME = 'driver-tracker-v1';
+const CACHE_NAME = 'driver-tracker-v2';
 const SERVER_URL = self.location.origin; // Динамический URL вместо localhost
 
 // Установка Service Worker
@@ -11,7 +11,21 @@ self.addEventListener('install', (event) => {
 // Активация Service Worker
 self.addEventListener('activate', (event) => {
     console.log('Service Worker активирован');
-    event.waitUntil(self.clients.claim());
+    event.waitUntil(
+        // Очищаем старые кеши при обновлении
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Удаляем старый кеш:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => {
+            return self.clients.claim();
+        })
+    );
 });
 
 // Обработка push-уведомлений

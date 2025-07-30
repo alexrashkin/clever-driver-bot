@@ -607,6 +607,27 @@ def settings():
 def about():
     return render_template('about.html')
 
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Обработка статических файлов с правильными заголовками кеширования"""
+    response = make_response(send_from_directory('static', filename))
+    
+    # Устанавливаем заголовки кеширования для принудительного обновления
+    if filename.endswith(('.js', '.css')):
+        # Для JS и CSS файлов - короткое кеширование с принудительной валидацией
+        response.headers['Cache-Control'] = 'public, max-age=300, must-revalidate'
+        response.headers['ETag'] = f'"{hash(filename + str(datetime.now().timestamp()))}"'
+    elif filename.endswith(('.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg')):
+        # Для изображений - более длительное кеширование
+        response.headers['Cache-Control'] = 'public, max-age=3600'
+    else:
+        # Для остальных файлов - без кеширования
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    
+    return response
+
 @app.route('/telegram_auth', methods=['POST', 'GET'])
 def telegram_auth():
     # Проверка подписи Telegram
