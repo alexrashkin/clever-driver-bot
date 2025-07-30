@@ -254,7 +254,7 @@ footer {
                 {% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание
             </button>
         </form>
-        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendManualNotification(event);" {% if not is_authorized %}disabled{% endif %}>Ожидаю</button>
+        <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendManualNotification(event);" {% if not is_authorized %}disabled{% endif %}>Ожидаю у подъезда</button>
         {% for btn in buttons %}
         <button class="btn btn-manual{% if not is_authorized %} btn-disabled{% endif %}" onclick="return sendDynamicButton(event, {{ loop.index0 }});" {% if not is_authorized %}disabled{% endif %}>{{ btn }}</button>
         {% endfor %}
