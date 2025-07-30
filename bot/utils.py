@@ -1,6 +1,6 @@
 import math
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from config.settings import config
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,6 @@ def get_greeting():
     """
     Получение приветствия в зависимости от времени суток (по системному времени сервера, который уже в Europe/Moscow)
     """
-    from datetime import datetime
     import logging
     now = datetime.now()
     current_hour = now.hour
@@ -67,17 +66,23 @@ def format_distance(distance):
 
 def format_timestamp(timestamp):
     """
-    Форматирование временной метки
+    Форматирование временной метки (конвертация в московское время +3 часа)
     """
     if isinstance(timestamp, str):
         try:
             dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
         except:
-            return timestamp
+            try:
+                # Попытка парсинга в формате SQLite
+                dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            except:
+                return timestamp
     else:
         dt = timestamp
     
-    return dt.strftime("%d.%m.%Y %H:%M:%S")
+    # Добавляем 3 часа для московского времени
+    dt_moscow = dt + timedelta(hours=3)
+    return dt_moscow.strftime("%d.%m.%Y %H:%M:%S")
 
 def create_location_message(latitude, longitude, distance=None, is_at_work=False):
     """

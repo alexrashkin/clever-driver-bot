@@ -4,7 +4,7 @@ from bot.database import Database  # Импортируем класс, а не 
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
 import logging
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import hashlib
 import hmac
@@ -563,7 +563,7 @@ def current_location():
                     'distance_to_work': distance,
                     'is_at_work': bool(is_at_work),
                     'timestamp': timestamp,
-                    'formatted_time': datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").strftime("%H:%M:%S")
+                    'formatted_time': (datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S") + timedelta(hours=3)).strftime("%H:%M:%S")
                 },
                 'work_zone': {
                     'latitude': work_lat,
