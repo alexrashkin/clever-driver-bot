@@ -94,9 +94,11 @@ def index():
         if telegram_id:
             # Авторизация через Telegram
             user_role = db.get_user_role(telegram_id)
+            logger.info(f"🔍 INDEX: telegram_id={telegram_id}, получена роль: {user_role}")
             
             # Если роли нет - отправляем на выбор роли
             if not user_role:
+                logger.info(f"🔍 INDEX: роли нет, перенаправляем на /select_role")
                 return redirect('/select_role')
             
             user = db.get_user_by_telegram_id(telegram_id)
@@ -859,26 +861,32 @@ def telegram_auth():
     first_name = auth_data.get('first_name')
     last_name = auth_data.get('last_name')
     
+    logger.info(f"🔍 TELEGRAM_AUTH: telegram_id={telegram_id}, username={username}, first_name={first_name}")
+    
     # Проверяем, существует ли пользователь
     existing_user = db.get_user_by_telegram_id(telegram_id)
     
     if not existing_user:
         # Создаем пользователя только если его нет
         db.create_user(telegram_id, username, first_name, last_name)
-        logger.info(f"Создан новый пользователь: {telegram_id}")
+        logger.info(f"✅ Создан новый пользователь: {telegram_id}")
     else:
-        logger.info(f"Пользователь уже существует: {telegram_id}, роль: {existing_user.get('role')}")
+        logger.info(f"✅ Пользователь уже существует: {telegram_id}, роль: {existing_user.get('role')}")
     
     session['telegram_id'] = telegram_id
     session.permanent = True
     
     # Проверяем, есть ли у пользователя роль
     user_role = db.get_user_role(telegram_id)
+    logger.info(f"🔍 TELEGRAM_AUTH: получена роль: {user_role}")
+    
     if not user_role:
         # Если роли нет - отправляем на страницу выбора роли
+        logger.info(f"🔍 TELEGRAM_AUTH: роли нет, перенаправляем на /select_role")
         return redirect(url_for('select_role'))
     else:
         # Если роль есть - отправляем на главную или в настройки
+        logger.info(f"🔍 TELEGRAM_AUTH: роль есть ({user_role}), перенаправляем на /")
         return redirect(url_for('index'))
 
 @app.route('/bind_telegram', methods=['POST', 'GET'])
