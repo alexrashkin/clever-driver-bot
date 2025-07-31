@@ -22,7 +22,7 @@ app = Flask(__name__)
 app.secret_key = config.WEB_SECRET_KEY
 
 # Создаем новый экземпляр базы данных
-db = Database()
+db = Database("../driver.db")
 
 def send_telegram_arrival(user_id):
     """Отправка ручного уведомления о прибытии всем пользователям с ролями."""
