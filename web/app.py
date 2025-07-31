@@ -13,6 +13,18 @@ import pytz
 import hashlib
 import hmac
 import time as pytime
+import json
+import logging
+import os
+import sys
+import time
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, make_response, send_from_directory
+from werkzeug.utils import secure_filename
+import sqlite3
+import requests
+import asyncio
+import threading
 
 # Настройка логирования
 logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
@@ -77,6 +89,86 @@ def send_alternative_notification():
     except Exception as e:
         logger.error(f"Ошибка альтернативного уведомления: {e}")
         return False
+
+def send_telegram_code(telegram_contact, code):
+    """Отправить код подтверждения через Telegram бота"""
+    try:
+        # Определяем, что передано: username или номер телефона
+        if telegram_contact.startswith('@'):
+            # Username - нужно найти telegram_id
+            username = telegram_contact[1:]  # Убираем @
+        elif telegram_contact.startswith('+'):
+            # Номер телефона - пока что не поддерживается
+            return False, "Отправка кодов на номер телефона пока не поддерживается. Используйте username (@username)"
+        else:
+            # Предполагаем, что это username без @
+            username = telegram_contact
+        
+        # Ищем пользователя по username
+        user_info = find_telegram_user_by_username(username)
+        if not user_info:
+            return False, f"Пользователь @{username} не найден. Проверьте правильность username"
+        
+        telegram_id = user_info['id']
+        
+        # Отправляем сообщение через Telegram Bot API
+        url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
+        message_text = f"""🔐 Код подтверждения для привязки аккаунта
+
+Ваш код: **{code}**
+
+Введите этот код на странице привязки для завершения процесса.
+
+⚠️ Не передавайте этот код никому!"""
+        
+        data = {
+            'chat_id': telegram_id,
+            'text': message_text,
+            'parse_mode': 'Markdown'
+        }
+        
+        response = requests.post(url, json=data, timeout=10)
+        
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('ok'):
+                logger.info(f"Код {code} отправлен пользователю {telegram_id} (@{username})")
+                return True, "Код отправлен в Telegram"
+            else:
+                error_msg = result.get('description', 'Неизвестная ошибка')
+                logger.error(f"Ошибка отправки кода: {error_msg}")
+                return False, f"Ошибка отправки: {error_msg}"
+        else:
+            logger.error(f"HTTP ошибка {response.status_code} при отправке кода")
+            return False, f"Ошибка отправки (HTTP {response.status_code})"
+        
+    except Exception as e:
+        logger.error(f"Ошибка отправки кода: {e}")
+        return False, f"Ошибка отправки кода: {e}"
+
+def find_telegram_user_by_username(username):
+    """Найти пользователя Telegram по username"""
+    try:
+        # Используем Telegram Bot API для поиска пользователя
+        url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getChat"
+        params = {"chat_id": f"@{username}"}
+        
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('ok'):
+                chat = data.get('result', {})
+                return {
+                    'id': chat.get('id'),
+                    'username': chat.get('username'),
+                    'first_name': chat.get('first_name'),
+                    'last_name': chat.get('last_name')
+                }
+        
+        return None
+    except Exception as e:
+        logger.error(f"Ошибка поиска пользователя по username {username}: {e}")
+        return None
 
 @app.route('/')
 def index():
@@ -1273,9 +1365,14 @@ def bind_telegram_form():
         session['telegram_bind_code'] = code
         session['telegram_contact'] = telegram_contact
         
-        # Отправляем код через бота (здесь нужно будет реализовать)
-        # Пока что просто показываем код для тестирования
-        message = f"Код подтверждения: {code} (для тестирования)"
+        # Отправляем код через Telegram
+        success, message = send_telegram_code(telegram_contact, code)
+        
+        if success:
+            message = f"✅ Код подтверждения отправлен в Telegram"
+        else:
+            # Если отправка не удалась, показываем код на странице для тестирования
+            message = f"⚠️ {message}. Код для тестирования: {code}"
         
         return render_template('bind_telegram_form.html', 
                              telegram_contact=telegram_contact,
@@ -1298,11 +1395,25 @@ def bind_telegram_form():
                                  message="Неверный код подтверждения")
         
         # Код верный - привязываем аккаунт
-        # Здесь нужно будет получить telegram_id по contact
-        # Пока что используем заглушку
-        telegram_id = 123456789  # Заглушка
+        # Получаем telegram_id по contact
+        if saved_contact.startswith('@'):
+            username = saved_contact[1:]
+        else:
+            username = saved_contact
         
-        success, message = db.bind_telegram_to_user(user_login, telegram_id, None, None, None)
+        user_info = find_telegram_user_by_username(username)
+        if not user_info:
+            return render_template('bind_telegram_form.html', 
+                                 telegram_contact=saved_contact,
+                                 error=True, 
+                                 message="Пользователь не найден. Попробуйте еще раз")
+        
+        telegram_id = user_info['id']
+        username = user_info['username']
+        first_name = user_info['first_name']
+        last_name = user_info['last_name']
+        
+        success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
         
         if success:
             # Очищаем сессию
@@ -1339,9 +1450,13 @@ def resend_telegram_code():
     session['telegram_bind_code'] = code
     session['telegram_contact'] = telegram_contact
     
-    # Отправляем код через бота (здесь нужно будет реализовать)
-    # Пока что просто возвращаем успех
-    return jsonify({'success': True, 'message': 'Код отправлен повторно'})
+    # Отправляем код через Telegram
+    success, message = send_telegram_code(telegram_contact, code)
+    
+    if success:
+        return jsonify({'success': True, 'message': 'Код отправлен повторно'})
+    else:
+        return jsonify({'success': False, 'message': message})
 
 @app.route('/telegram_login')
 def telegram_login():
