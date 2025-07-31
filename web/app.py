@@ -798,6 +798,7 @@ def register():
         
         if success:
             # Автоматический вход после регистрации
+            session.clear()  # Очищаем старую сессию
             session['user_login'] = login
             session.permanent = True
             logger.info(f"🔍 REGISTER: пользователь {login} успешно создан и авторизован")
@@ -820,6 +821,7 @@ def login():
         
         # Проверяем логин и пароль
         if db.verify_password(login, password):
+            session.clear()  # Очищаем старую сессию
             session['user_login'] = login
             session.permanent = True
             return redirect('/')
@@ -831,8 +833,8 @@ def login():
 @app.route('/logout')
 def logout():
     """Выход из системы"""
-    session.pop('user_login', None)
-    session.pop('telegram_id', None)
+    # Полностью очищаем сессию
+    session.clear()
     session['flash_message'] = "Вы успешно вышли из системы"
     return redirect('/')
 
@@ -926,6 +928,7 @@ def telegram_auth():
     else:
         logger.info(f"✅ Пользователь уже существует: {telegram_id}, роль: {existing_user.get('role')}")
     
+    session.clear()  # Очищаем старую сессию
     session['telegram_id'] = telegram_id
     session.permanent = True
     
