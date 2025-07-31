@@ -1309,13 +1309,14 @@ def bind_telegram_form():
             session.pop('telegram_bind_code', None)
             session.pop('telegram_contact', None)
             
-            session['flash_message'] = "Telegram аккаунт успешно привязан!"
-            return redirect('/settings')
+            return render_template('bind_telegram_form.html', 
+                                 success=True,
+                                 message="✅ Telegram аккаунт успешно привязан! Теперь вы можете входить в систему через Telegram.")
         else:
             return render_template('bind_telegram_form.html', 
                                  telegram_contact=saved_contact,
                                  error=True, 
-                                 message=f"Ошибка привязки: {message}")
+                                 message=f"❌ Ошибка привязки: {message}")
 
 @app.route('/resend_telegram_code', methods=['POST'])
 def resend_telegram_code():

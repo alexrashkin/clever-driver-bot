@@ -96,6 +96,10 @@
             background: #e0f2fe;
             color: #0284c7;
         }
+        .msg.success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
         .step {
             display: none;
         }
@@ -137,7 +141,7 @@
         <h2>📱 Привязка Telegram аккаунта</h2>
         
         {% if message %}
-            <div class="msg{% if error %} error{% endif %}{% if not error and not success %} info{% endif %}">{{ message }}</div>
+            <div class="msg{% if error %} error{% endif %}{% if success %} success{% endif %}{% if not error and not success %} info{% endif %}">{{ message }}</div>
         {% endif %}
         
         <!-- Шаг 1: Ввод username/phone -->
@@ -186,6 +190,23 @@
                 Отправить код повторно
             </button>
         </div>
+        
+        <!-- Шаг 3: Успешное завершение -->
+        <div id="step3" class="step">
+            <div class="instruction" style="background: rgba(34, 197, 94, 0.1); color: #15803d;">
+                <strong>🎉 Привязка завершена!</strong><br>
+                Ваш Telegram аккаунт успешно привязан к системе
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="/settings" class="btn" style="text-decoration: none; display: inline-block; margin-right: 10px;">
+                    ← Вернуться к настройкам
+                </a>
+                <a href="/" class="btn" style="text-decoration: none; display: inline-block; background: #22c55e;">
+                    🏠 На главную
+                </a>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -213,8 +234,14 @@
             });
         }
         
-        // Показываем второй шаг, если есть telegram_contact
-        {% if telegram_contact %}
+        // Показываем нужный шаг
+        {% if success %}
+            // Успешное завершение
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step3').classList.add('active');
+        {% elif telegram_contact %}
+            // Второй шаг - ввод кода
             document.getElementById('step1').classList.remove('active');
             document.getElementById('step2').classList.add('active');
         {% endif %}
