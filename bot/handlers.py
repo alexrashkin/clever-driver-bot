@@ -143,11 +143,13 @@ async def bind_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Удаляем старые коды для этого пользователя
         cursor.execute("DELETE FROM telegram_bind_codes WHERE telegram_id = ?", (telegram_id,))
         
-        # Добавляем новый код
+        # Добавляем новый код с локальным временем
+        from datetime import datetime
+        local_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute("""
             INSERT INTO telegram_bind_codes (telegram_id, username, first_name, chat_id, bind_code, created_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))
-        """, (telegram_id, username, first_name, chat_id, bind_code))
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (telegram_id, username, first_name, chat_id, bind_code, local_time))
         
         conn.commit()
         conn.close()
