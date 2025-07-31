@@ -640,6 +640,37 @@ def test_route():
     """Тестовый маршрут для проверки обновления"""
     return "✅ Код обновлен! Время: " + str(datetime.now())
 
+@app.route('/debug_session')
+def debug_session():
+    """Страница для отладки сессий"""
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    # Получаем роль пользователя
+    user_role = None
+    user_name = None
+    
+    if telegram_id:
+        user_role = db.get_user_role(telegram_id)
+        user = db.get_user_by_telegram_id(telegram_id)
+        user_name = user.get('first_name') if user else None
+    elif user_login:
+        user_role = db.get_user_role_by_login(user_login)
+        user = db.get_user_by_login(user_login)
+        user_name = user.get('first_name') if user else None
+    
+    # Показываем все данные сессии
+    session_data = "Все данные сессии:\n"
+    for key, value in session.items():
+        session_data += f"{key}: {value}\n"
+    
+    return render_template('debug_session.html', 
+                         session_data=session_data,
+                         telegram_id=telegram_id,
+                         user_login=user_login,
+                         user_role=user_role,
+                         user_name=user_name)
+
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     telegram_user = None
