@@ -9,7 +9,7 @@ class Config:
     
     # Telegram Bot
     TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN', '7824059826:AAEQx8WETTaAE4iU-tC58fT9ODkotjo-Enc')
-    TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME', 'Clever_driver_bot')
+    TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME', 'Clever_driver')
     TELEGRAM_BOT_ID = os.getenv('TELEGRAM_BOT_ID', '7824059826')  # ID бота (первая часть токена)
     
     # Chat ID для уведомлений
