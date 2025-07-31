@@ -1349,6 +1349,26 @@ def telegram_login():
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME
     return render_template('telegram_login.html', telegram_bot_username=telegram_bot_username)
 
+@app.route('/unbind_telegram', methods=['POST'])
+def unbind_telegram():
+    """Отвязка Telegram аккаунта"""
+    user_login = session.get('user_login')
+    if not user_login:
+        session['flash_message'] = "Необходимо авторизоваться через логин/пароль"
+        return redirect('/login')
+    
+    # Отвязываем Telegram аккаунт
+    success, message = db.unbind_telegram_from_user(user_login)
+    
+    if success:
+        # Очищаем telegram_id из сессии, если он есть
+        session.pop('telegram_id', None)
+        session['flash_message'] = "Telegram аккаунт успешно отвязан"
+    else:
+        session['flash_message'] = f"Ошибка отвязки: {message}"
+    
+    return redirect('/settings')
+
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
     print(f"📍 Адрес: http://{config.WEB_HOST}:{config.WEB_PORT}")
