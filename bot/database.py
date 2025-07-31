@@ -538,3 +538,4 @@ class Database:
         return True, "Telegram аккаунт успешно отвязан"
 
 # Создаем глобальный экземпляр базы данных
+db = Database()
