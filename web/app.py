@@ -701,6 +701,8 @@ def debug_settings():
                          telegram_user=telegram_user,
                          user=user)
 
+
+
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     telegram_user = None
@@ -709,51 +711,12 @@ def settings():
     error = False
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
     
-    # Проверяем авторизацию (Telegram или логин/пароль)
+    # Проверяем авторизацию (приоритет у логин/пароль, если есть)
     telegram_id = session.get('telegram_id')
     user_login = session.get('user_login')
     
-    if telegram_id:
-        # Авторизация через Telegram
-        # Проверяем роль пользователя
-        user_role = db.get_user_role(telegram_id)
-        if user_role == 'recipient':
-            session['flash_message'] = "Получатели уведомлений не имеют доступа к настройкам"
-            return redirect('/')
-        
-        telegram_user = True
-        user = db.get_user_by_telegram_id(telegram_id)
-        
-        if request.method == 'POST':
-            # Получаем данные формы
-            import json
-            buttons_json = request.form.get('buttons')
-            try:
-                buttons = json.loads(buttons_json) if buttons_json else []
-            except Exception:
-                buttons = []
-            work_latitude = request.form.get('work_latitude')
-            work_longitude = request.form.get('work_longitude')
-            work_radius = request.form.get('work_radius')
-            try:
-                db.update_user_settings(
-                    telegram_id,
-                    buttons=buttons,
-                    work_latitude=work_latitude,
-                    work_longitude=work_longitude,
-                    work_radius=work_radius
-                )
-                message = 'Настройки успешно сохранены'
-            except Exception as e:
-                message = f'Ошибка сохранения: {e}'
-                error = True
-            user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
-        
-        logger.info(f"🔍 SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
-    
-    elif user_login:
-        # Авторизация через логин/пароль
+    if user_login:
+        # Авторизация через логин/пароль (приоритет)
         user_role = db.get_user_role_by_login(user_login)
         if user_role == 'recipient':
             session['flash_message'] = "Получатели уведомлений не имеют доступа к настройкам"
@@ -793,6 +756,45 @@ def settings():
             user = db.get_user_by_login(user_login)  # Обновить данные
         
         logger.info(f"🔍 SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
+    
+    elif telegram_id:
+        # Авторизация через Telegram
+        # Проверяем роль пользователя
+        user_role = db.get_user_role(telegram_id)
+        if user_role == 'recipient':
+            session['flash_message'] = "Получатели уведомлений не имеют доступа к настройкам"
+            return redirect('/')
+        
+        telegram_user = True
+        user = db.get_user_by_telegram_id(telegram_id)
+        
+        if request.method == 'POST':
+            # Получаем данные формы
+            import json
+            buttons_json = request.form.get('buttons')
+            try:
+                buttons = json.loads(buttons_json) if buttons_json else []
+            except Exception:
+                buttons = []
+            work_latitude = request.form.get('work_latitude')
+            work_longitude = request.form.get('work_longitude')
+            work_radius = request.form.get('work_radius')
+            try:
+                db.update_user_settings(
+                    telegram_id,
+                    buttons=buttons,
+                    work_latitude=work_latitude,
+                    work_longitude=work_longitude,
+                    work_radius=work_radius
+                )
+                message = 'Настройки успешно сохранены'
+            except Exception as e:
+                message = f'Ошибка сохранения: {e}'
+                error = True
+            user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
+        
+        logger.info(f"🔍 SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
         return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
     
     else:
@@ -1041,8 +1043,9 @@ def bind_telegram():
     success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
     
     if success:
-        # Устанавливаем telegram_id в сессию
+        # Устанавливаем telegram_id в сессию и удаляем user_login
         session['telegram_id'] = telegram_id
+        session.pop('user_login', None)  # Удаляем логин из сессии
         session['flash_message'] = "Telegram аккаунт успешно привязан! Теперь у вас есть полный доступ к функциям."
         return redirect('/')
     else:
