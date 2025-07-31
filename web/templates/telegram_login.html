@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход через Telegram - Умный водитель</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+            color: #222;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1 0 auto;
+            max-width: 420px;
+            margin: 48px auto 0 auto;
+            background: #e8ebf1;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
+            padding: 40px 28px 32px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            text-align: center;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 18px;
+            color: #4338ca;
+        }
+        .instruction {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #4338ca;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 6px 18px;
+            font-size: 0.98em;
+            border-radius: 7px;
+            background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
+            color: #fff;
+            font-weight: 500;
+            text-decoration: none;
+            box-shadow: 0 1px 4px #6366f133;
+            transition: background 0.3s;
+            margin: 0;
+            min-width: 120px;
+            text-align: center;
+        }
+        .back-btn:hover {
+            background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
+        }
+        .alternative-links {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #d1d5db;
+        }
+        .alternative-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            color: #374151;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        .alternative-links a:hover {
+            background: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn" style="display:block;margin:18px auto 0 auto;position:static;">← Назад на главную</a>
+    
+    <div class="container">
+        <h2>📱 Вход через Telegram</h2>
+        
+        <div class="instruction">
+            <strong>Быстрый и безопасный вход</strong><br>
+            Авторизуйтесь через Telegram для доступа к системе
+        </div>
+        
+        <div style="margin: 30px 0;">
+            <script async src="https://telegram.org/js/telegram-widget.js?7"
+                    data-telegram-login="{{ telegram_bot_id }}"
+                    data-size="large"
+                    data-userpic="false"
+                    data-request-access="write"
+                    data-auth-url="{{ url_for('telegram_auth', _external=True) }}">
+            </script>
+        </div>
+        
+        <div class="alternative-links">
+            <p style="margin-bottom: 15px; color: #6b7280; font-size: 0.9em;">
+                Или используйте другие способы входа:
+            </p>
+            <a href="/login">Войти по логину/паролю</a>
+            <a href="/register">Зарегистрироваться</a>
+        </div>
+    </div>
+</body>
+</html> 
