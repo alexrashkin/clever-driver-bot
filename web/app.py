@@ -719,6 +719,7 @@ def settings():
                 error = True
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
         
+        logger.info(f"🔍 SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
         return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
     
     elif user_login:
@@ -761,6 +762,7 @@ def settings():
                 error = True
             user = db.get_user_by_login(user_login)  # Обновить данные
         
+        logger.info(f"🔍 SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
         return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
     
     else:
