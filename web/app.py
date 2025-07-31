@@ -671,6 +671,36 @@ def debug_session():
                          user_role=user_role,
                          user_name=user_name)
 
+@app.route('/debug_settings')
+def debug_settings():
+    """Страница для отладки настроек"""
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    # Получаем данные пользователя как в функции settings
+    telegram_user = None
+    user = None
+    
+    if telegram_id:
+        telegram_user = True
+        user = db.get_user_by_telegram_id(telegram_id)
+    elif user_login:
+        telegram_user = False
+        user = db.get_user_by_login(user_login)
+    
+    # Показываем все данные пользователя
+    user_data = "Все данные пользователя:\n"
+    if user:
+        for key, value in user.items():
+            user_data += f"{key}: {value}\n"
+    else:
+        user_data = "Пользователь не найден"
+    
+    return render_template('debug_settings.html', 
+                         user_data=user_data,
+                         telegram_user=telegram_user,
+                         user=user)
+
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     telegram_user = None
