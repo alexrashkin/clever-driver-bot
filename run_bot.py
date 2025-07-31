@@ -14,7 +14,7 @@ import asyncio
 import nest_asyncio
 
 if __name__ == "__main__":
-    print("🚗 Запуск Driver Bot...")
+    print("🚗 Запуск Умный водитель...")
     try:
         nest_asyncio.apply()
         loop = asyncio.get_event_loop()
