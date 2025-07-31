@@ -509,4 +509,32 @@ class Database:
         logger.info(f"Telegram ID {telegram_id} привязан к пользователю {login}")
         return True, "Telegram аккаунт успешно привязан"
 
+    def unbind_telegram_from_user(self, login):
+        """Отвязать Telegram аккаунт от пользователя по логину"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        # Проверяем, что пользователь с таким логином существует
+        user = self.get_user_by_login(login)
+        if not user:
+            conn.close()
+            return False, "Пользователь с таким логином не найден"
+        
+        # Проверяем, что у пользователя есть привязанный Telegram
+        if not user.get('telegram_id') or user.get('telegram_id') == 999999999:
+            conn.close()
+            return False, "У пользователя нет привязанного Telegram аккаунта"
+        
+        # Отвязываем Telegram (устанавливаем telegram_id = 999999999, как у новых пользователей)
+        c.execute('''
+            UPDATE users 
+            SET telegram_id = 999999999, username = NULL, first_name = NULL, last_name = NULL, auth_type = 'login'
+            WHERE login = ?
+        ''', (login,))
+        
+        conn.commit()
+        conn.close()
+        logger.info(f"Telegram аккаунт отвязан от пользователя {login}")
+        return True, "Telegram аккаунт успешно отвязан"
+
 # Создаем глобальный экземпляр базы данных
