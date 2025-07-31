@@ -24,11 +24,12 @@ def create_fresh_code():
         # Удаляем старые коды для этого пользователя
         cursor.execute("DELETE FROM telegram_bind_codes WHERE telegram_id = ?", (telegram_id,))
         
-        # Добавляем новый код
+        # Добавляем новый код с локальным временем
+        local_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute("""
             INSERT INTO telegram_bind_codes (telegram_id, username, first_name, chat_id, bind_code, created_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))
-        """, (telegram_id, username, first_name, chat_id, bind_code))
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (telegram_id, username, first_name, chat_id, bind_code, local_time))
         
         conn.commit()
         print("✓ Код сохранен в базу данных")
@@ -46,7 +47,7 @@ def create_fresh_code():
             cursor.execute("""
                 SELECT telegram_id, chat_id FROM telegram_bind_codes
                 WHERE username = ? AND bind_code = ? AND used_at IS NULL
-                AND datetime(created_at) > datetime('now', '-10 minutes')
+                AND datetime(created_at) > datetime('now', '-30 minutes')
             """, (username, bind_code))
             
             search_result = cursor.fetchone()
