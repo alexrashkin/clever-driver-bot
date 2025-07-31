@@ -332,7 +332,9 @@ class Database:
         ''', (telegram_id,))
         result = c.fetchone()
         conn.close()
-        return result[0] if result else None
+        role = result[0] if result else None
+        logger.info(f"🔍 DATABASE: get_user_role({telegram_id}) = {role}")
+        return role
     
     def set_user_role(self, telegram_id, role):
         """Установить роль пользователя (admin, driver, recipient)"""
