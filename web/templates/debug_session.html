@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отладка сессии - Умный водитель</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .debug-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .session-data {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .danger {
+            background: #dc3545;
+        }
+        .danger:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Отладка сессии</h1>
+    
+    <div class="debug-info">
+        <h2>Данные сессии:</h2>
+        <div class="session-data">{{ session_data }}</div>
+    </div>
+    
+    <div class="debug-info">
+        <h2>Действия:</h2>
+        <a href="/logout" class="button danger">Полный выход</a>
+        <a href="/" class="button">На главную</a>
+        <a href="/debug_session" class="button">Обновить</a>
+    </div>
+    
+    <div class="debug-info">
+        <h2>Информация:</h2>
+        <p><strong>Telegram ID:</strong> {{ telegram_id }}</p>
+        <p><strong>User Login:</strong> {{ user_login }}</p>
+        <p><strong>User Role:</strong> {{ user_role }}</p>
+        <p><strong>User Name:</strong> {{ user_name }}</p>
+    </div>
+</body>
+</html> 
