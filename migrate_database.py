@@ -24,7 +24,7 @@ def migrate_database():
         print(f"📋 Текущие колонки: {', '.join(column_names)}")
         
         # Проверяем нужно ли мигрировать
-        if 'role' in column_names and 'login' in column_names:
+        if 'role' in column_names and 'login' in column_names and 'password_hash' in column_names:
             print("✅ База данных уже обновлена до новой структуры")
             return
         
@@ -38,77 +38,133 @@ def migrate_database():
         cursor.execute("SELECT * FROM users")
         old_data = cursor.fetchall()
         
-        # Удаляем старую таблицу
-        cursor.execute("DROP TABLE users")
-        
-        # Создаем новую таблицу с правильной структурой
-        cursor.execute('''
-            CREATE TABLE users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id BIGINT UNIQUE,
-                username TEXT,
-                first_name TEXT,
-                last_name TEXT,
-                login TEXT UNIQUE,
-                password_hash TEXT,
-                auth_type TEXT DEFAULT 'telegram',
-                role TEXT DEFAULT NULL,
-                buttons TEXT DEFAULT NULL,
-                work_latitude REAL,
-                work_longitude REAL,
-                work_radius INTEGER DEFAULT 100,
-                subscription_status TEXT DEFAULT 'free',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP
-            )
-        ''')
-        print("✅ Создана новая таблица users")
-        
-        # Мигрируем данные
-        for row in old_data:
-            # Распаковываем старые данные
-            (user_id, telegram_id, username, first_name, last_name, 
-             button_name_1, button_name_2, buttons, work_latitude, 
-             work_longitude, work_radius, recipient_telegram_id, 
-             subscription_status, created_at, last_login) = row
+        # Определяем структуру старых данных
+        if 'role' in column_names:
+            # Промежуточная структура: есть role, но нет login/password_hash
+            print("📋 Обнаружена промежуточная структура (есть role, нет login)")
             
-            # Определяем роль на основе старых данных
-            if recipient_telegram_id:
-                # Если был получатель, то это водитель
-                role = 'driver'
-            else:
-                # Если не было получателя, тоже водитель (по умолчанию)
-                role = 'driver'
+            # Удаляем старую таблицу
+            cursor.execute("DROP TABLE users")
             
-            # Подготавливаем кнопки
-            if buttons:
-                buttons_json = buttons
-            else:
-                # Создаем кнопки из старых полей
-                button_list = []
-                if button_name_1:
-                    button_list.append(button_name_1)
-                if button_name_2:
-                    button_list.append(button_name_2)
-                if not button_list:
-                    button_list = ['📍 Еду на работу', '🚗 Подъезжаю к дому']
-                import json
-                buttons_json = json.dumps(button_list)
-            
-            # Вставляем данные в новую таблицу
+            # Создаем новую таблицу с правильной структурой
             cursor.execute('''
-                INSERT INTO users (
-                    id, telegram_id, username, first_name, last_name,
-                    login, password_hash, auth_type, role, buttons,
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id BIGINT UNIQUE,
+                    username TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    login TEXT,
+                    password_hash TEXT,
+                    auth_type TEXT DEFAULT 'telegram',
+                    role TEXT DEFAULT NULL,
+                    buttons TEXT DEFAULT NULL,
+                    work_latitude REAL,
+                    work_longitude REAL,
+                    work_radius INTEGER DEFAULT 100,
+                    subscription_status TEXT DEFAULT 'free',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP
+                )
+            ''')
+            print("✅ Создана новая таблица users")
+            
+            # Мигрируем данные из промежуточной структуры
+            for row in old_data:
+                # Распаковываем промежуточные данные (13 колонок)
+                (user_id, telegram_id, username, first_name, last_name, 
+                 role, buttons, work_latitude, work_longitude, work_radius, 
+                 subscription_status, created_at, last_login) = row
+                
+                # Вставляем данные в новую таблицу
+                cursor.execute('''
+                    INSERT INTO users (
+                        id, telegram_id, username, first_name, last_name,
+                        login, password_hash, auth_type, role, buttons,
+                        work_latitude, work_longitude, work_radius,
+                        subscription_status, created_at, last_login
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    user_id, telegram_id, username, first_name, last_name,
+                    None, None, 'telegram', role, buttons,
                     work_latitude, work_longitude, work_radius,
                     subscription_status, created_at, last_login
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                user_id, telegram_id, username, first_name, last_name,
-                None, None, 'telegram', role, buttons_json,
-                work_latitude, work_longitude, work_radius,
-                subscription_status, created_at, last_login
-            ))
+                ))
+        else:
+            # Старая структура: нет role, есть recipient_telegram_id
+            print("📋 Обнаружена старая структура (нет role)")
+            
+            # Удаляем старую таблицу
+            cursor.execute("DROP TABLE users")
+            
+            # Создаем новую таблицу с правильной структурой
+            cursor.execute('''
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id BIGINT UNIQUE,
+                    username TEXT,
+                    first_name TEXT,
+                    last_name TEXT,
+                    login TEXT,
+                    password_hash TEXT,
+                    auth_type TEXT DEFAULT 'telegram',
+                    role TEXT DEFAULT NULL,
+                    buttons TEXT DEFAULT NULL,
+                    work_latitude REAL,
+                    work_longitude REAL,
+                    work_radius INTEGER DEFAULT 100,
+                    subscription_status TEXT DEFAULT 'free',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP
+                )
+            ''')
+            print("✅ Создана новая таблица users")
+            
+            # Мигрируем данные из старой структуры
+            for row in old_data:
+                # Распаковываем старые данные (15 колонок)
+                (user_id, telegram_id, username, first_name, last_name, 
+                 button_name_1, button_name_2, buttons, work_latitude, 
+                 work_longitude, work_radius, recipient_telegram_id, 
+                 subscription_status, created_at, last_login) = row
+                
+                # Определяем роль на основе старых данных
+                if recipient_telegram_id:
+                    # Если был получатель, то это водитель
+                    role = 'driver'
+                else:
+                    # Если не было получателя, тоже водитель (по умолчанию)
+                    role = 'driver'
+                
+                # Подготавливаем кнопки
+                if buttons:
+                    buttons_json = buttons
+                else:
+                    # Создаем кнопки из старых полей
+                    button_list = []
+                    if button_name_1:
+                        button_list.append(button_name_1)
+                    if button_name_2:
+                        button_list.append(button_name_2)
+                    if not button_list:
+                        button_list = ['📍 Еду на работу', '🚗 Подъезжаю к дому']
+                    import json
+                    buttons_json = json.dumps(button_list)
+                
+                # Вставляем данные в новую таблицу
+                cursor.execute('''
+                    INSERT INTO users (
+                        id, telegram_id, username, first_name, last_name,
+                        login, password_hash, auth_type, role, buttons,
+                        work_latitude, work_longitude, work_radius,
+                        subscription_status, created_at, last_login
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    user_id, telegram_id, username, first_name, last_name,
+                    None, None, 'telegram', role, buttons_json,
+                    work_latitude, work_longitude, work_radius,
+                    subscription_status, created_at, last_login
+                ))
         
         print(f"✅ Мигрировано {len(old_data)} пользователей")
         
@@ -143,5 +199,61 @@ def migrate_database():
         except:
             pass
 
+def force_migrate():
+    """Принудительная миграция с удалением старой БД"""
+    try:
+        print("🔄 Принудительная миграция...")
+        
+        # Создаем резервную копию
+        if os.path.exists('driver.db'):
+            import shutil
+            shutil.copy('driver.db', 'driver_backup.db')
+            print("✅ Создана резервная копия driver_backup.db")
+        
+        # Удаляем старую БД
+        if os.path.exists('driver.db'):
+            os.remove('driver.db')
+            print("🗑️ Удалена старая база данных")
+        
+        # Создаем новую БД
+        conn = sqlite3.connect('driver.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                telegram_id BIGINT UNIQUE,
+                username TEXT,
+                first_name TEXT,
+                last_name TEXT,
+                login TEXT,
+                password_hash TEXT,
+                auth_type TEXT DEFAULT 'telegram',
+                role TEXT DEFAULT NULL,
+                buttons TEXT DEFAULT NULL,
+                work_latitude REAL,
+                work_longitude REAL,
+                work_radius INTEGER DEFAULT 100,
+                subscription_status TEXT DEFAULT 'free',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_login TIMESTAMP
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+        
+        print("✅ Создана новая база данных с правильной структурой")
+        print("💡 Теперь можно добавлять пользователей")
+        
+    except Exception as e:
+        print(f"❌ Ошибка при принудительной миграции: {e}")
+
+def main():
+    if len(sys.argv) > 1 and sys.argv[1] == '--force':
+        force_migrate()
+    else:
+        migrate_database()
+
 if __name__ == "__main__":
-    migrate_database() 
+    main() 
