@@ -743,14 +743,18 @@ def register():
             return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -")
         
         # Создание пользователя
+        logger.info(f"🔍 REGISTER: попытка создания пользователя login={login}, role={role}")
         success, result = db.create_user_with_login(login, password, first_name, last_name, role)
+        logger.info(f"🔍 REGISTER: результат создания - success={success}, result={result}")
         
         if success:
             # Автоматический вход после регистрации
             session['user_login'] = login
             session.permanent = True
+            logger.info(f"🔍 REGISTER: пользователь {login} успешно создан и авторизован")
             return redirect('/')
         else:
+            logger.error(f"🔍 REGISTER: ошибка создания пользователя {login}: {result}")
             return render_template('register.html', error=result)
     
     return render_template('register.html')
