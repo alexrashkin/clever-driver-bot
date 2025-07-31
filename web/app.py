@@ -119,7 +119,11 @@ def send_telegram_code(telegram_contact, code):
 
 Введите этот код на странице привязки для завершения процесса.
 
-⚠️ Не передавайте этот код никому!"""
+⚠️ Не передавайте этот код никому!
+
+💡 Если вы не получили сообщение, убедитесь что:
+• Username указан правильно
+• Вы начали диалог с ботом @{config.TELEGRAM_BOT_USERNAME}"""
         
         data = {
             'chat_id': telegram_id,
@@ -163,6 +167,16 @@ def find_telegram_user_by_username(username):
                     'username': chat.get('username'),
                     'first_name': chat.get('first_name'),
                     'last_name': chat.get('last_name')
+                }
+            else:
+                # Если getChat не работает, попробуем отправить сообщение напрямую
+                # Это может сработать для публичных username
+                logger.info(f"getChat не сработал для @{username}, пробуем прямой sendMessage")
+                return {
+                    'id': f"@{username}",
+                    'username': username,
+                    'first_name': username,
+                    'last_name': None
                 }
         
         return None
@@ -1376,7 +1390,8 @@ def bind_telegram_form():
         
         return render_template('bind_telegram_form.html', 
                              telegram_contact=telegram_contact,
-                             message=message)
+                             message=message,
+                             config=config)
     
     else:
         # Второй шаг - проверка кода
@@ -1392,7 +1407,8 @@ def bind_telegram_form():
             return render_template('bind_telegram_form.html', 
                                  telegram_contact=saved_contact,
                                  error=True, 
-                                 message="Неверный код подтверждения")
+                                 message="Неверный код подтверждения",
+                                 config=config)
         
         # Код верный - привязываем аккаунт
         # Получаем telegram_id по contact
@@ -1403,10 +1419,11 @@ def bind_telegram_form():
         
         user_info = find_telegram_user_by_username(username)
         if not user_info:
-            return render_template('bind_telegram_form.html', 
-                                 telegram_contact=saved_contact,
-                                 error=True, 
-                                 message="Пользователь не найден. Попробуйте еще раз")
+                    return render_template('bind_telegram_form.html', 
+                             telegram_contact=saved_contact,
+                             error=True, 
+                             message="Пользователь не найден. Попробуйте еще раз",
+                             config=config)
         
         telegram_id = user_info['id']
         username = user_info['username']
@@ -1422,12 +1439,14 @@ def bind_telegram_form():
             
             return render_template('bind_telegram_form.html', 
                                  success=True,
-                                 message="✅ Telegram аккаунт успешно привязан! Теперь вы можете входить в систему через Telegram.")
+                                 message="✅ Telegram аккаунт успешно привязан! Теперь вы можете входить в систему через Telegram.",
+                                 config=config)
         else:
             return render_template('bind_telegram_form.html', 
                                  telegram_contact=saved_contact,
                                  error=True, 
-                                 message=f"❌ Ошибка привязки: {message}")
+                                 message=f"❌ Ошибка привязки: {message}",
+                                 config=config)
 
 @app.route('/resend_telegram_code', methods=['POST'])
 def resend_telegram_code():
