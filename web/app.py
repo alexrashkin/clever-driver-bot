@@ -1403,78 +1403,72 @@ def bind_telegram_form():
     
     else:
         # Второй шаг - проверка кода
-        saved_code = session.get('telegram_bind_code')
         saved_contact = session.get('telegram_contact')
         
-        if not saved_code or not saved_contact:
+        if not saved_contact:
             return render_template('bind_telegram_form.html', 
                                  error=True, 
                                  message="Сессия истекла. Попробуйте снова",
                                  config=config)
         
-        if verification_code != saved_code:
+        # Проверяем код в базе данных
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Определяем, что передано: username или номер телефона
+        if saved_contact.startswith('@'):
+            # Username - ищем по username и коду
+            username = saved_contact[1:]  # Убираем @
+            cursor.execute("""
+                SELECT telegram_id, chat_id FROM telegram_bind_codes
+                WHERE username = ? AND bind_code = ? AND used_at IS NULL
+                AND datetime(created_at) > datetime('now', '-30 minutes')
+            """, (username, verification_code))
+        else:
+            # Номер телефона - ищем только по коду
+            cursor.execute("""
+                SELECT telegram_id, chat_id FROM telegram_bind_codes
+                WHERE bind_code = ? AND used_at IS NULL
+                AND datetime(created_at) > datetime('now', '-30 minutes')
+            """, (verification_code,))
+        
+        result = cursor.fetchone()
+        conn.close()
+        
+        if not result:
             return render_template('bind_telegram_form.html', 
                                  telegram_contact=saved_contact,
                                  error=True, 
                                  message="Неверный код подтверждения",
                                  config=config)
         
+        # Код найден - получаем данные
+        telegram_id, chat_id = result
+        
         # Код верный - привязываем аккаунт
-        # Получаем telegram_id по contact
-        if saved_contact.startswith('@'):
-            username = saved_contact[1:]
+        # Получаем данные пользователя из базы данных
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT username, first_name FROM telegram_bind_codes
+            WHERE telegram_id = ? AND bind_code = ?
+        """, (telegram_id, verification_code))
+        
+        user_data = cursor.fetchone()
+        conn.close()
+        
+        if user_data:
+            username, first_name = user_data
+            last_name = None  # В базе данных нет last_name
         else:
-            username = saved_contact
-        
-        user_info = find_telegram_user_by_username(username)
-        if not user_info:
-            return render_template('bind_telegram_form.html', 
-                                 telegram_contact=saved_contact,
-                                 error=True, 
-                                 message="Пользователь не найден. Попробуйте еще раз",
-                                 config=config)
-        
-        telegram_id = user_info['id']
-        username = user_info['username']
-        first_name = user_info['first_name']
-        last_name = user_info['last_name']
-        
-        # Если telegram_id в формате @username, нужно получить реальный ID
-        if isinstance(telegram_id, str) and telegram_id.startswith('@'):
-            # Пытаемся получить реальный ID через getChat (теперь пользователь должен существовать)
-            try:
-                url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getChat"
-                params = {"chat_id": telegram_id}
-                
-                response = requests.get(url, params=params, timeout=10)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get('ok'):
-                        chat = data.get('result', {})
-                        telegram_id = chat.get('id')
-                        username = chat.get('username', username)
-                        first_name = chat.get('first_name', first_name)
-                        last_name = chat.get('last_name', last_name)
-                        logger.info(f"Получен реальный telegram_id: {telegram_id} для @{username}")
-                    else:
-                        return render_template('bind_telegram_form.html', 
-                                             telegram_contact=saved_contact,
-                                             error=True, 
-                                             message="Не удалось получить ID пользователя. Попробуйте еще раз",
-                                             config=config)
-                else:
-                    return render_template('bind_telegram_form.html', 
-                                         telegram_contact=saved_contact,
-                                         error=True, 
-                                         message="Ошибка получения данных пользователя",
-                                         config=config)
-            except Exception as e:
-                logger.error(f"Ошибка получения telegram_id: {e}")
-                return render_template('bind_telegram_form.html', 
-                                     telegram_contact=saved_contact,
-                                     error=True, 
-                                     message="Ошибка получения данных пользователя",
-                                     config=config)
+            # Fallback - используем данные из contact
+            if saved_contact.startswith('@'):
+                username = saved_contact[1:]
+            else:
+                username = saved_contact
+            first_name = username
+            last_name = None
         
         success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
         
