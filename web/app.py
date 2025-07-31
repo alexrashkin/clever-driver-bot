@@ -97,19 +97,15 @@ def send_telegram_code(telegram_contact, code):
         if telegram_contact.startswith('@'):
             # Username - нужно найти telegram_id
             username = telegram_contact[1:]  # Убираем @
+            chat_id = f"@{username}"
         elif telegram_contact.startswith('+'):
-            # Номер телефона - пока что не поддерживается
-            return False, "Отправка кодов на номер телефона пока не поддерживается. Используйте username (@username)"
+            # Номер телефона - используем его напрямую
+            phone = telegram_contact
+            chat_id = phone
         else:
             # Предполагаем, что это username без @
             username = telegram_contact
-        
-        # Ищем пользователя по username
-        user_info = find_telegram_user_by_username(username)
-        if not user_info:
-            return False, f"Пользователь @{username} не найден. Проверьте правильность username"
-        
-        telegram_id = user_info['id']
+            chat_id = f"@{username}"
         
         # Отправляем сообщение через Telegram Bot API
         url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
@@ -122,11 +118,11 @@ def send_telegram_code(telegram_contact, code):
 ⚠️ Не передавайте этот код никому!
 
 💡 Если вы не получили сообщение, убедитесь что:
-• Username указан правильно
+• Контакт указан правильно
 • Вы начали диалог с ботом @{config.TELEGRAM_BOT_USERNAME}"""
         
         data = {
-            'chat_id': telegram_id,
+            'chat_id': chat_id,
             'text': message_text,
             'parse_mode': 'Markdown'
         }
@@ -136,7 +132,7 @@ def send_telegram_code(telegram_contact, code):
         if response.status_code == 200:
             result = response.json()
             if result.get('ok'):
-                logger.info(f"Код {code} отправлен пользователю {telegram_id} (@{username})")
+                logger.info(f"Код {code} отправлен пользователю {chat_id}")
                 return True, "Код отправлен в Telegram"
             else:
                 error_msg = result.get('description', 'Неизвестная ошибка')
@@ -144,9 +140,12 @@ def send_telegram_code(telegram_contact, code):
                 
                 # Обрабатываем специфические ошибки
                 if "Chat not found" in error_msg:
-                    return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
+                    if telegram_contact.startswith('+'):
+                        return False, f"Пользователь с номером {telegram_contact} не найден. Убедитесь, что номер указан правильно и пользователь существует в Telegram"
+                    else:
+                        return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
                 elif "Forbidden" in error_msg:
-                    return False, f"Пользователь @{username} заблокировал бота. Попросите пользователя разблокировать бота @{config.TELEGRAM_BOT_USERNAME}"
+                    return False, f"Пользователь заблокировал бота. Попросите пользователя разблокировать бота @{config.TELEGRAM_BOT_USERNAME}"
                 else:
                     return False, f"Ошибка отправки: {error_msg}"
         else:
