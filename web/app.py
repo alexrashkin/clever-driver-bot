@@ -902,18 +902,30 @@ def invite_auth():
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         if hmac_hash != hash_:
             return 'Ошибка авторизации Telegram', 403
-        # Создаем нового пользователя с ролью 'recipient'
+        # Проверяем, существует ли пользователь
         new_user_telegram_id = int(auth_data['id'])
         username = auth_data.get('username')
         first_name = auth_data.get('first_name')
         last_name = auth_data.get('last_name')
         
-        # Регистрируем пользователя как получателя уведомлений
-        db.create_user(new_user_telegram_id, username, first_name, last_name)
-        db.set_user_role(new_user_telegram_id, 'recipient')
+        # Проверяем, есть ли уже пользователь с таким Telegram ID
+        existing_user = db.get_user_by_telegram_id(new_user_telegram_id)
         
-        logger.info(f"Новый получатель уведомлений зарегистрирован: {new_user_telegram_id}")
-        return render_template('invite_success.html')
+        if existing_user:
+            # Пользователь уже существует - не меняем его роль
+            logger.info(f"Пользователь уже существует: {new_user_telegram_id}, роль: {existing_user.get('role')}")
+            session['telegram_id'] = new_user_telegram_id
+            session.permanent = True
+            return render_template('invite_success.html')
+        else:
+            # Создаем нового пользователя с ролью 'recipient'
+            db.create_user(new_user_telegram_id, username, first_name, last_name)
+            db.set_user_role(new_user_telegram_id, 'recipient')
+            
+            logger.info(f"Новый получатель уведомлений зарегистрирован: {new_user_telegram_id}")
+            session['telegram_id'] = new_user_telegram_id
+            session.permanent = True
+            return render_template('invite_success.html')
     except Exception as e:
         return 'Internal Server Error', 500
 
