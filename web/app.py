@@ -1343,6 +1343,12 @@ def resend_telegram_code():
     # Пока что просто возвращаем успех
     return jsonify({'success': True, 'message': 'Код отправлен повторно'})
 
+@app.route('/telegram_login')
+def telegram_login():
+    """Страница входа через Telegram"""
+    telegram_bot_id = config.TELEGRAM_BOT_ID
+    return render_template('telegram_login.html', telegram_bot_id=telegram_bot_id)
+
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
     print(f"📍 Адрес: http://{config.WEB_HOST}:{config.WEB_PORT}")
