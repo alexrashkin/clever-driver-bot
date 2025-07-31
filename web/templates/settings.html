@@ -90,7 +90,17 @@
     <a href="/" class="back-btn" style="display:block;margin:18px auto 0 auto;position:static;">← Назад на главную</a>
     <div class="container">
         <h2>Настройки профиля</h2>
-        {% if not telegram_user %}
+        
+        <!-- Отладочная информация -->
+        <div style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px;">
+            <strong>Отладка:</strong><br>
+            telegram_user: {{ telegram_user }}<br>
+            user.id: {{ user.get('id') if user else 'None' }}<br>
+            user.first_name: {{ user.get('first_name') if user else 'None' }}<br>
+            user.login: {{ user.get('login') if user else 'None' }}<br>
+            user.role: {{ user.get('role') if user else 'None' }}
+        </div>
+        {% if not user %}
             <div style="text-align:center; margin: 32px 0;">
                 <script async src="https://telegram.org/js/telegram-widget.js?7"
                         data-telegram-login="{{ telegram_bot_username }}"
@@ -106,7 +116,7 @@
             {% if message %}
                 <div class="msg{% if error %} error{% endif %}">{{ message }}</div>
             {% endif %}
-            {% if telegram_user %}
+            {% if telegram_user and user.telegram_id and user.telegram_id != 999999999 %}
                             <!-- Старая система получателей заменена на роли -->
             <!-- Теперь получатели - независимые пользователи с ролью 'recipient' -->
                     <div class="instruction-block" style="margin-bottom: 20px; padding: 18px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border-left: 4px solid #22c55e;">
