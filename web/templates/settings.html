@@ -95,7 +95,7 @@
         {% if not user %}
             <div style="text-align:center; margin: 32px 0;">
                 <script async src="https://telegram.org/js/telegram-widget.js?7"
-                        data-telegram-login="{{ telegram_bot_username }}"
+                        data-telegram-login="{{ telegram_bot_id }}"
                         data-size="large"
                         data-userpic="false"
                         data-request-access="write"
@@ -156,13 +156,9 @@
                         </ul>
                     </div>
                     <div style="text-align: center;">
-                        <script async src="https://telegram.org/js/telegram-widget.js?7"
-                                data-telegram-login="{{ telegram_bot_username }}"
-                                data-size="large"
-                                data-userpic="false"
-                                data-request-access="write"
-                                data-auth-url="{{ url_for('bind_telegram', _external=True) }}">
-                        </script>
+                        <a href="/bind_telegram_form" class="btn" style="text-decoration: none; display: inline-block;">
+                            📱 Привязать Telegram аккаунт
+                        </a>
                         <p style="margin-top: 10px; font-size: 0.9em; color: #6b7280;">Привяжите свой Telegram аккаунт для удобной авторизации</p>
                     </div>
                 </div>

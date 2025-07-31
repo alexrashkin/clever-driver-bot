@@ -709,7 +709,7 @@ def settings():
     user = None
     message = None
     error = False
-    telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
+    telegram_bot_id = config.TELEGRAM_BOT_ID  # ID Telegram-бота из настроек
     
     # Проверяем авторизацию (приоритет у логин/пароль, если есть)
     telegram_id = session.get('telegram_id')
@@ -756,7 +756,7 @@ def settings():
             user = db.get_user_by_login(user_login)  # Обновить данные
         
         logger.info(f"🔍 SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_id)
     
     elif telegram_id:
         # Авторизация через Telegram
@@ -795,7 +795,7 @@ def settings():
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
         
         logger.info(f"🔍 SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_username=telegram_bot_username)
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_id)
     
     else:
         # Не авторизован
@@ -1088,8 +1088,8 @@ def invite():
     user_id = request.args.get('user_id')
     if not user_id:
         return 'Некорректная ссылка приглашения', 400
-    telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # username Telegram-бота из настроек
-    return render_template('invite.html', user_id=user_id, telegram_bot_username=telegram_bot_username)
+    telegram_bot_id = config.TELEGRAM_BOT_ID  # ID Telegram-бота из настроек
+    return render_template('invite.html', user_id=user_id, telegram_bot_id=telegram_bot_id)
 
 @app.route('/invite_auth', methods=['POST', 'GET'])
 def invite_auth():
@@ -1242,6 +1242,105 @@ def real_time_tracker():
     except Exception as e:
         logger.error(f"Ошибка загрузки страницы трекера: {e}")
         return 'Ошибка загрузки страницы', 500
+
+@app.route('/bind_telegram_form', methods=['GET', 'POST'])
+def bind_telegram_form():
+    """Форма привязки Telegram аккаунта"""
+    user_login = session.get('user_login')
+    if not user_login:
+        session['flash_message'] = "Необходимо авторизоваться через логин/пароль"
+        return redirect('/login')
+    
+    if request.method == 'GET':
+        return render_template('bind_telegram_form.html')
+    
+    # POST запрос - обработка формы
+    telegram_contact = request.form.get('telegram_contact', '').strip()
+    verification_code = request.form.get('verification_code', '').strip()
+    
+    if not telegram_contact:
+        return render_template('bind_telegram_form.html', 
+                             error=True, 
+                             message="Введите Telegram username или номер телефона")
+    
+    if not verification_code:
+        # Первый шаг - отправка кода
+        # Генерируем 6-значный код
+        import random
+        code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        # Сохраняем код в сессии
+        session['telegram_bind_code'] = code
+        session['telegram_contact'] = telegram_contact
+        
+        # Отправляем код через бота (здесь нужно будет реализовать)
+        # Пока что просто показываем код для тестирования
+        message = f"Код подтверждения: {code} (для тестирования)"
+        
+        return render_template('bind_telegram_form.html', 
+                             telegram_contact=telegram_contact,
+                             message=message)
+    
+    else:
+        # Второй шаг - проверка кода
+        saved_code = session.get('telegram_bind_code')
+        saved_contact = session.get('telegram_contact')
+        
+        if not saved_code or not saved_contact:
+            return render_template('bind_telegram_form.html', 
+                                 error=True, 
+                                 message="Сессия истекла. Попробуйте снова")
+        
+        if verification_code != saved_code:
+            return render_template('bind_telegram_form.html', 
+                                 telegram_contact=saved_contact,
+                                 error=True, 
+                                 message="Неверный код подтверждения")
+        
+        # Код верный - привязываем аккаунт
+        # Здесь нужно будет получить telegram_id по contact
+        # Пока что используем заглушку
+        telegram_id = 123456789  # Заглушка
+        
+        success, message = db.bind_telegram_to_user(user_login, telegram_id, None, None, None)
+        
+        if success:
+            # Очищаем сессию
+            session.pop('telegram_bind_code', None)
+            session.pop('telegram_contact', None)
+            
+            session['flash_message'] = "Telegram аккаунт успешно привязан!"
+            return redirect('/settings')
+        else:
+            return render_template('bind_telegram_form.html', 
+                                 telegram_contact=saved_contact,
+                                 error=True, 
+                                 message=f"Ошибка привязки: {message}")
+
+@app.route('/resend_telegram_code', methods=['POST'])
+def resend_telegram_code():
+    """Повторная отправка кода подтверждения"""
+    user_login = session.get('user_login')
+    if not user_login:
+        return jsonify({'success': False, 'message': 'Не авторизован'})
+    
+    data = request.get_json()
+    telegram_contact = data.get('telegram_contact', '').strip()
+    
+    if not telegram_contact:
+        return jsonify({'success': False, 'message': 'Не указан контакт'})
+    
+    # Генерируем новый код
+    import random
+    code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    
+    # Сохраняем код в сессии
+    session['telegram_bind_code'] = code
+    session['telegram_contact'] = telegram_contact
+    
+    # Отправляем код через бота (здесь нужно будет реализовать)
+    # Пока что просто возвращаем успех
+    return jsonify({'success': True, 'message': 'Код отправлен повторно'})
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")

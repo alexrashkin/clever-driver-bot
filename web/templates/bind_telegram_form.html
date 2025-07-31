@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Привязка Telegram аккаунта - Умный водитель</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+            color: #222;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            flex: 1 0 auto;
+            max-width: 420px;
+            margin: 48px auto 0 auto;
+            background: #e8ebf1;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
+            padding: 40px 28px 32px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 18px;
+            color: #4338ca;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+        }
+        input[type="text"], input[type="tel"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus, input[type="tel"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px #6366f133;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px #6366f144;
+        }
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .msg {
+            text-align: center;
+            font-size: 1.05em;
+            font-weight: 500;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            padding: 10px 0;
+            background: #e0ffe7;
+            color: #22c55e;
+        }
+        .msg.error {
+            background: #ffe0e0;
+            color: #ef4444;
+        }
+        .msg.info {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 6px 18px;
+            font-size: 0.98em;
+            border-radius: 7px;
+            background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
+            color: #fff;
+            font-weight: 500;
+            text-decoration: none;
+            box-shadow: 0 1px 4px #6366f133;
+            transition: background 0.3s;
+            margin: 0;
+            min-width: 120px;
+            text-align: center;
+        }
+        .back-btn:hover {
+            background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
+        }
+        .instruction {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #4338ca;
+        }
+    </style>
+</head>
+<body>
+    <a href="/settings" class="back-btn" style="display:block;margin:18px auto 0 auto;position:static;">← Назад к настройкам</a>
+    
+    <div class="container">
+        <h2>📱 Привязка Telegram аккаунта</h2>
+        
+        {% if message %}
+            <div class="msg{% if error %} error{% endif %}{% if not error and not success %} info{% endif %}">{{ message }}</div>
+        {% endif %}
+        
+        <!-- Шаг 1: Ввод username/phone -->
+        <div id="step1" class="step active">
+            <div class="instruction">
+                <strong>Как это работает:</strong><br>
+                1. Введите ваш Telegram username или номер телефона<br>
+                2. Мы отправим код подтверждения в Telegram<br>
+                3. Введите код для завершения привязки
+            </div>
+            
+            <form method="post" action="/bind_telegram_form">
+                <div class="form-group">
+                    <label for="telegram_contact">Telegram username или номер телефона</label>
+                    <input type="text" id="telegram_contact" name="telegram_contact" 
+                           placeholder="@username или +7XXXXXXXXXX" required>
+                    <small style="color: #6b7280; font-size: 0.85em;">
+                        Примеры: @alexander, +79001234567
+                    </small>
+                </div>
+                <button type="submit" class="btn">Отправить код подтверждения</button>
+            </form>
+        </div>
+        
+        <!-- Шаг 2: Ввод кода -->
+        <div id="step2" class="step">
+            <div class="instruction">
+                <strong>Код отправлен!</strong><br>
+                Проверьте Telegram и введите полученный код
+            </div>
+            
+            <form method="post" action="/bind_telegram_form">
+                <input type="hidden" name="telegram_contact" value="{{ telegram_contact }}">
+                <div class="form-group">
+                    <label for="verification_code">Код подтверждения</label>
+                    <input type="text" id="verification_code" name="verification_code" 
+                           placeholder="123456" maxlength="6" required>
+                    <small style="color: #6b7280; font-size: 0.85em;">
+                        Введите 6-значный код из Telegram
+                    </small>
+                </div>
+                <button type="submit" class="btn">Подтвердить и привязать</button>
+            </form>
+            
+            <button type="button" class="btn" onclick="resendCode()" style="margin-top: 10px; background: #6b7280;">
+                Отправить код повторно
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function resendCode() {
+            // Отправляем запрос на повторную отправку кода
+            fetch('/resend_telegram_code', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    telegram_contact: '{{ telegram_contact }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Код отправлен повторно!');
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка отправки кода');
+            });
+        }
+        
+        // Показываем второй шаг, если есть telegram_contact
+        {% if telegram_contact %}
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+        {% endif %}
+    </script>
+</body>
+</html> 
