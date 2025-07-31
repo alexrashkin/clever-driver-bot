@@ -107,6 +107,19 @@ def send_telegram_code(telegram_contact, code):
             username = telegram_contact
             chat_id = f"@{username}"
         
+        # Сначала проверяем, может ли бот найти пользователя
+        check_url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getChat"
+        check_params = {"chat_id": chat_id}
+        
+        check_response = requests.get(check_url, params=check_params, timeout=10)
+        if check_response.status_code != 200:
+            check_data = check_response.json()
+            if "chat not found" in check_data.get('description', '').lower():
+                if telegram_contact.startswith('+'):
+                    return False, f"Пользователь с номером {telegram_contact} не найден. Убедитесь, что вы написали боту @{config.TELEGRAM_BOT_USERNAME} команду /start"
+                else:
+                    return False, f"Пользователь @{username} не найден. Убедитесь, что вы написали боту @{config.TELEGRAM_BOT_USERNAME} команду /start"
+        
         # Отправляем сообщение через Telegram Bot API
         url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
         message_text = f"""🔐 Код подтверждения для привязки аккаунта
