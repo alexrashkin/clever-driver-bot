@@ -1346,8 +1346,8 @@ def resend_telegram_code():
 @app.route('/telegram_login')
 def telegram_login():
     """Страница входа через Telegram"""
-    telegram_bot_id = config.TELEGRAM_BOT_ID
-    return render_template('telegram_login.html', telegram_bot_id=telegram_bot_id)
+    telegram_bot_username = config.TELEGRAM_BOT_USERNAME
+    return render_template('telegram_login.html', telegram_bot_username=telegram_bot_username)
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
