@@ -328,14 +328,14 @@ footer {
             <!-- Администратор - показываем полные настройки -->
             <a href="/settings" class="top-link nav-btn">Настройки</a>
             <a href="/admin/users" class="top-link nav-btn">👥 Пользователи</a>
-            <span class="top-link nav-btn" style="color: #ef4444; font-weight: 600;">👑 Админ</span>
+            <span class="top-link nav-btn" style="color: #8b5cf6; font-weight: 600;">⚡ Админ</span>
             {% elif is_driver %}
             <!-- Водитель - стандартные настройки -->
             <a href="/settings" class="top-link nav-btn">Настройки</a>
             <span class="top-link nav-btn" style="color: #3b82f6; font-weight: 600;">🚗 Водитель</span>
             {% endif %}
             <!-- Кнопка выхода для всех авторизованных -->
-            <a href="/logout" class="top-link nav-btn" style="color: #dc2626;">Выход</a>
+            <a href="/logout" class="top-link nav-btn">Выход</a>
         {% else %}
         <!-- Неавторизованный пользователь -->
         <a href="/login" class="top-link nav-btn">Вход</a>
@@ -453,9 +453,9 @@ footer {
         
         {% elif is_admin %}
         <!-- Интерфейс администратора -->
-        <div class="admin-info" style="background: rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 18px; margin: 20px 0; border-left: 4px solid #ef4444; text-align: center;">
-            <div style="font-weight: 600; color: #dc2626; margin-bottom: 8px;">
-                👑 Администратор системы
+        <div class="admin-info" style="background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 18px; margin: 20px 0; border-left: 4px solid #8b5cf6; text-align: center;">
+            <div style="font-weight: 600; color: #7c3aed; margin-bottom: 8px;">
+                ⚡ Администратор системы
             </div>
             <div style="color: #374151; font-size: 0.9em; line-height: 1.4;">
                 У вас есть полный доступ ко всем функциям системы и административной панели.

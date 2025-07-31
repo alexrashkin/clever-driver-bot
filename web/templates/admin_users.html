@@ -133,8 +133,8 @@
         }
         
         .role-admin {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
+            background: rgba(139, 92, 246, 0.1);
+            color: #7c3aed;
         }
         
         .role-driver {
@@ -292,7 +292,7 @@
                         </td>
                         <td>
                             {% if user.role == 'admin' %}
-                                <span class="role-badge role-admin">👑 Админ</span>
+                                <span class="role-badge role-admin">⚡ Админ</span>
                             {% elif user.role == 'driver' %}
                                 <span class="role-badge role-driver">🚗 Водитель</span>
                             {% elif user.role == 'recipient' %}
