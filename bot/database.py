@@ -393,8 +393,9 @@ class Database:
         """Получить пользователя по логину"""
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
+        # Исключаем NULL значения из поиска
         c.execute('''
-            SELECT * FROM users WHERE login = ?
+            SELECT * FROM users WHERE login = ? AND login IS NOT NULL
         ''', (login,))
         row = c.fetchone()
         columns = [desc[0] for desc in c.description]
