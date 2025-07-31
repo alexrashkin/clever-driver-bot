@@ -39,14 +39,72 @@
             text-align: center;
             margin-bottom: 24px;
         }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+            border: 2px solid #6366f1;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(99, 102, 241, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Успешно подключено!</h2>
+        <h2>✅ Успешно подключено!</h2>
         <div class="info">
-            Теперь Вы будете получать уведомления от сервиса «Умный водитель» в этот Telegram.<br>
-            Можете закрыть эту страницу.
+            Теперь Вы будете получать уведомления от сервиса «Умный водитель» в этот Telegram.<br><br>
+            
+            Вы можете перейти на главную страницу для просмотра трекера в реальном времени или закрыть эту страницу.
+        </div>
+        
+        <div class="buttons-container">
+            <a href="/" class="btn-primary">
+                🏠 Перейти на главную
+            </a>
+            <button onclick="window.close()" class="btn-secondary">
+                ✖️ Закрыть страницу
+            </button>
         </div>
     </div>
 </body>
