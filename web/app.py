@@ -751,6 +751,11 @@ def logout():
     session['flash_message'] = "Вы успешно вышли из системы"
     return redirect('/')
 
+@app.route('/admin')
+def admin_redirect():
+    """Редирект с /admin на /admin/users"""
+    return redirect('/admin/users')
+
 @app.route('/admin/users')
 def admin_users():
     """Администрирование пользователей"""

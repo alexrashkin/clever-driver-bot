@@ -30,6 +30,9 @@ python -c "from app import app; print('✅ App imports OK')" || {
     exit 1
 }
 
+# Создаем папку для логов если её нет
+mkdir -p ../logs
+
 # Запуск приложения в фоне
 echo "🚀 Запуск приложения..."
 nohup python app.py > ../logs/web.log 2>&1 &
@@ -44,9 +47,6 @@ if ps -p $WEB_PID > /dev/null; then
     echo "✅ Веб-приложение запущено! PID: $WEB_PID"
     echo "📊 Лог: tail -f ~/clever-driver-bot/logs/web.log"
     echo "🌐 URL: https://cleverdriver.ru/"
-    
-    # Создаем папку для логов если её нет
-    mkdir -p ../logs
     
     # Проверяем что сервер отвечает
     sleep 2
