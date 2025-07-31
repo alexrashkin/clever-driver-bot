@@ -482,4 +482,3 @@ class Database:
         logger.info(f"Обновлены настройки пользователя telegram_id={telegram_id}: {kwargs}")
 
 # Создаем глобальный экземпляр базы данных
-db = Database() 
