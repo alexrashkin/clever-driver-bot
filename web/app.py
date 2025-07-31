@@ -828,8 +828,17 @@ def telegram_auth():
     username = auth_data.get('username')
     first_name = auth_data.get('first_name')
     last_name = auth_data.get('last_name')
-    # Регистрируем пользователя, если его нет
-    db.create_user(telegram_id, username, first_name, last_name)
+    
+    # Проверяем, существует ли пользователь
+    existing_user = db.get_user_by_telegram_id(telegram_id)
+    
+    if not existing_user:
+        # Создаем пользователя только если его нет
+        db.create_user(telegram_id, username, first_name, last_name)
+        logger.info(f"Создан новый пользователь: {telegram_id}")
+    else:
+        logger.info(f"Пользователь уже существует: {telegram_id}, роль: {existing_user.get('role')}")
+    
     session['telegram_id'] = telegram_id
     session.permanent = True
     
