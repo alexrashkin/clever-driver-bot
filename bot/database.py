@@ -358,10 +358,6 @@ class Database:
         import secrets
         import json
         
-        # Проверяем, что пользователь с таким логином не существует
-        if self.get_user_by_login(login):
-            return False, "Пользователь с таким логином уже существует"
-        
         # Хешируем пароль с солью
         salt = secrets.token_hex(16)
         password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
@@ -377,17 +373,17 @@ class Database:
         c = conn.cursor()
         try:
             c.execute('''
-                INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, buttons)
-                VALUES (?, ?, ?, ?, 'login', ?, ?)
-            ''', (login, password_hash_hex, first_name, last_name, role, default_buttons))
+                INSERT INTO users (telegram_id, login, password_hash, first_name, last_name, auth_type, role, buttons)
+                VALUES (?, ?, ?, ?, ?, 'login', ?, ?)
+            ''', (999999999, login, password_hash_hex, first_name, last_name, role, default_buttons))
             conn.commit()
             user_id = c.lastrowid
             conn.close()
             logger.info(f"Создан пользователь с логином: {login}")
             return True, user_id
-        except sqlite3.IntegrityError:
+        except sqlite3.IntegrityError as e:
             conn.close()
-            return False, "Пользователь с таким логином уже существует"
+            return False, f"Ошибка создания пользователя: {e}"
     
     def get_user_by_login(self, login):
         """Получить пользователя по логину"""
