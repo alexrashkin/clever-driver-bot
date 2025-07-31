@@ -523,6 +523,44 @@ footer {
             </a>
         </div>
         
+        {% elif needs_telegram_binding %}
+        <!-- Пользователь авторизован, но нужна привязка Telegram -->
+        <div class="status">
+            Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
+        </div>
+        {% if message %}
+            <div class="msg">{{ message }}</div>
+        {% endif %}
+        
+        <div class="info-block" style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444;">
+            <div class="info-block-title" style="color: #dc2626;">
+                ⚠️ Требуется привязка Telegram
+            </div>
+            <div class="info-block-text" style="color: #374151;">
+                Для полного доступа к функциям необходимо привязать ваш Telegram аккаунт. 
+                Без этого вы можете только просматривать статус системы.
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+            <a href="/bind_telegram" class="btn btn-toggle" style="background: linear-gradient(90deg, #0088cc 0%, #229ED9 100%); color: white; font-weight: 500; text-decoration: none;">
+                📱 Привязать Telegram
+            </a>
+            <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
+                🗺️ Трекер
+            </a>
+        </div>
+        
+        <div class="info-block">
+            <div class="info-block-title">
+                💡 Ограниченный доступ
+            </div>
+            <div class="info-block-text">
+                После привязки Telegram вы получите полный доступ ко всем функциям: управление отслеживанием, 
+                настройка кнопок уведомлений и многое другое.
+            </div>
+        </div>
+        
         {% else %}
         <!-- Интерфейс для неавторизованных пользователей -->
         <div class="status">

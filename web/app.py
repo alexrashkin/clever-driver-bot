@@ -116,7 +116,37 @@ def index():
             is_authorized = True
             user_name = user.get('first_name') or user.get('last_name') or user_login
             auth_type = 'login'
-            telegram_id = None  # Для совместимости
+            
+            # Проверяем, есть ли у пользователя привязанный Telegram ID
+            telegram_id = user.get('telegram_id')
+            if not telegram_id:
+                # Если нет Telegram ID - показываем предупреждение
+                session['flash_message'] = "Для полного доступа к функциям необходимо привязать Telegram аккаунт"
+                # Ограничиваем доступ - только просмотр
+                is_recipient_only = True
+                is_admin = False
+                is_driver = False
+                buttons = []
+                work_latitude = config.WORK_LATITUDE
+                work_longitude = config.WORK_LONGITUDE
+                work_radius = config.WORK_RADIUS
+                return render_template(
+                    'index.html',
+                    tracking_status=tracking_status,
+                    message=session.pop('flash_message', None),
+                    year=datetime.now().year,
+                    buttons=buttons,
+                    work_latitude=work_latitude,
+                    work_longitude=work_longitude,
+                    work_radius=work_radius,
+                    is_authorized=is_authorized,
+                    is_recipient_only=is_recipient_only,
+                    is_admin=is_admin,
+                    is_driver=is_driver,
+                    auth_type=auth_type,
+                    user_name=user_name,
+                    needs_telegram_binding=True
+                )
         
         # Общая обработка ролей для всех типов авторизации
         if telegram_id or user_login:
@@ -850,6 +880,47 @@ def telegram_auth():
     else:
         # Если роль есть - отправляем на главную или в настройки
         return redirect(url_for('index'))
+
+@app.route('/bind_telegram', methods=['POST', 'GET'])
+def bind_telegram():
+    """Привязка Telegram к существующему аккаунту"""
+    user_login = session.get('user_login')
+    if not user_login:
+        session['flash_message'] = "Необходимо авторизоваться через логин/пароль"
+        return redirect('/login')
+    
+    if request.method == 'GET':
+        return render_template('bind_telegram.html', user_login=user_login)
+    
+    # POST запрос - обработка привязки
+    data = request.args if request.method == 'GET' else request.form
+    auth_data = dict(data)
+    hash_ = auth_data.pop('hash', None)
+    auth_data.pop('user_id', None)
+    auth_data = {k: v for k, v in auth_data.items()}
+    data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
+    secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+    hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    
+    if hmac_hash != hash_:
+        return 'Ошибка авторизации Telegram', 403
+    
+    telegram_id = int(auth_data['id'])
+    username = auth_data.get('username')
+    first_name = auth_data.get('first_name')
+    last_name = auth_data.get('last_name')
+    
+    # Привязываем Telegram к пользователю
+    success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
+    
+    if success:
+        # Устанавливаем telegram_id в сессию
+        session['telegram_id'] = telegram_id
+        session['flash_message'] = "Telegram аккаунт успешно привязан! Теперь у вас есть полный доступ к функциям."
+        return redirect('/')
+    else:
+        session['flash_message'] = f"Ошибка привязки: {message}"
+        return redirect('/bind_telegram')
 
 @app.route('/select_role', methods=['GET', 'POST'])
 def select_role():

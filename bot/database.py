@@ -481,4 +481,33 @@ class Database:
         conn.close()
         logger.info(f"Обновлены настройки пользователя telegram_id={telegram_id}: {kwargs}")
 
+    def bind_telegram_to_user(self, login, telegram_id, username=None, first_name=None, last_name=None):
+        """Привязать Telegram ID к существующему пользователю по логину"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        # Проверяем, что пользователь с таким логином существует
+        user = self.get_user_by_login(login)
+        if not user:
+            conn.close()
+            return False, "Пользователь с таким логином не найден"
+        
+        # Проверяем, что Telegram ID не занят другим пользователем
+        existing_telegram_user = self.get_user_by_telegram_id(telegram_id)
+        if existing_telegram_user and existing_telegram_user.get('login') != login:
+            conn.close()
+            return False, "Этот Telegram аккаунт уже привязан к другому пользователю"
+        
+        # Обновляем пользователя
+        c.execute('''
+            UPDATE users 
+            SET telegram_id = ?, username = ?, first_name = ?, last_name = ?, auth_type = 'hybrid'
+            WHERE login = ?
+        ''', (telegram_id, username, first_name, last_name, login))
+        
+        conn.commit()
+        conn.close()
+        logger.info(f"Telegram ID {telegram_id} привязан к пользователю {login}")
+        return True, "Telegram аккаунт успешно привязан"
+
 # Создаем глобальный экземпляр базы данных
