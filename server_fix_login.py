@@ -44,11 +44,11 @@ def fix_login_issue():
             print("⚠️ Пользователь testuser уже существует, удаляем...")
             cursor.execute("DELETE FROM users WHERE login = 'testuser'")
         
-        # Пытаемся создать тестового пользователя
+        # Пытаемся создать тестового пользователя с telegram_id = 999999999
         cursor.execute("""
-            INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role)
-            VALUES (?, ?, ?, ?, 'login', ?)
-        """, ("testuser", "test_hash", "Тест", "Пользователь", "driver"))
+            INSERT INTO users (telegram_id, login, password_hash, first_name, last_name, auth_type, role)
+            VALUES (?, ?, ?, ?, ?, 'login', ?)
+        """, (999999999, "testuser", "test_hash", "Тест", "Пользователь", "driver"))
         
         user_id = cursor.lastrowid
         print(f"✅ Тестовый пользователь создан с ID: {user_id}")
