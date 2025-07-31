@@ -1358,7 +1358,7 @@ def bind_telegram_form():
         return redirect('/login')
     
     if request.method == 'GET':
-        return render_template('bind_telegram_form.html')
+        return render_template('bind_telegram_form.html', config=config)
     
     # POST запрос - обработка формы
     telegram_contact = request.form.get('telegram_contact', '').strip()
@@ -1367,7 +1367,8 @@ def bind_telegram_form():
     if not telegram_contact:
         return render_template('bind_telegram_form.html', 
                              error=True, 
-                             message="Введите Telegram username или номер телефона")
+                             message="Введите Telegram username или номер телефона",
+                             config=config)
     
     if not verification_code:
         # Первый шаг - отправка кода
@@ -1401,7 +1402,8 @@ def bind_telegram_form():
         if not saved_code or not saved_contact:
             return render_template('bind_telegram_form.html', 
                                  error=True, 
-                                 message="Сессия истекла. Попробуйте снова")
+                                 message="Сессия истекла. Попробуйте снова",
+                                 config=config)
         
         if verification_code != saved_code:
             return render_template('bind_telegram_form.html', 
