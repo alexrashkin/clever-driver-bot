@@ -141,7 +141,14 @@ def send_telegram_code(telegram_contact, code):
             else:
                 error_msg = result.get('description', 'Неизвестная ошибка')
                 logger.error(f"Ошибка отправки кода: {error_msg}")
-                return False, f"Ошибка отправки: {error_msg}"
+                
+                # Обрабатываем специфические ошибки
+                if "Chat not found" in error_msg:
+                    return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
+                elif "Forbidden" in error_msg:
+                    return False, f"Пользователь @{username} заблокировал бота. Попросите пользователя разблокировать бота @{config.TELEGRAM_BOT_USERNAME}"
+                else:
+                    return False, f"Ошибка отправки: {error_msg}"
         else:
             logger.error(f"HTTP ошибка {response.status_code} при отправке кода")
             return False, f"Ошибка отправки (HTTP {response.status_code})"
@@ -153,33 +160,21 @@ def send_telegram_code(telegram_contact, code):
 def find_telegram_user_by_username(username):
     """Найти пользователя Telegram по username"""
     try:
-        # Используем Telegram Bot API для поиска пользователя
-        url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getChat"
-        params = {"chat_id": f"@{username}"}
+        # Для привязки аккаунта мы не можем использовать getChat,
+        # так как он работает только для пользователей, которые уже писали боту.
+        # Вместо этого мы будем пытаться отправить сообщение напрямую.
+        # Если сообщение отправляется успешно, значит пользователь найден.
         
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('ok'):
-                chat = data.get('result', {})
-                return {
-                    'id': chat.get('id'),
-                    'username': chat.get('username'),
-                    'first_name': chat.get('first_name'),
-                    'last_name': chat.get('last_name')
-                }
-            else:
-                # Если getChat не работает, попробуем отправить сообщение напрямую
-                # Это может сработать для публичных username
-                logger.info(f"getChat не сработал для @{username}, пробуем прямой sendMessage")
-                return {
-                    'id': f"@{username}",
-                    'username': username,
-                    'first_name': username,
-                    'last_name': None
-                }
+        logger.info(f"Попытка найти пользователя @{username} через прямой sendMessage")
         
-        return None
+        # Возвращаем базовую информацию для попытки отправки
+        return {
+            'id': f"@{username}",
+            'username': username,
+            'first_name': username,
+            'last_name': None
+        }
+        
     except Exception as e:
         logger.error(f"Ошибка поиска пользователя по username {username}: {e}")
         return None
@@ -1421,16 +1416,53 @@ def bind_telegram_form():
         
         user_info = find_telegram_user_by_username(username)
         if not user_info:
-                    return render_template('bind_telegram_form.html', 
-                             telegram_contact=saved_contact,
-                             error=True, 
-                             message="Пользователь не найден. Попробуйте еще раз",
-                             config=config)
+            return render_template('bind_telegram_form.html', 
+                                 telegram_contact=saved_contact,
+                                 error=True, 
+                                 message="Пользователь не найден. Попробуйте еще раз",
+                                 config=config)
         
         telegram_id = user_info['id']
         username = user_info['username']
         first_name = user_info['first_name']
         last_name = user_info['last_name']
+        
+        # Если telegram_id в формате @username, нужно получить реальный ID
+        if isinstance(telegram_id, str) and telegram_id.startswith('@'):
+            # Пытаемся получить реальный ID через getChat (теперь пользователь должен существовать)
+            try:
+                url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getChat"
+                params = {"chat_id": telegram_id}
+                
+                response = requests.get(url, params=params, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('ok'):
+                        chat = data.get('result', {})
+                        telegram_id = chat.get('id')
+                        username = chat.get('username', username)
+                        first_name = chat.get('first_name', first_name)
+                        last_name = chat.get('last_name', last_name)
+                        logger.info(f"Получен реальный telegram_id: {telegram_id} для @{username}")
+                    else:
+                        return render_template('bind_telegram_form.html', 
+                                             telegram_contact=saved_contact,
+                                             error=True, 
+                                             message="Не удалось получить ID пользователя. Попробуйте еще раз",
+                                             config=config)
+                else:
+                    return render_template('bind_telegram_form.html', 
+                                         telegram_contact=saved_contact,
+                                         error=True, 
+                                         message="Ошибка получения данных пользователя",
+                                         config=config)
+            except Exception as e:
+                logger.error(f"Ошибка получения telegram_id: {e}")
+                return render_template('bind_telegram_form.html', 
+                                     telegram_contact=saved_contact,
+                                     error=True, 
+                                     message="Ошибка получения данных пользователя",
+                                     config=config)
         
         success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
         
