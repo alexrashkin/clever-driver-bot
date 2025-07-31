@@ -34,7 +34,7 @@ app = Flask(__name__)
 app.secret_key = config.WEB_SECRET_KEY
 
 # Создаем новый экземпляр базы данных
-db = Database("driver.db")
+db = Database("../driver.db")
 
 def send_telegram_arrival(user_id):
     """Отправка ручного уведомления о прибытии всем пользователям с ролями."""
@@ -1258,7 +1258,7 @@ def current_location():
     try:
         # Получаем последнее местоположение из базы данных
         import sqlite3
-        conn = sqlite3.connect('driver.db')
+        conn = sqlite3.connect('../driver.db')
         cursor = conn.cursor()
         cursor.execute("""
             SELECT latitude, longitude, distance, is_at_work, timestamp 

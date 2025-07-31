@@ -14,7 +14,7 @@ from telegram.ext import (
 from config.settings import config
 from bot.handlers import (
     start_command, help_command, track_command, status_command,
-    handle_location, handle_text, error_handler
+    handle_location, handle_text, error_handler, bind_command
 )
 from bot.database import db
 from bot.utils import create_work_notification
@@ -149,6 +149,7 @@ async def main():
         application.add_handler(CommandHandler("help", help_command))
         application.add_handler(CommandHandler("track", track_command))
         application.add_handler(CommandHandler("status", status_command))
+        application.add_handler(CommandHandler("bind", bind_command))
         
         # Добавляем обработчики сообщений
         application.add_handler(MessageHandler(filters.LOCATION, handle_location))

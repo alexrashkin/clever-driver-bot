@@ -119,4 +119,46 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Update {update} caused error {context.error}")
     if update and update.effective_message:
-        await update.effective_message.reply_text("Произошла ошибка. Попробуйте позже или обратитесь к администратору.") 
+        await update.effective_message.reply_text("Произошла ошибка. Попробуйте позже или обратитесь к администратору.")
+
+async def bind_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Команда для привязки Telegram аккаунта к веб-приложению"""
+    import random
+    import sqlite3
+    
+    user = update.effective_user
+    telegram_id = user.id
+    username = user.username
+    first_name = user.first_name
+    chat_id = update.effective_chat.id
+    
+    # Генерируем код подтверждения
+    bind_code = str(random.randint(100000, 999999))
+    
+    try:
+        # Сохраняем код в базу данных
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        # Удаляем старые коды для этого пользователя
+        cursor.execute("DELETE FROM telegram_bind_codes WHERE telegram_id = ?", (telegram_id,))
+        
+        # Добавляем новый код
+        cursor.execute("""
+            INSERT INTO telegram_bind_codes (telegram_id, username, first_name, chat_id, bind_code, created_at)
+            VALUES (?, ?, ?, ?, ?, datetime('now'))
+        """, (telegram_id, username, first_name, chat_id, bind_code))
+        
+        conn.commit()
+        conn.close()
+        
+        # Отправляем код пользователю
+        message = f"🔐 Код для привязки аккаунта: {bind_code}\n\n"
+        message += f"Используйте этот код в веб-приложении для завершения привязки.\n"
+        message += f"Код действителен 10 минут."
+        
+        await update.message.reply_text(message)
+        
+    except Exception as e:
+        logger.error(f"Ошибка при создании кода привязки: {e}")
+        await update.message.reply_text("Произошла ошибка при создании кода. Попробуйте позже.") 
