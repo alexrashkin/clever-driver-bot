@@ -92,7 +92,13 @@ def send_telegram_arrival(user_id):
     users = cursor.fetchall()
     conn.close()
     
+    if not users:
+        logger.warning("Нет пользователей с ролями для отправки уведомлений")
+        return False
+    
     sent_count = 0
+    total_users = len(users)
+    
     for (telegram_id,) in users:
         try:
             response = requests.post(url, data={"chat_id": telegram_id, "text": text}, timeout=15)
@@ -108,7 +114,10 @@ def send_telegram_arrival(user_id):
         except Exception as e:
             logger.error(f"Ошибка отправки уведомления пользователю {telegram_id}: {e}")
     
-    return sent_count > 0
+    logger.info(f"Отправлено уведомлений: {sent_count} из {total_users}")
+    
+    # Возвращаем True, если есть пользователи и хотя бы одно уведомление отправлено
+    return total_users > 0 and sent_count > 0
 
 def send_alternative_notification():
     """Альтернативный способ отправки уведомления (логирование)"""
@@ -517,7 +526,7 @@ def manual_arrival():
                 if send_alternative_notification():
                     message = "Уведомление отправлено (альтернативным способом)"
                 else:
-                    message = "Ошибка отправки уведомления"
+                    message = "Не удалось отправить уведомления. Проверьте, что есть пользователи с ролями и бот не заблокирован."
         
         # Сохраняем сообщение в сессии и делаем редирект
         session['flash_message'] = message
@@ -673,7 +682,7 @@ def api_notify():
             if send_alternative_notification():
                 return jsonify({'success': True})
             else:
-                return jsonify({'success': False, 'error': 'Не удалось отправить уведомление'})
+                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления. Проверьте, что есть пользователи с ролями и бот не заблокирован.'})
     except Exception as e:
         logger.error(f"Ошибка ручного уведомления: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
