@@ -108,7 +108,7 @@
             {% if message %}
                 <div class="msg{% if error %} error{% endif %}">{{ message }}</div>
             {% endif %}
-            {% if telegram_user and user.telegram_id and user.telegram_id != 999999999 %}
+            {% if user_role in ['driver', 'admin'] %}
                 <!-- Информация о привязанном Telegram аккаунте -->
                 <div style="margin-bottom: 20px; padding: 20px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border-left: 4px solid #22c55e;">
                     <div style="font-weight: 600; color: #15803d; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
