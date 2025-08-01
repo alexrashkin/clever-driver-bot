@@ -52,7 +52,7 @@ class Database:
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id BIGINT UNIQUE NOT NULL,
+                telegram_id BIGINT UNIQUE,
                 username TEXT,
                 first_name TEXT,
                 last_name TEXT,
@@ -146,7 +146,7 @@ class Database:
             c.execute('''
                 CREATE TABLE users_new (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    telegram_id BIGINT UNIQUE NOT NULL,
+                    telegram_id BIGINT UNIQUE,
                     username TEXT,
                     first_name TEXT,
                     last_name TEXT,
