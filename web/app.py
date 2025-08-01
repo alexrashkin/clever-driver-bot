@@ -303,34 +303,39 @@ def index():
             telegram_id = user.get('telegram_id')
             logger.info(f"INDEX: проверка telegram_id для пользователя {user_login}: telegram_id={telegram_id}")
             if not telegram_id:
-                # Если нет Telegram ID - показываем предупреждение
-                logger.info(f"INDEX: у пользователя {user_login} нет telegram_id, устанавливаем is_recipient_only=True")
-                session['flash_message'] = "Для полного доступа к функциям необходимо привязать Telegram аккаунт"
-                # Ограничиваем доступ - только просмотр
-                is_recipient_only = True
-                is_admin = False
-                is_driver = False
-                buttons = []
-                work_latitude = config.WORK_LATITUDE
-                work_longitude = config.WORK_LONGITUDE
-                work_radius = config.WORK_RADIUS
-                return render_template(
-                    'index.html',
-                    tracking_status=tracking_status,
-                    message=session.pop('flash_message', None),
-                    year=datetime.now().year,
-                    buttons=buttons,
-                    work_latitude=work_latitude,
-                    work_longitude=work_longitude,
-                    work_radius=work_radius,
-                    is_authorized=is_authorized,
-                    is_recipient_only=is_recipient_only,
-                    is_admin=is_admin,
-                    is_driver=is_driver,
-                    auth_type=auth_type,
-                    user_name=user_name,
-                    needs_telegram_binding=True
-                )
+                # Если нет Telegram ID - показываем предупреждение, но не ограничиваем доступ для driver
+                logger.info(f"INDEX: у пользователя {user_login} нет telegram_id")
+                if user_role == 'driver':
+                    logger.info(f"INDEX: пользователь {user_login} имеет роль driver, разрешаем полный доступ")
+                    session['flash_message'] = "Для отправки уведомлений необходимо привязать Telegram аккаунт"
+                else:
+                    logger.info(f"INDEX: у пользователя {user_login} нет telegram_id, устанавливаем is_recipient_only=True")
+                    session['flash_message'] = "Для полного доступа к функциям необходимо привязать Telegram аккаунт"
+                    # Ограничиваем доступ - только просмотр
+                    is_recipient_only = True
+                    is_admin = False
+                    is_driver = False
+                    buttons = []
+                    work_latitude = config.WORK_LATITUDE
+                    work_longitude = config.WORK_LONGITUDE
+                    work_radius = config.WORK_RADIUS
+                    return render_template(
+                        'index.html',
+                        tracking_status=tracking_status,
+                        message=session.pop('flash_message', None),
+                        year=datetime.now().year,
+                        buttons=buttons,
+                        work_latitude=work_latitude,
+                        work_longitude=work_longitude,
+                        work_radius=work_radius,
+                        is_authorized=is_authorized,
+                        is_recipient_only=is_recipient_only,
+                        is_admin=is_admin,
+                        is_driver=is_driver,
+                        auth_type=auth_type,
+                        user_name=user_name,
+                        needs_telegram_binding=True
+                    )
         
         # Общая обработка ролей для всех типов авторизации
         if telegram_id or user_login:
