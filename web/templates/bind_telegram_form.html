@@ -171,15 +171,15 @@
                         Примеры: @alexander, +79001234567
                     </small>
                 </div>
-                <button type="submit" class="btn">Отправить код подтверждения</button>
+                <button type="submit" class="btn">Ввести код подтверждения</button>
             </form>
         </div>
         
         <!-- Шаг 2: Ввод кода -->
         <div id="step2" class="step">
             <div class="instruction">
-                <strong>Код отправлен!</strong><br>
-                Проверьте Telegram и введите полученный код
+                <strong>Код получен!</strong><br>
+                Введите код подтверждения, полученный от бота
             </div>
             
             <form method="post" action="/bind_telegram_form">
@@ -196,7 +196,7 @@
             </form>
             
             <button type="button" class="btn" onclick="resendCode()" style="margin-top: 10px; background: #6b7280;">
-                Отправить код повторно
+                Получить новый код
             </button>
         </div>
         
