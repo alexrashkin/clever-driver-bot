@@ -25,7 +25,6 @@
             --block-bg: #f5f7fa;
             --block-color: #222;
             --info-color: #6366f1;
-        }
         body.dark {
             /* Переменные для тёмной темы */
             --bg: #18181b;
@@ -35,11 +34,9 @@
             --block-bg: #23232b;
             --block-color: #f1f5ff;
             --info-color: #a5b4fc;
-        }
         body, body.dark {
             background: var(--bg);
             color: var(--text);
-        }
         .container {
             flex: 1 0 auto;
             background: #f5f7fa;
@@ -53,21 +50,17 @@
             flex-direction: column;
             align-items: center;
             transition: background 0.3s, color 0.3s;
-        }
         body.dark .container {
             background: #23232b;
             color: #f1f5ff;
             box-shadow: 0 4px 24px rgba(30, 41, 59, 0.25);
-        }
         h2 {
             color: #2d3a5a;
             margin-bottom: 18px;
             font-size: 1.5em;
             text-align: center;
-        }
         body.dark h2 {
             color: #a5b4fc;
-        }
         .distance-block {
             background: #f1f5fb;
             border-radius: 12px;
@@ -80,12 +73,10 @@
             text-align: center;
             box-shadow: 0 2px 8px rgba(60, 72, 100, 0.04);
             transition: background 0.3s, color 0.3s;
-        }
         body.dark .distance-block {
             background: #35354a;
             color: #f1f5ff;
             box-shadow: 0 2px 8px rgba(30, 41, 59, 0.18);
-        }
         .status-block {
             background: #e0f7fa;
             border-radius: 12px;
@@ -96,11 +87,9 @@
             width: 100%;
             text-align: center;
             transition: background 0.3s, color 0.3s;
-        }
         body.dark .status-block {
             background: #35354a;
             color: #a5b4fc;
-        }
         .btn-refresh {
             background: var(--btn-bg, linear-gradient(90deg, #6366f1 0%, #60a5fa 100%));
             color: #fff;
@@ -114,41 +103,31 @@
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(60, 72, 100, 0.08);
             transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.1s;
-        }
         .btn-refresh:active {
             background: var(--btn-bg-active, linear-gradient(90deg, #4f46e5 0%, #2563eb 100%));
             transform: scale(0.97);
-        }
         .info {
             color: #64748b;
             font-size: 0.98em;
             margin-top: 10px;
             text-align: center;
             transition: color 0.3s;
-        }
         body.dark .info {
             color: var(--info-color, #a5b4fc);
-        }
         footer {
             flex-shrink: 0;
-        }
         @media (max-width: 500px) {
             .container {
                 margin-top: 10vw;
                 padding: 16px 4vw 24px 4vw;
-            }
             h2 {
                 font-size: 1.1em;
-            }
             .distance-block, .status-block {
                 font-size: 1em;
                 padding: 10px 8px;
-            }
             .btn-refresh {
                 padding: 12px 0;
                 width: 100%;
-            }
-        }
     </style>
     <style>
     .back-btn {
@@ -165,10 +144,8 @@
         margin: 0;
         min-width: 120px;
         text-align: center;
-    }
     .back-btn:hover, .back-btn:focus {
         background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
-    }
     </style>
 </head>
 <body>
@@ -187,6 +164,7 @@
     </footer>
     <script>
         function sendLocation() {
+            document.getElementById("status").textContent = "��� Получение геолокации...";
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     fetch('/api/location', {
@@ -199,21 +177,31 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        }
                         document.getElementById('status').textContent =
-                            'Последняя отправка геолокации: ' + new Date().toLocaleTimeString();
+                            '✅ Трекер работает! Последняя отправка: ' + new Date().toLocaleTimeString();
+                        lastUpdateTime = new Date();
                     }, function(error) {
                         document.getElementById('status').textContent =
-                            'Ошибка получения геолокации: ' + error.message;
+                            '❌ Ошибка получения геолокации: ' + error.message;
                     });
                 });
             } else {
                 document.getElementById('status').textContent =
-                    'Геолокация не поддерживается';
-            }
-        }
+                    '❌ Геолокация не поддерживается';
         setInterval(sendLocation, 10000); // каждые 10 секунд
         window.onload = sendLocation;
+        
+        // Проверка времени последнего обновления
+        let lastUpdateTime = null;
+        setInterval(() => {
+            if (lastUpdateTime) {
+                const now = new Date();
+                const diff = Math.floor((now - lastUpdateTime) / 1000);
+                if (diff > 15) {
+                    document.getElementById("status").textContent = `⚠️ Трекер не обновлялся ${diff} сек. Проверьте соединение.`;
+                }
+            }
+        }, 5000);
     </script>
 </body>
 </html> 
