@@ -267,6 +267,7 @@ def index():
         # Проверяем авторизацию (Telegram или логин/пароль)
         telegram_id = session.get('telegram_id')
         user_login = session.get('user_login')
+        user_role = None  # Инициализируем переменную
         
         if telegram_id:
             # Авторизация через Telegram
@@ -330,8 +331,8 @@ def index():
                 )
         
         # Общая обработка ролей для всех типов авторизации
-        logger.info(f"INDEX: обработка ролей user_role={user_role}")
         if telegram_id or user_login:
+            logger.info(f"INDEX: обработка ролей user_role={user_role}")
             if user_role == 'recipient':
                 # Получатель уведомлений - упрощенный интерфейс
                 buttons = []
