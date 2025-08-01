@@ -36,6 +36,28 @@ app.secret_key = config.WEB_SECRET_KEY
 # Создаем новый экземпляр базы данных
 db = Database("driver.db")
 
+def get_current_user():
+    """Получить текущего пользователя из сессии (Telegram или логин/пароль)"""
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if telegram_id:
+        return db.get_user_by_telegram_id(telegram_id)
+    elif user_login:
+        return db.get_user_by_login(user_login)
+    return None
+
+def get_current_user_role():
+    """Получить роль текущего пользователя"""
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if telegram_id:
+        return db.get_user_role(telegram_id)
+    elif user_login:
+        return db.get_user_role_by_login(user_login)
+    return None
+
 def send_telegram_arrival(user_id):
     """Отправка ручного уведомления о прибытии всем пользователям с ролями."""
     # Проверяем, что отправитель имеет права отправлять уведомления
@@ -602,12 +624,17 @@ def api_location():
 def api_notify():
     """API ручного уведомления"""
     try:
-        telegram_id = session.get('telegram_id')
-        if not telegram_id:
-            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
-        if db.get_user_role(telegram_id) == 'recipient':
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
+        
+        user_role = get_current_user_role()
+        if user_role == 'recipient':
             return jsonify({'success': False, 'error': 'Получатели уведомлений не могут отправлять ручные уведомления'}), 403
-        if send_telegram_arrival(telegram_id):
+        
+        # Используем telegram_id если есть, иначе логин
+        user_id = user.get('telegram_id') or user.get('login')
+        if send_telegram_arrival(user_id):
             return jsonify({'success': True})
         else:
             if send_alternative_notification():
@@ -621,16 +648,15 @@ def api_notify():
 @app.route('/api/user1', methods=['POST'])
 def api_user1():
     try:
-        telegram_id = session.get('telegram_id')
-        if not telegram_id:
-            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
         
         # Проверяем права пользователя
-        user_role = db.get_user_role(telegram_id)
+        user_role = get_current_user_role()
         if user_role not in ['admin', 'driver']:
             return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
         
-        user = db.get_user_by_telegram_id(telegram_id)
         buttons = user.get('buttons', [])
         greeting = get_greeting() + '!'
         # Используем первую кнопку или дефолтное значение
@@ -667,16 +693,15 @@ def api_user1():
 @app.route('/api/user2', methods=['POST'])
 def api_user2():
     try:
-        telegram_id = session.get('telegram_id')
-        if not telegram_id:
-            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
         
         # Проверяем права пользователя
-        user_role = db.get_user_role(telegram_id)
+        user_role = get_current_user_role()
         if user_role not in ['admin', 'driver']:
             return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
         
-        user = db.get_user_by_telegram_id(telegram_id)
         buttons = user.get('buttons', [])
         greeting = get_greeting() + '!'
         # Используем вторую кнопку или дефолтное значение
@@ -712,16 +737,17 @@ def api_user2():
 
 @app.route('/api/button/<int:idx>', methods=['POST'])
 def api_button(idx):
+    """API для отправки уведомления через кнопку с индексом idx"""
     try:
-        telegram_id = session.get('telegram_id')
-        if not telegram_id:
-            return jsonify({'success': False, 'error': 'Необходимо авторизоваться через Telegram'}), 401
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
+        
         # Проверяем права пользователя
-        user_role = db.get_user_role(telegram_id)
+        user_role = get_current_user_role()
         if user_role not in ['admin', 'driver']:
             return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
         
-        user = db.get_user_by_telegram_id(telegram_id)
         buttons = user.get('buttons', [])
         if idx < 0 or idx >= len(buttons):
             return jsonify({'success': False, 'error': 'Некорректный номер кнопки'}), 400
