@@ -328,13 +328,13 @@ def index():
 @app.route('/mobile')
 def mobile_tracker():
     """Мобильный трекер"""
-    # Временно убираем проверку авторизации для резервного трекера
-    # telegram_id = session.get('telegram_id')
-    # user_login = session.get('user_login')
+    # Проверяем авторизацию через Telegram или логин/пароль
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
     
-    # if not telegram_id and not user_login:
-    #     session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
-    #     return redirect('/')
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
+        return redirect('/')
     return render_template('mobile_tracker.html', year=datetime.now().year)
 
 @app.route('/debug_status')
@@ -352,13 +352,13 @@ def debug_status():
 @app.route('/mobile_tracker.html')
 def mobile_tracker_redirect():
     """Редирект для старой ссылки"""
-    # Временно убираем проверку авторизации для резервного трекера
-    # telegram_id = session.get('telegram_id')
-    # user_login = session.get('user_login')
+    # Проверяем авторизацию через Telegram или логин/пароль
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
     
-    # if not telegram_id and not user_login:
-    #     session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
-    #     return redirect('/')
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
+        return redirect('/')
     return redirect('/mobile')
 
 @app.route('/toggle', methods=['POST'])

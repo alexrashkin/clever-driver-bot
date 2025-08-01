@@ -179,13 +179,9 @@
             }
         }
         
-        // Автоматическая отправка каждые 10 секунд
         setInterval(sendLocation, 10000);
-        
-        // Первая отправка при загрузке страницы
         window.onload = sendLocation;
         
-        // Показываем время последнего обновления
         setInterval(() => {
             if (lastUpdateTime) {
                 const now = new Date();
