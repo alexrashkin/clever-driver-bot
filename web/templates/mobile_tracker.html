@@ -68,22 +68,6 @@
         body.dark h2 {
             color: #a5b4fc;
         }
-        .distance-block {
-            background: #f1f5fb;
-            border-radius: 12px;
-            padding: 18px 20px;
-            margin: 18px 0 10px 0;
-            font-size: 1.3em;
-            color: #1e293b;
-            font-weight: 500;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(60, 72, 100, 0.04);
-            transition: background 0.3s, color 0.3s;
-        }
-        body.dark .distance-block {
-            background: #35354a;
-            color: #f1f5ff;
             box-shadow: 0 2px 8px rgba(30, 41, 59, 0.18);
         }
         .status-block {
@@ -140,22 +124,6 @@
             h2 {
                 font-size: 1.1em;
             }
-            .distance-block, .status-block {
-                font-size: 1em;
-                padding: 10px 8px;
-            }
-            .btn-refresh {
-                padding: 12px 0;
-                width: 100%;
-            }
-        }
-    </style>
-    <style>
-    .back-btn {
-        display: inline-block;
-        padding: 6px 18px;
-        font-size: 0.98em;
-        border-radius: 7px;
         background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
         color: #fff;
         font-weight: 500;
@@ -178,7 +146,6 @@
             <img id="logo-img" src="/static/logo_light.png" alt="Умный водитель" style="max-width:220px;max-height:80px;width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 2px 8px #6366f122);">
         </div>
         <h2 style="text-align:center;">🚗 Резервный мобильный трекер</h2>
-        <div id="distance" class="distance-block">Расстояние до дома: ...</div>
         <div id="status" class="status-block">Ожидание отправки геолокации...</div>
         <button class="btn-refresh" onclick="sendLocation()">Обновить местоположение</button>
         <div class="info">Для работы резервного трекера страница должна оставаться открытой.<br>Геолокация обновляется автоматически каждые 10 секунд.</div>
@@ -187,7 +154,24 @@
         © {{ year }} Все права защищены. Разработчик: Александр Рашкин
     </footer>
     <script>
+        let lastUpdateTime = null;
+        
+        function updateStatus(message, type = "default") {
+            const statusEl = document.getElementById("status");
+            statusEl.textContent = message;
+            if (type === "working") {
+                statusEl.style.background = "#e8f5e8";
+                statusEl.style.color = "#2e7d32";
+            } else if (type === "error") {
+                statusEl.style.background = "#ffebee";
+                statusEl.style.color = "#c62828";
+            } else {
+                statusEl.style.background = "#e0f7fa";
+                statusEl.style.color = "#00796b";
+            }
+        }
         function sendLocation() {
+            updateStatus("��� Получение геолокации...", "default");
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     fetch('/api/location', {
@@ -200,10 +184,6 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        // Показываем расстояние
-                        if (data.distance) {
-                            document.getElementById('distance').textContent =
-                                'Расстояние до дома: ' + data.distance;
                         }
                         document.getElementById('status').textContent =
                             'Последняя отправка геолокации: ' + new Date().toLocaleTimeString();
