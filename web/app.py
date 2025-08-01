@@ -380,6 +380,9 @@ def index():
             is_admin = False
             is_driver = False
             user_name = None
+        # Определяем, нужна ли привязка Telegram
+        needs_telegram_binding = is_authorized and not telegram_id
+        
         return render_template(
             'index.html',
             tracking_status=tracking_status,
@@ -394,7 +397,8 @@ def index():
             is_admin=is_admin,
             is_driver=is_driver,
             auth_type=auth_type if is_authorized else None,
-            user_name=user_name
+            user_name=user_name,
+            needs_telegram_binding=needs_telegram_binding
         )
     except Exception as e:
         logger.error(f"Ошибка загрузки главной страницы: {e}")
