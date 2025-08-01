@@ -35,7 +35,7 @@ class Config:
     CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', '5'))  # секунды
     
     # Веб-интерфейс
-    WEB_HOST = os.getenv('WEB_HOST', '0.0.0.0')
+    WEB_HOST = os.getenv('WEB_HOST', '127.0.0.1')
     WEB_PORT = int(os.getenv('WEB_PORT', '5000'))
     WEB_SECRET_KEY = os.getenv('WEB_SECRET_KEY', 'clever-driver-secret-key-2024-very-secure-and-long')
 

@@ -112,6 +112,10 @@ Desktop.ini
 *.backup driver.db
 driver.db
 
+# Проблемные файлы Windows
+nul
+NUL
+
 # Файлы состояния бота
 bot/last_checked_id.txt
 bot/last_checked_time.txt
