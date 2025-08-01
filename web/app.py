@@ -25,9 +25,17 @@ import sqlite3
 import requests
 import asyncio
 import threading
+import traceback
 
 # Настройка логирования
-logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
+logging.basicConfig(
+    level=getattr(logging, config.LOG_LEVEL),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(config.LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -130,31 +138,16 @@ def send_telegram_code(telegram_contact, code):
             chat_id = f"@{username}"
             logger.info(f"Отправка кода username: @{username}")
         elif telegram_contact.startswith('+'):
-            # Номер телефона - нужно получить chat_id
+            # Номер телефона - пытаемся отправить сообщение напрямую
             phone = telegram_contact
             if len(phone) < 10:
                 return False, "Номер телефона слишком короткий. Используйте формат +7XXXXXXXXXX"
             logger.info(f"Отправка кода номер телефона: {phone}")
             
-            # Пытаемся получить chat_id через getChat
-            check_url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getChat"
-            check_params = {"chat_id": phone}
-            
-            check_response = requests.get(check_url, params=check_params, timeout=10)
-            logger.info(f"getChat response: HTTP {check_response.status_code}")
-            
-            if check_response.status_code == 200:
-                check_data = check_response.json()
-                if check_data.get('ok'):
-                    chat_id = check_data['result']['id']  # Используем числовой ID
-                    logger.info(f"Получен chat_id: {chat_id}")
-                else:
-                    error_desc = check_data.get('description', 'Неизвестная ошибка')
-                    logger.error(f"getChat error: {error_desc}")
-                    return False, f"Не удалось найти пользователя с номером {phone}. Убедитесь, что номер указан правильно."
-            else:
-                logger.error(f"getChat HTTP error: {check_response.status_code}")
-                return False, f"Не удалось найти пользователя с номером {phone}. Убедитесь, что номер указан правильно."
+            # Для номера телефона используем его напрямую как chat_id
+            # Telegram API попытается найти пользователя по номеру
+            chat_id = phone
+            logger.info(f"Используем номер как chat_id: {chat_id}")
         else:
             # Предполагаем, что это username без @
             username = telegram_contact
@@ -201,7 +194,7 @@ def send_telegram_code(telegram_contact, code):
                 # Обрабатываем специфические ошибки
                 if "Chat not found" in error_msg:
                     if telegram_contact.startswith('+'):
-                        return False, f"Пользователь с номером {telegram_contact} не найден. Убедитесь, что номер указан правильно и пользователь существует в Telegram"
+                        return False, f"Пользователь с номером {telegram_contact} не найден. Попросите пользователя написать боту @{config.TELEGRAM_BOT_USERNAME} /start"
                     else:
                         return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
                 elif "Forbidden" in error_msg:
@@ -213,7 +206,7 @@ def send_telegram_code(telegram_contact, code):
                         return False, f"Некорректный запрос. Проверьте формат контакта: {telegram_contact}"
                 elif "chat not found" in error_msg.lower():
                     if telegram_contact.startswith('+'):
-                        return False, f"Пользователь с номером {telegram_contact} не найден. Убедитесь, что номер указан правильно и пользователь существует в Telegram"
+                        return False, f"Пользователь с номером {telegram_contact} не найден. Попросите пользователя написать боту @{config.TELEGRAM_BOT_USERNAME} /start"
                     else:
                         return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
                 else:
@@ -269,11 +262,11 @@ def index():
         if telegram_id:
             # Авторизация через Telegram
             user_role = db.get_user_role(telegram_id)
-            logger.info(f"🔍 INDEX: telegram_id={telegram_id}, получена роль: {user_role}")
+            logger.info(f"INDEX: telegram_id={telegram_id}, получена роль: {user_role}")
             
             # Если роли нет - отправляем на выбор роли
             if not user_role:
-                logger.info(f"🔍 INDEX: роли нет, перенаправляем на /select_role")
+                logger.info(f"INDEX: роли нет, перенаправляем на /select_role")
                 return redirect('/select_role')
             
             user = db.get_user_by_telegram_id(telegram_id)
@@ -943,7 +936,7 @@ def settings():
                 error = True
             user = db.get_user_by_login(user_login)  # Обновить данные
         
-        logger.info(f"🔍 SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
+        logger.info(f"SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
         return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_id)
     
     elif telegram_id:
@@ -982,7 +975,7 @@ def settings():
                 error = True
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
         
-        logger.info(f"🔍 SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
+        logger.info(f"SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
         return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_id)
     
     else:
@@ -1045,19 +1038,19 @@ def register():
             return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -")
         
         # Создание пользователя
-        logger.info(f"🔍 REGISTER: попытка создания пользователя login={login}, role={role}")
+        logger.info(f"REGISTER: попытка создания пользователя login={login}, role={role}")
         success, result = db.create_user_with_login(login, password, first_name, last_name, role)
-        logger.info(f"🔍 REGISTER: результат создания - success={success}, result={result}")
+        logger.info(f"REGISTER: результат создания - success={success}, result={result}")
         
         if success:
             # Автоматический вход после регистрации
             session.clear()  # Очищаем старую сессию
             session['user_login'] = login
             session.permanent = True
-            logger.info(f"🔍 REGISTER: пользователь {login} успешно создан и авторизован")
+            logger.info(f"REGISTER: пользователь {login} успешно создан и авторизован")
             return redirect('/')
         else:
-            logger.error(f"🔍 REGISTER: ошибка создания пользователя {login}: {result}")
+            logger.error(f"REGISTER: ошибка создания пользователя {login}: {result}")
             return render_template('register.html', error=result)
     
     return render_template('register.html')
@@ -1169,7 +1162,7 @@ def telegram_auth():
     first_name = auth_data.get('first_name')
     last_name = auth_data.get('last_name')
     
-    logger.info(f"🔍 TELEGRAM_AUTH: telegram_id={telegram_id}, username={username}, first_name={first_name}")
+    logger.info(f"TELEGRAM_AUTH: telegram_id={telegram_id}, username={username}, first_name={first_name}")
     
     # Проверяем, существует ли пользователь
     existing_user = db.get_user_by_telegram_id(telegram_id)
@@ -1187,15 +1180,15 @@ def telegram_auth():
     
     # Проверяем, есть ли у пользователя роль
     user_role = db.get_user_role(telegram_id)
-    logger.info(f"🔍 TELEGRAM_AUTH: получена роль: {user_role}")
+    logger.info(f"TELEGRAM_AUTH: получена роль: {user_role}")
     
     if not user_role:
         # Если роли нет - отправляем на страницу выбора роли
-        logger.info(f"🔍 TELEGRAM_AUTH: роли нет, перенаправляем на /select_role")
+        logger.info(f"TELEGRAM_AUTH: роли нет, перенаправляем на /select_role")
         return redirect(url_for('select_role'))
     else:
         # Если роль есть - отправляем на главную или в настройки
-        logger.info(f"🔍 TELEGRAM_AUTH: роль есть ({user_role}), перенаправляем на /")
+        logger.info(f"TELEGRAM_AUTH: роль есть ({user_role}), перенаправляем на /")
         return redirect(url_for('index'))
 
 @app.route('/bind_telegram', methods=['POST', 'GET'])
@@ -1449,6 +1442,8 @@ def bind_telegram_form():
     telegram_contact = request.form.get('telegram_contact', '').strip()
     verification_code = request.form.get('verification_code', '').strip()
     
+    logger.info(f"BIND_TELEGRAM_FORM: user_login={user_login}, contact='{telegram_contact}', code='{verification_code}'")
+    
     if not telegram_contact:
         return render_template('bind_telegram_form.html', 
                              error=True, 
@@ -1456,27 +1451,14 @@ def bind_telegram_form():
                              config=config)
     
     if not verification_code:
-        # Первый шаг - отправка кода
-        # Генерируем 6-значный код
-        import random
-        code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        
-        # Сохраняем код в сессии
-        session['telegram_bind_code'] = code
+        # Первый шаг - переход к форме ввода кода
+        # Сохраняем контакт в сессии
         session['telegram_contact'] = telegram_contact
         
-        # Отправляем код через Telegram
-        success, message = send_telegram_code(telegram_contact, code)
-        
-        if success:
-            message = f"✅ Код подтверждения отправлен в Telegram"
-        else:
-            # Если отправка не удалась, показываем код на странице для тестирования
-            message = f"⚠️ {message}. Код для тестирования: {code}"
-        
+        # Просто переходим к форме ввода кода
         return render_template('bind_telegram_form.html', 
                              telegram_contact=telegram_contact,
-                             message=message,
+                             message="Введите код подтверждения, полученный от бота",
                              config=config)
     
     else:
@@ -1489,26 +1471,16 @@ def bind_telegram_form():
                                  message="Сессия истекла. Попробуйте снова",
                                  config=config)
         
-        # Проверяем код в базе данных
+        # Проверяем код в базе данных (созданный командой /bind)
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        # Определяем, что передано: username или номер телефона
-        if saved_contact.startswith('@'):
-            # Username - ищем по username и коду
-            username = saved_contact[1:]  # Убираем @
-            cursor.execute("""
-                SELECT telegram_id, chat_id FROM telegram_bind_codes
-                WHERE username = ? AND bind_code = ? AND used_at IS NULL
-                AND datetime(created_at) > datetime('now', '-30 minutes')
-            """, (username, verification_code))
-        else:
-            # Номер телефона - ищем только по коду
-            cursor.execute("""
-                SELECT telegram_id, chat_id FROM telegram_bind_codes
-                WHERE bind_code = ? AND used_at IS NULL
-                AND datetime(created_at) > datetime('now', '-30 minutes')
-            """, (verification_code,))
+        # Ищем код, созданный командой /bind (с telegram_id)
+        cursor.execute("""
+            SELECT telegram_id, chat_id FROM telegram_bind_codes
+            WHERE bind_code = ? AND used_at IS NULL AND telegram_id IS NOT NULL
+            AND datetime(created_at) > datetime('now', '-30 minutes')
+        """, (verification_code,))
         
         result = cursor.fetchone()
         conn.close()
@@ -1530,11 +1502,10 @@ def bind_telegram_form():
         
         cursor.execute("""
             SELECT username, first_name FROM telegram_bind_codes
-            WHERE telegram_id = ? AND bind_code = ?
+            WHERE telegram_id = ? AND bind_code = ? AND used_at IS NULL
         """, (telegram_id, verification_code))
         
         user_data = cursor.fetchone()
-        conn.close()
         
         if user_data:
             username, first_name = user_data
@@ -1548,11 +1519,20 @@ def bind_telegram_form():
             first_name = username
             last_name = None
         
+        # Помечаем код как использованный
+        cursor.execute("""
+            UPDATE telegram_bind_codes 
+            SET used_at = CURRENT_TIMESTAMP 
+            WHERE telegram_id = ? AND bind_code = ? AND used_at IS NULL
+        """, (telegram_id, verification_code))
+        
+        conn.commit()
+        conn.close()
+        
         success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
         
         if success:
             # Очищаем сессию
-            session.pop('telegram_bind_code', None)
             session.pop('telegram_contact', None)
             
             return render_template('bind_telegram_form.html', 
