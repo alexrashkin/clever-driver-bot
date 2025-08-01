@@ -738,7 +738,13 @@ def api_user1():
         if sent_count > 0:
             return jsonify({'success': True})
         else:
-            return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
+            # Если нет пользователей для уведомлений, это не ошибка
+            if len(users) == 0:
+                logger.info(f"API_BUTTON: нет пользователей для уведомлений, но это не ошибка")
+                return jsonify({'success': True, 'message': 'Уведомление отправлено (нет получателей)'})
+            else:
+                logger.warning(f"API_BUTTON: не удалось отправить уведомления")
+                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
     except Exception as e:
         logger.error(f"Ошибка user1: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -783,7 +789,13 @@ def api_user2():
         if sent_count > 0:
             return jsonify({'success': True})
         else:
-            return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
+            # Если нет пользователей для уведомлений, это не ошибка
+            if len(users) == 0:
+                logger.info(f"API_BUTTON: нет пользователей для уведомлений, но это не ошибка")
+                return jsonify({'success': True, 'message': 'Уведомление отправлено (нет получателей)'})
+            else:
+                logger.warning(f"API_BUTTON: не удалось отправить уведомления")
+                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
     except Exception as e:
         logger.error(f"Ошибка user2: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -838,7 +850,13 @@ def api_button(idx):
         if sent_count > 0:
             return jsonify({'success': True})
         else:
-            return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
+            # Если нет пользователей для уведомлений, это не ошибка
+            if len(users) == 0:
+                logger.info(f"API_BUTTON: нет пользователей для уведомлений, но это не ошибка")
+                return jsonify({'success': True, 'message': 'Уведомление отправлено (нет получателей)'})
+            else:
+                logger.warning(f"API_BUTTON: не удалось отправить уведомления")
+                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
     except Exception as e:
         logger.error(f"Ошибка api_button: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
