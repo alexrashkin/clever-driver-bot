@@ -301,8 +301,10 @@ def index():
             
             # Проверяем, есть ли у пользователя привязанный Telegram ID
             telegram_id = user.get('telegram_id')
+            logger.info(f"INDEX: проверка telegram_id для пользователя {user_login}: telegram_id={telegram_id}")
             if not telegram_id:
                 # Если нет Telegram ID - показываем предупреждение
+                logger.info(f"INDEX: у пользователя {user_login} нет telegram_id, устанавливаем is_recipient_only=True")
                 session['flash_message'] = "Для полного доступа к функциям необходимо привязать Telegram аккаунт"
                 # Ограничиваем доступ - только просмотр
                 is_recipient_only = True
