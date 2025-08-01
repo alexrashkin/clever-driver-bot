@@ -333,7 +333,7 @@ class Database:
         result = c.fetchone()
         conn.close()
         role = result[0] if result else None
-        logger.info(f"🔍 DATABASE: get_user_role({telegram_id}) = {role}")
+        logger.info(f"DATABASE: get_user_role({telegram_id}) = {role}")
         return role
     
     def set_user_role(self, telegram_id, role):
