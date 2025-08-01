@@ -328,27 +328,36 @@ def index():
 @app.route('/mobile')
 def mobile_tracker():
     """Мобильный трекер"""
+    # Проверяем авторизацию через Telegram или логин/пароль
     telegram_id = session.get('telegram_id')
-    if not telegram_id:
-        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться через Telegram"
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
         return redirect('/')
     return render_template('mobile_tracker.html', year=datetime.now().year)
 
 @app.route('/debug_status')
 def debug_status():
     """Отладочная страница для мониторинга статуса"""
+    # Проверяем авторизацию через Telegram или логин/пароль
     telegram_id = session.get('telegram_id')
-    if not telegram_id:
-        session['flash_message'] = "Для доступа к отладочной странице необходимо авторизоваться через Telegram"
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Для доступа к отладочной странице необходимо авторизоваться"
         return redirect('/')
     return render_template('debug_status.html')
 
 @app.route('/mobile_tracker.html')
 def mobile_tracker_redirect():
     """Редирект для старой ссылки"""
+    # Проверяем авторизацию через Telegram или логин/пароль
     telegram_id = session.get('telegram_id')
-    if not telegram_id:
-        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться через Telegram"
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
         return redirect('/')
     return redirect('/mobile')
 
@@ -1341,9 +1350,12 @@ def current_location():
 @app.route('/tracker')
 def real_time_tracker():
     """Страница отслеживания в реальном времени"""
+    # Проверяем авторизацию через Telegram или логин/пароль
     telegram_id = session.get('telegram_id')
-    if not telegram_id:
-        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться через Telegram"
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
         return redirect('/')
     
     try:
