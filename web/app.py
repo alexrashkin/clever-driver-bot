@@ -812,10 +812,10 @@ def api_button(idx):
         token = config.TELEGRAM_TOKEN
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         
-        # Получаем всех пользователей с ролями
+        # Получаем всех пользователей с ролями и telegram_id
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL")
         users = cursor.fetchall()
         conn.close()
         
