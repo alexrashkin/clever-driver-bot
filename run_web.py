@@ -9,7 +9,10 @@ import os
 # Добавляем текущую директорию в путь
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from web.app import app
+# Добавляем путь к web директории
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'web'))
+
+from app import app
 from config.settings import config
 
 if __name__ == "__main__":
