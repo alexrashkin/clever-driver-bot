@@ -37,7 +37,7 @@ class Config:
     # Веб-интерфейс
     WEB_HOST = os.getenv('WEB_HOST', '0.0.0.0')
     WEB_PORT = int(os.getenv('WEB_PORT', '5000'))
-    WEB_SECRET_KEY = os.getenv('WEB_SECRET_KEY', 'your-secret-key-here')
+    WEB_SECRET_KEY = os.getenv('WEB_SECRET_KEY', 'clever-driver-secret-key-2024-very-secure-and-long')
 
 # Создаем экземпляр конфигурации
 config = Config() 
