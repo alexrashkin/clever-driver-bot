@@ -195,9 +195,7 @@
                 <button type="submit" class="btn">Подтвердить и привязать</button>
             </form>
             
-            <button type="button" class="btn" onclick="resendCode()" style="margin-top: 10px; background: #6b7280;">
-                Получить новый код
-            </button>
+
         </div>
         
         <!-- Шаг 3: Успешное завершение -->
@@ -219,30 +217,6 @@
     </div>
 
     <script>
-        function resendCode() {
-            // Отправляем запрос на повторную отправку кода
-            fetch('/resend_telegram_code', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    telegram_contact: '{{ telegram_contact }}'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Код отправлен повторно!');
-                } else {
-                    alert('Ошибка: ' + data.message);
-                }
-            })
-            .catch(error => {
-                alert('Ошибка отправки кода');
-            });
-        }
-        
         // Показываем нужный шаг
         {% if success %}
             // Успешное завершение
