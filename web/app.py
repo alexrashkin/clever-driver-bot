@@ -284,7 +284,9 @@ def index():
             auth_type = 'telegram'
         elif user_login:
             # Авторизация через логин/пароль
+            logger.info(f"INDEX: авторизация через логин user_login={user_login}")
             user_role = db.get_user_role_by_login(user_login)
+            logger.info(f"INDEX: получена роль user_role={user_role}")
             
             if not user_role:
                 # Пользователь удален или роль сброшена
@@ -328,6 +330,7 @@ def index():
                 )
         
         # Общая обработка ролей для всех типов авторизации
+        logger.info(f"INDEX: обработка ролей user_role={user_role}")
         if telegram_id or user_login:
             if user_role == 'recipient':
                 # Получатель уведомлений - упрощенный интерфейс
@@ -1075,12 +1078,15 @@ def login():
             return render_template('login.html', error="Введите логин и пароль")
         
         # Проверяем логин и пароль
+        logger.info(f"LOGIN: попытка входа login={login}")
         if db.verify_password(login, password):
             session.clear()  # Очищаем старую сессию
             session['user_login'] = login
             session.permanent = True
+            logger.info(f"LOGIN: успешный вход login={login}")
             return redirect('/')
         else:
+            logger.error(f"LOGIN: неверный пароль для login={login}")
             return render_template('login.html', error="Неверный логин или пароль")
     
     return render_template('login.html')
