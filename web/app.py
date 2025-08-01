@@ -85,10 +85,10 @@ def send_telegram_arrival(user_id):
     text = create_work_notification()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     
-    # Получаем всех пользователей с ролями
+    # Получаем всех пользователей с ролями и telegram_id
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+    cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL")
     users = cursor.fetchall()
     conn.close()
     
