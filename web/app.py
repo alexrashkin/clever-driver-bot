@@ -792,17 +792,23 @@ def api_user2():
 def api_button(idx):
     """API для отправки уведомления через кнопку с индексом idx"""
     try:
+        logger.info(f"API_BUTTON: попытка нажатия кнопки idx={idx}")
         user = get_current_user()
         if not user:
+            logger.error(f"API_BUTTON: пользователь не авторизован")
             return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
         
         # Проверяем права пользователя
         user_role = get_current_user_role()
+        logger.info(f"API_BUTTON: роль пользователя user_role={user_role}")
         if user_role not in ['admin', 'driver']:
+            logger.error(f"API_BUTTON: недостаточно прав user_role={user_role}")
             return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
         
         buttons = user.get('buttons', [])
+        logger.info(f"API_BUTTON: кнопки пользователя buttons={buttons}")
         if idx < 0 or idx >= len(buttons):
+            logger.error(f"API_BUTTON: некорректный номер кнопки idx={idx}, всего кнопок={len(buttons)}")
             return jsonify({'success': False, 'error': 'Некорректный номер кнопки'}), 400
         
         # Отправляем уведомления всем пользователям с ролями
@@ -819,6 +825,7 @@ def api_button(idx):
         users = cursor.fetchall()
         conn.close()
         
+        logger.info(f"API_BUTTON: найдено пользователей для уведомлений users={len(users)}")
         sent_count = 0
         for (user_telegram_id,) in users:
             try:
