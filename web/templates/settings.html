@@ -109,34 +109,56 @@
                 <div class="msg{% if error %} error{% endif %}">{{ message }}</div>
             {% endif %}
             {% if telegram_user and user.telegram_id and user.telegram_id != 999999999 %}
-                            <!-- Старая система получателей заменена на роли -->
-            <!-- Теперь получатели - независимые пользователи с ролью 'recipient' -->
-                    <div class="instruction-block" style="margin-bottom: 20px; padding: 18px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border-left: 4px solid #22c55e;">
-                        <div style="font-weight: 600; color: #15803d; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <span>📱</span> Как подключить получателя уведомлений
-                        </div>
-                        <div style="color: #374151; font-size: 0.9em; line-height: 1.5; margin-bottom: 15px;">
-                            <strong>Получатель сможет:</strong>
-                            <ul style="margin: 8px 0; padding-left: 20px;">
-                                <li>Получать автоматические уведомления о прибытии/выезде</li>
-                                <li>Отслеживать ваше местоположение в реальном времени</li>
-                                <li>Видеть статус (в пути/ожидает) на карте</li>
-                                <li>Использовать все возможности веб-интерфейса</li>
-                            </ul>
-                        </div>
-                        <div style="color: #6b7280; font-size: 0.85em; background: rgba(255, 255, 255, 0.7); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                            <strong>📋 Пошаговая инструкция:</strong><br>
-                            <strong>1.</strong> Нажмите кнопку "Пригласить получателя уведомлений" ниже<br>
-                            <strong>2.</strong> <span style="background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Скопируйте ссылку открывшейся страницы</span><br>
-                            <strong>3.</strong> Отправьте эту ссылку человеку, которого хотите подключить<br>
-                            <strong>4.</strong> Получатель должен перейти по ссылке и авторизоваться через Telegram<br>
-                            <strong>5.</strong> После авторизации он автоматически получит доступ ко всем функциям
-                        </div>
+                <!-- Информация о привязанном Telegram аккаунте -->
+                <div style="margin-bottom: 20px; padding: 20px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border-left: 4px solid #22c55e;">
+                    <div style="font-weight: 600; color: #15803d; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>✅</span> Telegram аккаунт привязан
                     </div>
-                    <form method="get" action="/invite">
-                        <input type="hidden" name="user_id" value="{{ user.telegram_id }}">
-                        <button class="btn" type="submit" style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: white; font-weight: 500;">📱 Пригласить получателя уведомлений</button>
-                    </form>
+                    <div style="color: #374151; font-size: 0.9em; line-height: 1.5; margin-bottom: 15px;">
+                        <strong>Ваш Telegram ID:</strong> {{ user.telegram_id }}<br>
+                        <strong>Username:</strong> {{ user.username or 'Не указан' }}<br>
+                        <strong>Имя:</strong> {{ user.first_name or 'Не указано' }}
+                    </div>
+                    <div style="text-align: center;">
+                        <form method="post" action="/unbind_telegram" style="display: inline-block; margin-right: 10px;">
+                            <button type="submit" class="btn" style="background: #ef4444; font-size: 0.9em; padding: 8px 16px;" 
+                                    onclick="return confirm('Вы уверены, что хотите отвязать Telegram аккаунт?')">
+                                🔗 Отвязать Telegram
+                            </button>
+                        </form>
+                        <a href="/bind_telegram_form" class="btn" style="text-decoration: none; display: inline-block; background: #6366f1; font-size: 0.9em; padding: 8px 16px;">
+                            🔄 Привязать другой
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Инструкция по приглашению получателей -->
+                <div class="instruction-block" style="margin-bottom: 20px; padding: 18px; background: rgba(34, 197, 94, 0.1); border-radius: 12px; border-left: 4px solid #22c55e;">
+                    <div style="font-weight: 600; color: #15803d; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>📱</span> Как подключить получателя уведомлений
+                    </div>
+                    <div style="color: #374151; font-size: 0.9em; line-height: 1.5; margin-bottom: 15px;">
+                        <strong>Получатель сможет:</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            <li>Получать автоматические уведомления о прибытии/выезде</li>
+                            <li>Отслеживать ваше местоположение в реальном времени</li>
+                            <li>Видеть статус (в пути/ожидает) на карте</li>
+                            <li>Использовать все возможности веб-интерфейса</li>
+                        </ul>
+                    </div>
+                    <div style="color: #6b7280; font-size: 0.85em; background: rgba(255, 255, 255, 0.7); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                        <strong>📋 Пошаговая инструкция:</strong><br>
+                        <strong>1.</strong> Нажмите кнопку "Пригласить получателя уведомлений" ниже<br>
+                        <strong>2.</strong> <span style="background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Скопируйте ссылку открывшейся страницы</span><br>
+                        <strong>3.</strong> Отправьте эту ссылку человеку, которого хотите подключить<br>
+                        <strong>4.</strong> Получатель должен перейти по ссылке и авторизоваться через Telegram<br>
+                        <strong>5.</strong> После авторизации он автоматически получит доступ ко всем функциям
+                    </div>
+                </div>
+                <form method="get" action="/invite">
+                    <input type="hidden" name="user_id" value="{{ user.telegram_id }}">
+                    <button class="btn" type="submit" style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: white; font-weight: 500;">📱 Пригласить получателя уведомлений</button>
+                </form>
             {% endif %}
             
 
