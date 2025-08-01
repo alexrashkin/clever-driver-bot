@@ -379,9 +379,9 @@ def index():
             work_longitude=work_longitude,
             work_radius=work_radius,
             is_authorized=is_authorized,
-            is_recipient_only=is_recipient_only if telegram_id else False,
-            is_admin=is_admin if telegram_id else False,
-            is_driver=is_driver if telegram_id else False,
+            is_recipient_only=is_recipient_only,
+            is_admin=is_admin,
+            is_driver=is_driver,
             auth_type=auth_type if is_authorized else None,
             user_name=user_name
         )
@@ -1621,6 +1621,18 @@ def unbind_telegram():
         session['flash_message'] = f"Ошибка отвязки: {message}"
     
     return redirect('/settings')
+
+@app.route('/logs')
+def view_logs():
+    """Просмотр логов"""
+    try:
+        with open('driver-bot.log', 'r', encoding='utf-8') as f:
+            logs = f.read()
+        return f"<pre>{logs}</pre>"
+    except FileNotFoundError:
+        return "Лог файл не найден"
+    except Exception as e:
+        return f"Ошибка чтения логов: {e}"
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
