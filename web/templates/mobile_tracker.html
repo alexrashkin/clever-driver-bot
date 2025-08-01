@@ -1,3 +1,200 @@
-        <h2 style="text-align:center;">🚗 Резервный мобильный трекер</h2>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Driver Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            align-items: center;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+            color: #222;
+        }
+        .container {
+            flex: 1 0 auto;
+            background: #f5f7fa;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(60, 72, 100, 0.08);
+            margin-top: 32px;
+            padding: 28px 20px 32px 20px;
+            max-width: 400px;
+            width: 96vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #2d3a5a;
+            margin-bottom: 18px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+        .status-block {
+            background: #e0f7fa;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-bottom: 18px;
+            font-size: 1.1em;
+            color: #00796b;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .status-block.working {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status-block.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .btn-refresh {
+            background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 32px;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(60, 72, 100, 0.08);
+            transition: all 0.3s;
+        }
+        .btn-refresh:active {
+            background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%);
+            transform: scale(0.97);
+        }
+        .info {
+            color: #64748b;
+            font-size: 0.98em;
+            margin-top: 10px;
+            text-align: center;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 6px 18px;
+            font-size: 0.98em;
+            border-radius: 7px;
+            background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
+            color: #fff;
+            font-weight: 500;
+            text-decoration: none;
+            box-shadow: 0 1px 4px #6366f133;
+            transition: background 0.3s;
+            margin: 18px auto 0 auto;
+            min-width: 120px;
+            text-align: center;
+        }
+        footer {
+            text-align: center;
+            margin-top: 32px;
+            color: #888;
+            font-size: 14px;
+        }
+        @media (max-width: 500px) {
+            .container {
+                margin-top: 10vw;
+                padding: 16px 4vw 24px 4vw;
+            }
+            h2 {
+                font-size: 1.1em;
+            }
+            .status-block {
+                font-size: 1em;
+                padding: 10px 8px;
+            }
+            .btn-refresh {
+                padding: 12px 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Назад на главную</a>
+    <div class="container">
+        <div class="logo-wrap" style="display:flex;justify-content:center;align-items:center;margin-bottom:12px;">
+            <img id="logo-img" src="/static/logo_light.png" alt="Умный водитель" style="max-width:220px;max-height:80px;width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 2px 8px #6366f122);">
+        </div>
+        <h2>��� Резервный мобильный трекер</h2>
         <div id="status" class="status-block">Ожидание отправки геолокации...</div>
-        <button class="btn-refresh" onclick="sendLocation()">Обновить местоположение</button> 
+        <button class="btn-refresh" onclick="sendLocation()">Обновить местоположение</button>
+        <div class="info">
+            <strong>⚠️ Важно: Не закрывайте эту страницу!</strong><br>
+            Резервный трекер работает только когда страница открыта в браузере.<br>
+            Если закрыть страницу, отслеживание прекратится.
+        </div>
+    </div>
+    <footer>
+        © {{ year }} Все права защищены. Разработчик: Александр Рашкин
+    </footer>
+    <script>
+        let lastUpdateTime = null;
+        
+        function updateStatus(message, type = 'default') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status-block ' + type;
+        }
+        
+        function sendLocation() {
+            if (navigator.geolocation) {
+                updateStatus('��� Получение геолокации...', 'default');
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    fetch('/api/location', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        lastUpdateTime = new Date();
+                        const timeStr = lastUpdateTime.toLocaleTimeString();
+                        updateStatus(`✅ Трекер работает! Последняя отправка: ${timeStr}`, 'working');
+                    })
+                    .catch(error => {
+                        updateStatus(`❌ Ошибка отправки: ${error.message}`, 'error');
+                    });
+                }, function(error) {
+                    updateStatus(`❌ Ошибка получения геолокации: ${error.message}`, 'error');
+                });
+            } else {
+                updateStatus('❌ Геолокация не поддерживается', 'error');
+            }
+        }
+        
+        // Автоматическая отправка каждые 10 секунд
+        setInterval(sendLocation, 10000);
+        
+        // Первая отправка при загрузке страницы
+        window.onload = sendLocation;
+        
+        // Показываем время последнего обновления
+        setInterval(() => {
+            if (lastUpdateTime) {
+                const now = new Date();
+                const diff = Math.floor((now - lastUpdateTime) / 1000);
+                if (diff > 15) {
+                    updateStatus(`⚠️ Трекер не обновлялся ${diff} сек. Проверьте соединение.`, 'error');
+                }
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
