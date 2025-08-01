@@ -373,9 +373,9 @@ class Database:
         c = conn.cursor()
         try:
             c.execute('''
-                INSERT INTO users (telegram_id, login, password_hash, first_name, last_name, auth_type, role, buttons)
-                VALUES (?, ?, ?, ?, ?, 'login', ?, ?)
-            ''', (999999999, login, password_hash_hex, first_name, last_name, role, default_buttons))
+                INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, buttons)
+                VALUES (?, ?, ?, ?, 'login', ?, ?)
+            ''', (login, password_hash_hex, first_name, last_name, role, default_buttons))
             conn.commit()
             user_id = c.lastrowid
             conn.close()
@@ -521,14 +521,14 @@ class Database:
             return False, "Пользователь с таким логином не найден"
         
         # Проверяем, что у пользователя есть привязанный Telegram
-        if not user.get('telegram_id') or user.get('telegram_id') == 999999999:
+        if not user.get('telegram_id'):
             conn.close()
             return False, "У пользователя нет привязанного Telegram аккаунта"
         
-        # Отвязываем Telegram (устанавливаем telegram_id = 999999999, как у новых пользователей)
+        # Отвязываем Telegram (устанавливаем telegram_id = NULL)
         c.execute('''
             UPDATE users 
-            SET telegram_id = 999999999, username = NULL, first_name = NULL, last_name = NULL, auth_type = 'login'
+            SET telegram_id = NULL, username = NULL, first_name = NULL, last_name = NULL, auth_type = 'login'
             WHERE login = ?
         ''', (login,))
         
