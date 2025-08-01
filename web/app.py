@@ -115,25 +115,61 @@ def send_alternative_notification():
 def send_telegram_code(telegram_contact, code):
     """Отправить код подтверждения через Telegram бота"""
     try:
+        # Валидация контакта
+        if not telegram_contact or not telegram_contact.strip():
+            return False, "Контакт не указан"
+        
+        telegram_contact = telegram_contact.strip()
+        
         # Определяем, что передано: username или номер телефона
         if telegram_contact.startswith('@'):
-            # Username - нужно найти telegram_id
+            # Username - используем напрямую
             username = telegram_contact[1:]  # Убираем @
+            if not username:
+                return False, "Username не может быть пустым. Используйте формат @username"
             chat_id = f"@{username}"
+            logger.info(f"Отправка кода username: @{username}")
         elif telegram_contact.startswith('+'):
-            # Номер телефона - используем его напрямую
+            # Номер телефона - нужно получить chat_id
             phone = telegram_contact
-            chat_id = phone
+            if len(phone) < 10:
+                return False, "Номер телефона слишком короткий. Используйте формат +7XXXXXXXXXX"
+            logger.info(f"Отправка кода номер телефона: {phone}")
+            
+            # Пытаемся получить chat_id через getChat
+            check_url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getChat"
+            check_params = {"chat_id": phone}
+            
+            check_response = requests.get(check_url, params=check_params, timeout=10)
+            logger.info(f"getChat response: HTTP {check_response.status_code}")
+            
+            if check_response.status_code == 200:
+                check_data = check_response.json()
+                if check_data.get('ok'):
+                    chat_id = check_data['result']['id']  # Используем числовой ID
+                    logger.info(f"Получен chat_id: {chat_id}")
+                else:
+                    error_desc = check_data.get('description', 'Неизвестная ошибка')
+                    logger.error(f"getChat error: {error_desc}")
+                    return False, f"Не удалось найти пользователя с номером {phone}. Убедитесь, что номер указан правильно."
+            else:
+                logger.error(f"getChat HTTP error: {check_response.status_code}")
+                return False, f"Не удалось найти пользователя с номером {phone}. Убедитесь, что номер указан правильно."
         else:
             # Предполагаем, что это username без @
             username = telegram_contact
+            if not username:
+                return False, "Username не может быть пустым"
             chat_id = f"@{username}"
+            logger.info(f"Отправка кода username (без @): @{username}")
         
         # Отправляем сообщение через Telegram Bot API
         url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
+        
+        # Упрощенное сообщение без Markdown для избежания ошибок форматирования
         message_text = f"""🔐 Код подтверждения для привязки аккаунта
 
-Ваш код: **{code}**
+Ваш код: {code}
 
 Введите этот код на странице привязки для завершения процесса.
 
@@ -143,13 +179,15 @@ def send_telegram_code(telegram_contact, code):
 • Контакт указан правильно
 • Вы начали диалог с ботом @{config.TELEGRAM_BOT_USERNAME}"""
         
+        # Сначала пробуем без parse_mode
         data = {
             'chat_id': chat_id,
-            'text': message_text,
-            'parse_mode': 'Markdown'
+            'text': message_text
         }
         
+        logger.info(f"Отправка сообщения в {chat_id}")
         response = requests.post(url, json=data, timeout=10)
+        logger.info(f"sendMessage response: HTTP {response.status_code}")
         
         if response.status_code == 200:
             result = response.json()
@@ -168,10 +206,25 @@ def send_telegram_code(telegram_contact, code):
                         return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
                 elif "Forbidden" in error_msg:
                     return False, f"Пользователь заблокировал бота. Попросите пользователя разблокировать бота @{config.TELEGRAM_BOT_USERNAME}"
+                elif "Bad Request" in error_msg:
+                    if "chat_id is empty" in error_msg:
+                        return False, f"Некорректный формат контакта. Используйте @username или +7XXXXXXXXXX"
+                    else:
+                        return False, f"Некорректный запрос. Проверьте формат контакта: {telegram_contact}"
+                elif "chat not found" in error_msg.lower():
+                    if telegram_contact.startswith('+'):
+                        return False, f"Пользователь с номером {telegram_contact} не найден. Убедитесь, что номер указан правильно и пользователь существует в Telegram"
+                    else:
+                        return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
                 else:
                     return False, f"Ошибка отправки: {error_msg}"
         else:
             logger.error(f"HTTP ошибка {response.status_code} при отправке кода")
+            try:
+                error_data = response.json()
+                logger.error(f"Детали ошибки: {error_data}")
+            except:
+                logger.error(f"Текст ответа: {response.text}")
             return False, f"Ошибка отправки (HTTP {response.status_code})"
         
     except Exception as e:
@@ -1520,27 +1573,39 @@ def resend_telegram_code():
     if not user_login:
         return jsonify({'success': False, 'message': 'Не авторизован'})
     
-    data = request.get_json()
-    telegram_contact = data.get('telegram_contact', '').strip()
-    
-    if not telegram_contact:
-        return jsonify({'success': False, 'message': 'Не указан контакт'})
-    
-    # Генерируем новый код
-    import random
-    code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-    
-    # Сохраняем код в сессии
-    session['telegram_bind_code'] = code
-    session['telegram_contact'] = telegram_contact
-    
-    # Отправляем код через Telegram
-    success, message = send_telegram_code(telegram_contact, code)
-    
-    if success:
-        return jsonify({'success': True, 'message': 'Код отправлен повторно'})
-    else:
-        return jsonify({'success': False, 'message': message})
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'Некорректные данные запроса'})
+        
+        telegram_contact = data.get('telegram_contact', '').strip()
+        
+        if not telegram_contact:
+            return jsonify({'success': False, 'message': 'Не указан контакт'})
+        
+        logger.info(f"Повторная отправка кода для контакта: {telegram_contact}")
+        
+        # Генерируем новый код
+        import random
+        code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        
+        # Сохраняем код в сессии
+        session['telegram_bind_code'] = code
+        session['telegram_contact'] = telegram_contact
+        
+        # Отправляем код через Telegram
+        success, message = send_telegram_code(telegram_contact, code)
+        
+        if success:
+            logger.info(f"Код {code} отправлен повторно для {telegram_contact}")
+            return jsonify({'success': True, 'message': 'Код отправлен повторно'})
+        else:
+            logger.error(f"Ошибка повторной отправки кода: {message}")
+            return jsonify({'success': False, 'message': message})
+            
+    except Exception as e:
+        logger.error(f"Исключение при повторной отправке кода: {e}")
+        return jsonify({'success': False, 'message': f'Внутренняя ошибка сервера: {str(e)}'})
 
 @app.route('/telegram_login')
 def telegram_login():
