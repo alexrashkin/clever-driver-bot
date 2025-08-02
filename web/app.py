@@ -393,6 +393,16 @@ def index():
         # Определяем, нужна ли привязка Telegram
         needs_telegram_binding = is_authorized and not telegram_id
         
+        # Проверяем наличие получателей уведомлений
+        has_recipients = False
+        if is_authorized:
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL")
+            recipients_count = cursor.fetchone()[0]
+            conn.close()
+            has_recipients = recipients_count > 0
+        
         return render_template(
             'index.html',
             tracking_status=tracking_status,
@@ -408,7 +418,8 @@ def index():
             is_driver=is_driver,
             auth_type=auth_type if is_authorized else None,
             user_name=user_name,
-            needs_telegram_binding=needs_telegram_binding
+            needs_telegram_binding=needs_telegram_binding,
+            has_recipients=has_recipients
         )
     except Exception as e:
         logger.error(f"Ошибка загрузки главной страницы: {e}")
