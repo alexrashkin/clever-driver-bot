@@ -123,8 +123,10 @@
                     <li>Перейдите в <strong>Настройки</strong> (Settings), кликнув по иконке шестерёнки в правом верхнем углу, либо кликнув на букву "i" в левом верхнем углу и далее на "Settings"</li>
                     <li>Убедитесь, что включен режим: <strong>HTTP</strong> (Mode HTTP). Если включен режим "MQTT", то переключитесь на режим "HTTP"</li>
                     <li>Введите URL: <code>https://cleverdriver.ru/api/location</code></li>
-                    <li>Убедитесь, что ползунок <strong>allowRemoteLocation</strong> сдвинут вправо (разрешено автоматическое отслеживание)</li> 
-                    <li>Рекомендуется выбрать <strong>2</strong> в строке <code>locatorDisplacement</code> и <strong>3</strong> в строке <code>locatorInterval</code></li>
+                    <li>Убедитесь, что ползунок <strong>allowRemoteLocation</strong> сдвинут вправо (то есть разрешено автоматическое отслеживание)</li> 
+                    <li>В строке <code>locatorDisplacement</code> рекомендуется ввести цифру <strong>2</strong> (то есть 2 метра)</li>
+                    <li>В строке <code>locatorInterval</code> рекомендуется ввести цифру <strong>3</strong> (то есть 3 секунды)</li>    
+                    <li>Настройка завершена, приложение можно закрыть. Теперь в фоновом режиме приложение будет отправлять координаты на наш сервер каждые 3 секунды с точностью до 2 метров</li>
                 </ol>
             </div>
         </div>
