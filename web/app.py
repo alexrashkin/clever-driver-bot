@@ -386,7 +386,16 @@ def index():
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
             is_authorized = False
-            is_recipient_only = True  # Неавторизованные пользователи видят интерфейс получателя
+            
+            # Проверяем, есть ли в базе пользователь с ролью recipient
+            # Если есть, то показываем интерфейс получателя, иначе - водителя
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'recipient' AND telegram_id IS NOT NULL")
+            recipients_count = cursor.fetchone()[0]
+            conn.close()
+            
+            is_recipient_only = recipients_count > 0  # Показываем интерфейс получателя только если есть получатели
             is_admin = False
             is_driver = False
             user_name = None
