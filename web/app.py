@@ -1219,92 +1219,128 @@ def admin_delete_user(user_id):
 
 @app.route('/telegram_auth', methods=['POST', 'GET'])
 def telegram_auth():
-    # Проверка подписи Telegram
-    data = request.args if request.method == 'GET' else request.form
-    auth_data = dict(data)
-    hash_ = auth_data.pop('hash', None)
-    auth_data.pop('user_id', None)  # Удаляем user_id, если есть
-    auth_data = {k: v for k, v in auth_data.items()}
-    data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-    secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
-    hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
-    if hmac_hash != hash_:
-        return 'Ошибка авторизации Telegram', 403
-    telegram_id = int(auth_data['id'])
-    username = auth_data.get('username')
-    first_name = auth_data.get('first_name')
-    last_name = auth_data.get('last_name')
-    
-    logger.info(f"TELEGRAM_AUTH: telegram_id={telegram_id}, username={username}, first_name={first_name}")
-    
-    # Проверяем, существует ли пользователь
-    existing_user = db.get_user_by_telegram_id(telegram_id)
-    
-    if not existing_user:
-        # Создаем пользователя только если его нет
-        db.create_user(telegram_id, username, first_name, last_name)
-        logger.info(f"✅ Создан новый пользователь: {telegram_id}")
-    else:
-        logger.info(f"✅ Пользователь уже существует: {telegram_id}, роль: {existing_user.get('role')}")
-    
-    session.clear()  # Очищаем старую сессию
-    session['telegram_id'] = telegram_id
-    session.permanent = True
-    
-    # Проверяем, есть ли у пользователя роль
-    user_role = db.get_user_role(telegram_id)
-    logger.info(f"TELEGRAM_AUTH: получена роль: {user_role}")
-    
-    if not user_role:
-        # Если роли нет - отправляем на страницу выбора роли
-        logger.info(f"TELEGRAM_AUTH: роли нет, перенаправляем на /select_role")
-        return redirect(url_for('select_role'))
-    else:
-        # Если роль есть - отправляем на главную или в настройки
-        logger.info(f"TELEGRAM_AUTH: роль есть ({user_role}), перенаправляем на /")
-        return redirect(url_for('index'))
+    try:
+        logger.info(f"TELEGRAM_AUTH: начало обработки запроса, метод: {request.method}")
+        # Проверка подписи Telegram
+        data = request.args if request.method == 'GET' else request.form
+        auth_data = dict(data)
+        logger.info(f"TELEGRAM_AUTH: полученные данные: {auth_data}")
+        
+        hash_ = auth_data.pop('hash', None)
+        auth_data.pop('user_id', None)  # Удаляем user_id, если есть
+        auth_data = {k: v for k, v in auth_data.items()}
+        data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
+        secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+        hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+        
+        logger.info(f"TELEGRAM_AUTH: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
+        
+        if hmac_hash != hash_:
+            logger.error("TELEGRAM_AUTH: неверная подпись Telegram")
+            return 'Ошибка авторизации Telegram', 403
+            
+        telegram_id = int(auth_data['id'])
+        username = auth_data.get('username')
+        first_name = auth_data.get('first_name')
+        last_name = auth_data.get('last_name')
+        
+        logger.info(f"TELEGRAM_AUTH: telegram_id={telegram_id}, username={username}, first_name={first_name}")
+        
+        # Проверяем, существует ли пользователь
+        existing_user = db.get_user_by_telegram_id(telegram_id)
+        
+        if not existing_user:
+            # Создаем пользователя только если его нет
+            logger.info(f"TELEGRAM_AUTH: создаем нового пользователя: {telegram_id}")
+            db.create_user(telegram_id, username, first_name, last_name)
+            logger.info(f"✅ Создан новый пользователь: {telegram_id}")
+        else:
+            logger.info(f"✅ Пользователь уже существует: {telegram_id}, роль: {existing_user.get('role')}")
+        
+        session.clear()  # Очищаем старую сессию
+        session['telegram_id'] = telegram_id
+        session.permanent = True
+        
+        # Проверяем, есть ли у пользователя роль
+        user_role = db.get_user_role(telegram_id)
+        logger.info(f"TELEGRAM_AUTH: получена роль: {user_role}")
+        
+        if not user_role:
+            # Если роли нет - отправляем на страницу выбора роли
+            logger.info(f"TELEGRAM_AUTH: роли нет, перенаправляем на /select_role")
+            return redirect(url_for('select_role'))
+        else:
+            # Если роль есть - отправляем на главную или в настройки
+            logger.info(f"TELEGRAM_AUTH: роль есть ({user_role}), перенаправляем на /")
+            return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"TELEGRAM_AUTH: исключение: {e}")
+        logger.error(f"TELEGRAM_AUTH: тип исключения: {type(e)}")
+        import traceback
+        logger.error(f"TELEGRAM_AUTH: traceback: {traceback.format_exc()}")
+        return 'Internal Server Error', 500
 
 @app.route('/bind_telegram', methods=['POST', 'GET'])
 def bind_telegram():
     """Привязка Telegram к существующему аккаунту"""
-    user_login = session.get('user_login')
-    if not user_login:
-        session['flash_message'] = "Необходимо авторизоваться через логин/пароль"
-        return redirect('/login')
-    
-    if request.method == 'GET':
-        return render_template('bind_telegram.html', user_login=user_login)
-    
-    # POST запрос - обработка привязки
-    data = request.args if request.method == 'GET' else request.form
-    auth_data = dict(data)
-    hash_ = auth_data.pop('hash', None)
-    auth_data.pop('user_id', None)
-    auth_data = {k: v for k, v in auth_data.items()}
-    data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-    secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
-    hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
-    
-    if hmac_hash != hash_:
-        return 'Ошибка авторизации Telegram', 403
-    
-    telegram_id = int(auth_data['id'])
-    username = auth_data.get('username')
-    first_name = auth_data.get('first_name')
-    last_name = auth_data.get('last_name')
-    
-    # Привязываем Telegram к пользователю
-    success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
-    
-    if success:
-        # Устанавливаем telegram_id в сессию и удаляем user_login
-        session['telegram_id'] = telegram_id
-        session.pop('user_login', None)  # Удаляем логин из сессии
-        session['flash_message'] = "Telegram аккаунт успешно привязан! Теперь у вас есть полный доступ к функциям."
-        return redirect('/')
-    else:
-        session['flash_message'] = f"Ошибка привязки: {message}"
-        return redirect('/bind_telegram')
+    try:
+        logger.info(f"BIND_TELEGRAM: начало обработки запроса, метод: {request.method}")
+        user_login = session.get('user_login')
+        if not user_login:
+            logger.error("BIND_TELEGRAM: нет user_login в сессии")
+            session['flash_message'] = "Необходимо авторизоваться через логин/пароль"
+            return redirect('/login')
+        
+        if request.method == 'GET':
+            logger.info("BIND_TELEGRAM: GET запрос, рендерим bind_telegram.html")
+            return render_template('bind_telegram.html', user_login=user_login)
+        
+        # POST запрос - обработка привязки
+        logger.info("BIND_TELEGRAM: POST запрос, обрабатываем привязку")
+        data = request.args if request.method == 'GET' else request.form
+        auth_data = dict(data)
+        logger.info(f"BIND_TELEGRAM: полученные данные: {auth_data}")
+        
+        hash_ = auth_data.pop('hash', None)
+        auth_data.pop('user_id', None)
+        auth_data = {k: v for k, v in auth_data.items()}
+        data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
+        secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+        hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+        
+        logger.info(f"BIND_TELEGRAM: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
+        
+        if hmac_hash != hash_:
+            logger.error("BIND_TELEGRAM: неверная подпись Telegram")
+            return 'Ошибка авторизации Telegram', 403
+        
+        telegram_id = int(auth_data['id'])
+        username = auth_data.get('username')
+        first_name = auth_data.get('first_name')
+        last_name = auth_data.get('last_name')
+        
+        logger.info(f"BIND_TELEGRAM: telegram_id={telegram_id}, username={username}, first_name={first_name}")
+        
+        # Привязываем Telegram к пользователю
+        success, message = db.bind_telegram_to_user(user_login, telegram_id, username, first_name, last_name)
+        
+        if success:
+            logger.info(f"BIND_TELEGRAM: успешная привязка для user_login={user_login}, telegram_id={telegram_id}")
+            # Устанавливаем telegram_id в сессию и удаляем user_login
+            session['telegram_id'] = telegram_id
+            session.pop('user_login', None)  # Удаляем логин из сессии
+            session['flash_message'] = "Telegram аккаунт успешно привязан! Теперь у вас есть полный доступ к функциям."
+            return redirect('/')
+        else:
+            logger.error(f"BIND_TELEGRAM: ошибка привязки: {message}")
+            session['flash_message'] = f"Ошибка привязки: {message}"
+            return redirect('/bind_telegram')
+    except Exception as e:
+        logger.error(f"BIND_TELEGRAM: исключение: {e}")
+        logger.error(f"BIND_TELEGRAM: тип исключения: {type(e)}")
+        import traceback
+        logger.error(f"BIND_TELEGRAM: traceback: {traceback.format_exc()}")
+        return 'Internal Server Error', 500
 
 @app.route('/select_role', methods=['GET', 'POST'])
 def select_role():
@@ -1391,14 +1427,22 @@ def invite():
 @app.route('/invite_auth', methods=['POST', 'GET'])
 def invite_auth():
     try:
+        logger.info(f"INVITE_AUTH: начало обработки запроса, метод: {request.method}")
         auth_data = {**request.args, **request.form}
+        logger.info(f"INVITE_AUTH: полученные данные: {auth_data}")
+        
         if 'hash' not in auth_data:
+            logger.error("INVITE_AUTH: отсутствует hash")
             return 'Ошибка авторизации Telegram: отсутствует hash', 400
         if 'auth_date' not in auth_data:
+            logger.error("INVITE_AUTH: отсутствует auth_date")
             return 'Ошибка авторизации Telegram: отсутствует auth_date', 400
+        
         user_id = auth_data.get('user_id')
         if not user_id:
+            logger.error("INVITE_AUTH: отсутствует user_id")
             return 'Некорректная ссылка приглашения', 400
+        
         hash_ = auth_data.pop('hash')
         auth_data.pop('user_id', None)
         data_check_string = '\n'.join(
@@ -1407,33 +1451,47 @@ def invite_auth():
         )
         secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+        
+        logger.info(f"INVITE_AUTH: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
+        
         if hmac_hash != hash_:
+            logger.error("INVITE_AUTH: неверная подпись Telegram")
             return 'Ошибка авторизации Telegram', 403
+        
         # Проверяем, существует ли пользователь
         new_user_telegram_id = int(auth_data['id'])
         username = auth_data.get('username')
         first_name = auth_data.get('first_name')
         last_name = auth_data.get('last_name')
         
+        logger.info(f"INVITE_AUTH: telegram_id={new_user_telegram_id}, username={username}, first_name={first_name}")
+        
         # Проверяем, есть ли уже пользователь с таким Telegram ID
         existing_user = db.get_user_by_telegram_id(new_user_telegram_id)
         
         if existing_user:
             # Пользователь уже существует - не меняем его роль
-            logger.info(f"Пользователь уже существует: {new_user_telegram_id}, роль: {existing_user.get('role')}")
+            logger.info(f"INVITE_AUTH: пользователь уже существует: {new_user_telegram_id}, роль: {existing_user.get('role')}")
             session['telegram_id'] = new_user_telegram_id
             session.permanent = True
+            logger.info("INVITE_AUTH: рендерим invite_success.html для существующего пользователя")
             return render_template('invite_success.html')
         else:
             # Создаем нового пользователя с ролью 'recipient'
+            logger.info(f"INVITE_AUTH: создаем нового пользователя с ролью recipient: {new_user_telegram_id}")
             db.create_user(new_user_telegram_id, username, first_name, last_name)
             db.set_user_role(new_user_telegram_id, 'recipient')
             
-            logger.info(f"Новый получатель уведомлений зарегистрирован: {new_user_telegram_id}")
+            logger.info(f"INVITE_AUTH: новый получатель уведомлений зарегистрирован: {new_user_telegram_id}")
             session['telegram_id'] = new_user_telegram_id
             session.permanent = True
+            logger.info("INVITE_AUTH: рендерим invite_success.html для нового пользователя")
             return render_template('invite_success.html')
     except Exception as e:
+        logger.error(f"INVITE_AUTH: исключение: {e}")
+        logger.error(f"INVITE_AUTH: тип исключения: {type(e)}")
+        import traceback
+        logger.error(f"INVITE_AUTH: traceback: {traceback.format_exc()}")
         return 'Internal Server Error', 500
 
 @app.route('/api/current_location')
