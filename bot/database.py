@@ -105,6 +105,10 @@ class Database:
         if 'auth_type' not in columns:
             c.execute("ALTER TABLE users ADD COLUMN auth_type TEXT DEFAULT 'telegram'")
         
+        # Миграция: добавляем поле username, если его нет
+        if 'username' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN username TEXT")
+        
         # Миграция: удаляем поле recipient_telegram_id, если оно есть (больше не используется)
         if 'recipient_telegram_id' in columns:
             # SQLite не поддерживает DROP COLUMN, поэтому пересоздаем таблицу
