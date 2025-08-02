@@ -1337,33 +1337,58 @@ def select_role():
                          user_name=user_name, 
                          telegram_id=telegram_id)
 
-@app.route('/invite')
-def invite():
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return 'Некорректная ссылка приглашения', 400
-    
-    # Проверяем, что user_id соответствует авторизованному пользователю с ролью driver или admin
+@app.route('/create_invite')
+def create_invite():
+    """Страница для водителя/админа для создания приглашения"""
+    # Проверяем авторизацию
     telegram_id = session.get('telegram_id')
     user_login = session.get('user_login')
     
     if not telegram_id and not user_login:
-        return 'Доступ запрещен', 403
+        session['flash_message'] = "Необходимо авторизоваться"
+        return redirect('/login')
     
     # Получаем роль пользователя
     if telegram_id:
         user_role = db.get_user_role(telegram_id)
-        current_user_id = str(telegram_id)
+        user_id = telegram_id
     else:
         user_role = db.get_user_role_by_login(user_login)
         user = db.get_user_by_login(user_login)
-        current_user_id = str(user.get('telegram_id')) if user else None
+        user_id = user.get('telegram_id') if user else None
     
     # Проверяем права доступа
-    if user_role not in ['driver', 'admin'] or current_user_id != user_id:
-        return 'Доступ запрещен', 403
+    if user_role not in ['driver', 'admin']:
+        session['flash_message'] = "Недостаточно прав для создания приглашений"
+        return redirect('/')
     
-    telegram_bot_id = config.TELEGRAM_BOT_ID  # ID Telegram-бота из настроек
+    if not user_id:
+        session['flash_message'] = "Для создания приглашений необходимо привязать Telegram аккаунт"
+        return redirect('/settings')
+    
+    # Генерируем ссылку для приглашения
+    invite_url = url_for('invite', user_id=user_id, _external=True)
+    
+    return render_template('create_invite.html', 
+                         invite_url=invite_url, 
+                         year=datetime.now().year)
+
+@app.route('/invite')
+def invite():
+    """Страница приглашения для получателей (только для неавторизованных пользователей)"""
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return 'Некорректная ссылка приглашения', 400
+    
+    # Проверяем, что пользователь НЕ авторизован (это страница для получателей)
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if telegram_id or user_login:
+        # Если пользователь уже авторизован, перенаправляем на главную
+        return redirect('/')
+    
+    telegram_bot_id = config.TELEGRAM_BOT_ID
     return render_template('invite.html', user_id=user_id, telegram_bot_id=telegram_bot_id)
 
 @app.route('/invite_auth', methods=['POST', 'GET'])

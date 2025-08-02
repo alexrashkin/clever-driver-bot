@@ -155,10 +155,7 @@
                         <strong>5.</strong> После авторизации он автоматически получит доступ ко всем функциям
                     </div>
                 </div>
-                <form method="get" action="/invite">
-                    <input type="hidden" name="user_id" value="{{ user.telegram_id }}">
-                    <button class="btn" type="submit" style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: white; font-weight: 500;">📱 Пригласить получателя уведомлений</button>
-                </form>
+                <a href="/create_invite" class="btn" style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color: white; font-weight: 500; text-decoration: none; display: inline-block;">📱 Пригласить получателя уведомлений</a>
             {% endif %}
             
 

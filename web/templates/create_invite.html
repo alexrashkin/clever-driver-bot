@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Создать приглашение - Умный водитель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+            color: #222;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            flex: 1 0 auto;
+            max-width: 420px;
+            margin: 48px auto 0 auto;
+            background: #e8ebf1;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
+            padding: 40px 28px 32px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #1d4ed8;
+            margin: 0 0 8px 0;
+        }
+        
+        .header p {
+            color: #6b7280;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        
+        .info-block {
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 12px;
+            padding: 18px;
+            border-left: 4px solid #22c55e;
+        }
+        
+        .info-title {
+            font-weight: 600;
+            color: #15803d;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-text {
+            color: #374151;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .link-block {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 12px;
+            padding: 18px;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .link-title {
+            font-weight: 600;
+            color: #4338ca;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .link-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85em;
+            background: white;
+            color: #374151;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(90deg, #6b7280 0%, #4b5563 100%);
+            margin-top: 8px;
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+        }
+        
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            color: #15803d;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Создать приглашение</h1>
+            <p>Пригласите получателя уведомлений</p>
+        </div>
+        
+        {% if message %}
+            {% if error %}
+                <div class="error-message">{{ message }}</div>
+            {% else %}
+                <div class="success-message">{{ message }}</div>
+            {% endif %}
+        {% endif %}
+        
+        <div class="info-block">
+            <div class="info-title">
+                <span>💡</span> Как это работает
+            </div>
+            <div class="info-text">
+                Скопируйте ссылку ниже и отправьте её человеку, которого хотите подключить. 
+                Получатель перейдет по ссылке, авторизуется через Telegram и автоматически получит доступ к уведомлениям.
+            </div>
+        </div>
+        
+        <div class="link-block">
+            <div class="link-title">
+                <span>🔗</span> Ссылка для приглашения
+            </div>
+            <input type="text" id="invite-link" class="link-input" value="{{ invite_url }}" readonly>
+            <button class="btn" onclick="copyLink()">📋 Скопировать ссылку</button>
+            <button class="btn btn-secondary" onclick="generateNewLink()">🔄 Создать новую ссылку</button>
+        </div>
+        
+        <div class="info-block">
+            <div class="info-title">
+                <span>📋</span> Инструкция
+            </div>
+            <div class="info-text">
+                <strong>1.</strong> Скопируйте ссылку выше<br>
+                <strong>2.</strong> Отправьте её получателю в Telegram, WhatsApp или любым другим способом<br>
+                <strong>3.</strong> Получатель перейдет по ссылке и авторизуется через Telegram<br>
+                <strong>4.</strong> Готово! Получатель автоматически получит доступ к уведомлениям
+            </div>
+        </div>
+        
+        <a href="/settings" class="btn btn-secondary" style="text-align: center;">← Вернуться в настройки</a>
+    </div>
+    
+    <div class="footer">
+        © {{ year }} Все права защищены. Разработчик: Александр Рашкин
+    </div>
+    
+    <script>
+        function copyLink() {
+            const linkInput = document.getElementById('invite-link');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // Для мобильных устройств
+            
+            try {
+                document.execCommand('copy');
+                showMessage('✅ Ссылка скопирована!', false);
+            } catch (err) {
+                // Современный способ для HTTPS
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(linkInput.value).then(() => {
+                        showMessage('✅ Ссылка скопирована!', false);
+                    }).catch(() => {
+                        showMessage('❌ Не удалось скопировать ссылку', true);
+                    });
+                } else {
+                    showMessage('❌ Не удалось скопировать ссылку', true);
+                }
+            }
+        }
+        
+        function generateNewLink() {
+            // Перезагружаем страницу для генерации новой ссылки
+            window.location.reload();
+        }
+        
+        function showMessage(text, isError) {
+            // Удаляем существующие сообщения
+            const existingMessages = document.querySelectorAll('.success-message, .error-message');
+            existingMessages.forEach(msg => msg.remove());
+            
+            // Создаем новое сообщение
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isError ? 'error-message' : 'success-message';
+            messageDiv.textContent = text;
+            
+            // Вставляем после header
+            const header = document.querySelector('.header');
+            header.parentNode.insertBefore(messageDiv, header.nextSibling);
+            
+            // Удаляем сообщение через 3 секунды
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 
