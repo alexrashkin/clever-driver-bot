@@ -509,17 +509,22 @@ footer {
                 {% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание
             </button>
         </form>
-        <button class="btn btn-manual" onclick="return sendManualNotification(event);">Ожидаю у подъезда</button>
+        <button class="btn btn-manual {% if not has_recipients %}btn-disabled{% endif %}" 
+                onclick="return sendManualNotification(event);" 
+                {% if not has_recipients %}disabled{% endif %}>
+            Ожидаю у подъезда
+        </button>
         {% for btn in buttons %}
-        <button class="btn btn-manual" onclick="return sendDynamicButton(event, {{ loop.index0 }});">{{ btn }}</button>
+        <button class="btn btn-manual {% if not has_recipients %}btn-disabled{% endif %}" 
+                onclick="return sendDynamicButton(event, {{ loop.index0 }});" 
+                {% if not has_recipients %}disabled{% endif %}>
+            {{ btn }}
+        </button>
         {% endfor %}
         
         <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
             <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
                 🗺️ Трекер
-            </a>
-            <a href="/settings" class="btn btn-toggle" style="background: linear-gradient(90deg, #059669 0%, #10b981 100%); color: white; font-weight: 500; text-decoration: none;">
-                ⚙️ Настройки
             </a>
             <a href="/mobile_tracker.html" class="btn btn-toggle off">
                 📱 Резервный трекер
