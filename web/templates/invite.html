@@ -62,20 +62,7 @@
         <a href="/" class="back-btn">← Назад на главную</a>
         <h2>🎯 Подключение к сервису «Умный водитель»</h2>
         
-        <div class="important-notice" style="background: rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 18px; margin-bottom: 24px; border-left: 4px solid #ef4444; text-align: center;">
-            <div style="font-weight: 700; color: #dc2626; margin-bottom: 8px; font-size: 1.1em;">
-                📢 ВАЖНО! Инструкция для владельца аккаунта
-            </div>
-            <div style="color: #374151; font-size: 0.95em; line-height: 1.4; font-weight: 600;">
-                <strong>Скопируйте ссылку на эту страницу и отправьте её человеку, которого хотите подключить как получателя уведомлений!</strong>
-            </div>
-            <div style="color: #6b7280; font-size: 0.85em; margin-top: 8px;">
-                Получатель должен перейти по этой ссылке и авторизоваться через свой Telegram
-            </div>
-            <button onclick="copyLinkToClipboard()" style="margin-top: 12px; padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9em;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
-                📋 Скопировать ссылку
-            </button>
-        </div>
+
         
         <div class="welcome-block" style="background: rgba(34, 197, 94, 0.1); border-radius: 12px; padding: 18px; margin-bottom: 24px; border-left: 4px solid #22c55e;">
             <div style="font-weight: 600; color: #15803d; margin-bottom: 8px;">
@@ -124,73 +111,6 @@
         </div>
     </div>
     
-    <script>
-    function copyLinkToClipboard() {
-        const currentUrl = window.location.href;
-        
-        if (navigator.clipboard && window.isSecureContext) {
-            // Современный способ для HTTPS
-            navigator.clipboard.writeText(currentUrl).then(function() {
-                showCopySuccess();
-            }).catch(function() {
-                fallbackCopyToClipboard(currentUrl);
-            });
-        } else {
-            // Резервный способ для HTTP
-            fallbackCopyToClipboard(currentUrl);
-        }
-    }
-    
-    function fallbackCopyToClipboard(text) {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        try {
-            const successful = document.execCommand('copy');
-            if (successful) {
-                showCopySuccess();
-            } else {
-                showCopyError();
-            }
-        } catch (err) {
-            showCopyError();
-        }
-        
-        document.body.removeChild(textArea);
-    }
-    
-    function showCopySuccess() {
-        const button = event.target;
-        const originalText = button.innerHTML;
-        button.innerHTML = '✅ Ссылка скопирована!';
-        button.style.background = '#22c55e';
-        
-        setTimeout(function() {
-            button.innerHTML = originalText;
-            button.style.background = '#ef4444';
-        }, 2000);
-    }
-    
-    function showCopyError() {
-        const button = event.target;
-        const originalText = button.innerHTML;
-        button.innerHTML = '❌ Ошибка копирования';
-        button.style.background = '#f59e0b';
-        
-        setTimeout(function() {
-            button.innerHTML = originalText;
-            button.style.background = '#ef4444';
-        }, 2000);
-        
-        // Показываем ссылку для ручного копирования
-        alert('Скопируйте ссылку вручную:\n' + window.location.href);
-    }
-    </script>
+
 </body>
 </html> 
