@@ -1342,6 +1342,27 @@ def invite():
     user_id = request.args.get('user_id')
     if not user_id:
         return 'Некорректная ссылка приглашения', 400
+    
+    # Проверяем, что user_id соответствует авторизованному пользователю с ролью driver или admin
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        return 'Доступ запрещен', 403
+    
+    # Получаем роль пользователя
+    if telegram_id:
+        user_role = db.get_user_role(telegram_id)
+        current_user_id = str(telegram_id)
+    else:
+        user_role = db.get_user_role_by_login(user_login)
+        user = db.get_user_by_login(user_login)
+        current_user_id = str(user.get('telegram_id')) if user else None
+    
+    # Проверяем права доступа
+    if user_role not in ['driver', 'admin'] or current_user_id != user_id:
+        return 'Доступ запрещен', 403
+    
     telegram_bot_id = config.TELEGRAM_BOT_ID  # ID Telegram-бота из настроек
     return render_template('invite.html', user_id=user_id, telegram_bot_id=telegram_bot_id)
 
