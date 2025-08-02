@@ -307,7 +307,17 @@ def index():
                 logger.info(f"INDEX: у пользователя {user_login} нет telegram_id")
                 if user_role == 'driver':
                     logger.info(f"INDEX: пользователь {user_login} имеет роль driver, разрешаем полный доступ")
-                    session['flash_message'] = "Для отправки уведомлений необходимо привязать Telegram аккаунт"
+                    # Проверяем, есть ли получатели уведомлений
+                    conn = db.get_connection()
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT COUNT(*) FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL")
+                    recipients_count = cursor.fetchone()[0]
+                    conn.close()
+                    
+                    if recipients_count == 0:
+                        session['flash_message'] = "Для отправки уведомлений необходимо добавить получателя уведомлений"
+                    else:
+                        session['flash_message'] = None
                 else:
                     logger.info(f"INDEX: у пользователя {user_login} нет telegram_id, устанавливаем is_recipient_only=True")
                     session['flash_message'] = "Для полного доступа к функциям необходимо привязать Telegram аккаунт"
@@ -541,7 +551,7 @@ def manual_arrival():
                 if send_alternative_notification():
                     message = "Уведомление отправлено (альтернативным способом)"
                 else:
-                    message = "Не удалось отправить уведомления. Проверьте, что есть пользователи с ролями и бот не заблокирован."
+                    message = "Не удалось отправить уведомления. Добавьте получателя уведомлений в настройках."
         
         # Сохраняем сообщение в сессии и делаем редирект
         session['flash_message'] = message
