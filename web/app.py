@@ -960,7 +960,7 @@ def settings():
     user = None
     message = None
     error = False
-    telegram_bot_id = config.TELEGRAM_BOT_ID  # ID Telegram-бота из настроек
+    telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # Username Telegram-бота из настроек
     
     # Проверяем авторизацию (приоритет у логин/пароль, если есть)
     telegram_id = session.get('telegram_id')
@@ -1007,7 +1007,7 @@ def settings():
             user = db.get_user_by_login(user_login)  # Обновить данные
         
         logger.info(f"SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_id, user_role=user_role)
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role)
     
     elif telegram_id:
         # Авторизация через Telegram
@@ -1046,7 +1046,7 @@ def settings():
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
         
         logger.info(f"SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_id, user_role=user_role)
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role)
     
     else:
         # Не авторизован
@@ -1385,8 +1385,8 @@ def invite():
         # Если пользователь уже авторизован, перенаправляем на главную
         return redirect('/')
     
-    telegram_bot_id = config.TELEGRAM_BOT_ID
-    return render_template('invite.html', user_id=user_id, telegram_bot_id=telegram_bot_id)
+    telegram_bot_username = config.TELEGRAM_BOT_USERNAME
+    return render_template('invite.html', user_id=user_id, telegram_bot_id=telegram_bot_username)
 
 @app.route('/invite_auth', methods=['POST', 'GET'])
 def invite_auth():
