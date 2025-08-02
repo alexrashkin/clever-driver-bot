@@ -570,35 +570,48 @@ footer {
         </div>
         
         {% else %}
-        <!-- Интерфейс для неавторизованных пользователей -->
+        <!-- Нейтральный интерфейс для неавторизованных пользователей -->
         <div class="status">
             Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
         </div>
         {% if message %}
             <div class="msg">{{ message }}</div>
         {% endif %}
-        <form method="post" action="/toggle">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% endif %} btn-disabled" type="submit" disabled onclick="return onAuthRequired(event);">
-                {% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание
-            </button>
-        </form>
-        <button class="btn btn-manual btn-disabled" onclick="return sendManualNotification(event);" disabled>Ожидаю у подъезда</button>
-        {% for btn in buttons %}
-        <button class="btn btn-manual btn-disabled" onclick="return sendDynamicButton(event, {{ loop.index0 }});" disabled>{{ btn }}</button>
-        {% endfor %}
         
-        <div class="info-block">
-            <div class="info-block-title">
-                💡 Это примеры кнопок
+        <div class="info-block" style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6;">
+            <div class="info-block-title" style="color: #1d4ed8;">
+                🚀 Добро пожаловать в «Умный водитель»!
             </div>
-            <div class="info-block-text">
-                После авторизации через Telegram вы сможете настроить до 6 собственных кнопок с любым текстом в разделе «Настройки»
+            <div class="info-block-text" style="color: #374151;">
+                Выберите, как вы хотите использовать сервис:
             </div>
         </div>
         
-        <div style="display: flex; justify-content: center;">
-            <a href="/mobile_tracker.html" class="btn btn-toggle off btn-disabled" onclick="return onAuthRequired(event);">
-                Резервный мобильный трекер
+        <div style="display: flex; justify-content: center; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+            <a href="/login" class="btn btn-toggle" style="background: linear-gradient(90deg, #059669 0%, #10b981 100%); color: white; font-weight: 500; text-decoration: none;">
+                🚗 Войти как водитель
+            </a>
+            <a href="/register" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
+                📱 Войти как получатель
+            </a>
+        </div>
+        
+        <div class="info-block">
+            <div class="info-block-title">
+                💡 Как это работает?
+            </div>
+            <div class="info-block-text">
+                <strong>Водители:</strong> Управляют отслеживанием автомобиля и отправляют уведомления получателям.<br><br>
+                <strong>Получатели:</strong> Получают уведомления о местоположении водителя и могут отслеживать его в реальном времени.
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+            <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
+                🗺️ Трекер (демо)
+            </a>
+            <a href="/telegram_login" class="btn btn-toggle" style="background: linear-gradient(90deg, #0088cc 0%, #229ED9 100%); color: white; font-weight: 500; text-decoration: none;">
+                📱 Войти через Telegram
             </a>
         </div>
         {% endif %}
