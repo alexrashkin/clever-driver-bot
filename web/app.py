@@ -1355,16 +1355,13 @@ def create_invite():
     else:
         user_role = db.get_user_role_by_login(user_login)
         user = db.get_user_by_login(user_login)
-        user_id = user.get('telegram_id') if user else None
+        # Если нет telegram_id, используем логин как идентификатор
+        user_id = user.get('telegram_id') if user and user.get('telegram_id') else user_login
     
     # Проверяем права доступа
     if user_role not in ['driver', 'admin']:
         session['flash_message'] = "Недостаточно прав для создания приглашений"
         return redirect('/')
-    
-    if not user_id:
-        session['flash_message'] = "Для создания приглашений необходимо привязать Telegram аккаунт"
-        return redirect('/settings')
     
     # Генерируем ссылку для приглашения
     invite_url = url_for('invite', user_id=user_id, _external=True)
