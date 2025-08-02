@@ -269,6 +269,8 @@ def index():
         user_login = session.get('user_login')
         user_role = None  # Инициализируем переменную
         
+        logger.info(f"INDEX: проверка авторизации - telegram_id={telegram_id}, user_login={user_login}")
+        
         if telegram_id:
             # Авторизация через Telegram
             user_role = db.get_user_role(telegram_id)
@@ -386,16 +388,7 @@ def index():
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
             is_authorized = False
-            
-            # Проверяем, есть ли в базе пользователь с ролью recipient
-            # Если есть, то показываем интерфейс получателя, иначе - водителя
-            conn = db.get_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'recipient' AND telegram_id IS NOT NULL")
-            recipients_count = cursor.fetchone()[0]
-            conn.close()
-            
-            is_recipient_only = recipients_count > 0  # Показываем интерфейс получателя только если есть получатели
+            is_recipient_only = False  # Нейтральный интерфейс для неавторизованных
             is_admin = False
             is_driver = False
             user_name = None
@@ -1161,10 +1154,22 @@ def login():
 @app.route('/logout')
 def logout():
     """Выход из системы"""
+    logger.info(f"LOGOUT: пользователь выходит из системы")
+    logger.info(f"LOGOUT: telegram_id до очистки: {session.get('telegram_id')}")
+    logger.info(f"LOGOUT: user_login до очистки: {session.get('user_login')}")
+    
     # Полностью очищаем сессию
     session.clear()
+    
+    # Создаем новый ответ с редиректом и очисткой cookies
+    response = redirect('/')
+    response.delete_cookie('session')  # Удаляем cookie сессии
+    response.delete_cookie('session_id')  # Удаляем cookie session_id если есть
+    
     session['flash_message'] = "Вы успешно вышли из системы"
-    return redirect('/')
+    logger.info(f"LOGOUT: сессия очищена, редирект на /")
+    
+    return response
 
 @app.route('/admin')
 def admin_redirect():
