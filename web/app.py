@@ -386,7 +386,7 @@ def index():
             work_longitude = config.WORK_LONGITUDE
             work_radius = config.WORK_RADIUS
             is_authorized = False
-            is_recipient_only = False
+            is_recipient_only = True  # Неавторизованные пользователи видят интерфейс получателя
             is_admin = False
             is_driver = False
             user_name = None
