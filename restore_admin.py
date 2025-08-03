@@ -5,6 +5,8 @@
 
 import sqlite3
 import hashlib
+import secrets
+import json
 
 def restore_admin():
     """Восстанавливает пользователя admin"""
@@ -23,15 +25,23 @@ def restore_admin():
         else:
             print("Админ не найден, создаем...")
             
-            # Создаем хеш пароля для admin
+            # Создаем хеш пароля для admin (правильный метод)
             password = "admin123"  # Можно изменить на нужный пароль
-            password_hash = hashlib.sha256(password.encode()).hexdigest()
+            salt = secrets.token_hex(16)
+            password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+            password_hash_hex = salt + password_hash.hex()
+            
+            # Дефолтные кнопки
+            default_buttons = json.dumps([
+                '📍 Еду на работу',
+                '🚗 Подъезжаю к дому'
+            ], ensure_ascii=False)
             
             # Создаем пользователя admin
             cursor.execute("""
-                INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, telegram_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, ('admin', password_hash, 'Администратор', 'Системы', 'password', 'admin', 888888888))
+                INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, telegram_id, buttons)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, ('admin', password_hash_hex, 'Администратор', 'Системы', 'login', 'admin', 888888888, default_buttons))
             
             conn.commit()
             print("✅ Пользователь admin создан!")
