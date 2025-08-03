@@ -244,11 +244,13 @@
                 <input type="hidden" name="buttons" id="buttons-json">
                 <div class="form-group">
                     <label for="work_latitude">Широта работы</label>
-                    <input type="text" id="work_latitude" name="work_latitude" value="{{ '%.6f' % user.work_latitude if user.work_latitude is not none else '' }}" required>
+                    <input type="text" id="work_latitude" name="work_latitude" value="{{ '%.6f' % user.work_latitude if user.work_latitude is not none else '' }}" placeholder="55.7558" required>
+                    <small style="color: #666; font-size: 0.9em;">💡 Можно вставить координаты из Google Maps - они автоматически разделятся</small>
                 </div>
                 <div class="form-group">
                     <label for="work_longitude">Долгота работы</label>
-                    <input type="text" id="work_longitude" name="work_longitude" value="{{ '%.6f' % user.work_longitude if user.work_longitude is not none else '' }}" required>
+                    <input type="text" id="work_longitude" name="work_longitude" value="{{ '%.6f' % user.work_longitude if user.work_longitude is not none else '' }}" placeholder="37.6176" required>
+                    <small style="color: #666; font-size: 0.9em;">💡 Или вставить координаты из Google Maps в это поле</small>
                 </div>
                 <div class="form-group">
                     <label for="work_radius">Радиус (м)</label>
@@ -318,6 +320,49 @@
                 document.getElementById('buttons-json').value = JSON.stringify(arr);
                 return true;
             };
+
+            // Функция для автоматического разделения координат при вставке
+            function handleCoordinatePaste(event, targetField) {
+                event.preventDefault();
+                const pastedText = (event.clipboardData || window.clipboardData).getData('text');
+                
+                // Очищаем текст от лишних символов
+                const cleanText = pastedText.replace(/[^\d.,\-]/g, '');
+                
+                // Пытаемся найти координаты в формате "широта, долгота" или "широта долгота"
+                const coords = cleanText.split(/[,\s]+/).filter(coord => coord.trim());
+                
+                if (coords.length >= 2) {
+                    const lat = parseFloat(coords[0]);
+                    const lng = parseFloat(coords[1]);
+                    
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        // Если вставляем в поле широты, заполняем оба поля
+                        if (targetField === 'latitude') {
+                            document.getElementById('work_latitude').value = lat.toFixed(6);
+                            document.getElementById('work_longitude').value = lng.toFixed(6);
+                        }
+                        // Если вставляем в поле долготы, заполняем оба поля
+                        else if (targetField === 'longitude') {
+                            document.getElementById('work_latitude').value = lat.toFixed(6);
+                            document.getElementById('work_longitude').value = lng.toFixed(6);
+                        }
+                        return;
+                    }
+                }
+                
+                // Если не удалось распарсить координаты, вставляем как есть
+                event.target.value = cleanText;
+            }
+
+            // Добавляем обработчики событий для полей координат
+            document.getElementById('work_latitude').addEventListener('paste', function(e) {
+                handleCoordinatePaste(e, 'latitude');
+            });
+            
+            document.getElementById('work_longitude').addEventListener('paste', function(e) {
+                handleCoordinatePaste(e, 'longitude');
+            });
             </script>
         {% endif %}
     </div>
