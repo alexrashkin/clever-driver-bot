@@ -555,16 +555,27 @@ class Database:
         logger.info(f"Telegram ID {telegram_id} привязан к пользователю {login}")
         return True, "Telegram аккаунт успешно привязан"
 
-    def unbind_telegram_from_user(self, login):
-        """Отвязать Telegram аккаунт от пользователя по логину"""
+    def unbind_telegram_from_user(self, login_or_id):
+        """Отвязать Telegram аккаунт от пользователя по логину или ID"""
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         
-        # Проверяем, что пользователь с таким логином существует
-        user = self.get_user_by_login(login)
+        # Определяем, что передано - логин или ID
+        if isinstance(login_or_id, int) or (isinstance(login_or_id, str) and login_or_id.isdigit()):
+            # Это ID
+            user_id = int(login_or_id)
+            user = self.get_user_by_id(user_id)
+            where_clause = "id = ?"
+            where_value = user_id
+        else:
+            # Это логин
+            user = self.get_user_by_login(login_or_id)
+            where_clause = "login = ?"
+            where_value = login_or_id
+        
         if not user:
             conn.close()
-            return False, "Пользователь с таким логином не найден"
+            return False, f"Пользователь не найден: {login_or_id}"
         
         # Проверяем, что у пользователя есть привязанный Telegram
         if not user.get('telegram_id'):
@@ -572,15 +583,15 @@ class Database:
             return False, "У пользователя нет привязанного Telegram аккаунта"
         
         # Отвязываем Telegram (устанавливаем telegram_id = NULL)
-        c.execute('''
+        c.execute(f'''
             UPDATE users 
             SET telegram_id = NULL, username = NULL, first_name = NULL, last_name = NULL, auth_type = 'login'
-            WHERE login = ?
-        ''', (login,))
+            WHERE {where_clause}
+        ''', (where_value,))
         
         conn.commit()
         conn.close()
-        logger.info(f"Telegram аккаунт отвязан от пользователя {login}")
+        logger.info(f"Telegram аккаунт отвязан от пользователя {login_or_id}")
         return True, "Telegram аккаунт успешно отвязан"
 
 # Создаем глобальный экземпляр базы данных

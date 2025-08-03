@@ -1261,11 +1261,14 @@ def admin_delete_user(user_id):
 @app.route('/admin/users/unbind_telegram/<int:user_id>', methods=['POST'])
 def admin_unbind_telegram(user_id):
     """Отвязка Telegram аккаунта администратором"""
+    logger.info(f"ADMIN_UNBIND_TELEGRAM: попытка отвязки для пользователя ID {user_id}")
+    
     # Проверяем авторизацию и права администратора
     telegram_id = session.get('telegram_id')
     user_login = session.get('user_login')
     
     if not telegram_id and not user_login:
+        logger.warning("ADMIN_UNBIND_TELEGRAM: пользователь не авторизован")
         session['flash_message'] = "Необходимо авторизоваться"
         return redirect('/login')
     
@@ -1275,21 +1278,36 @@ def admin_unbind_telegram(user_id):
     else:
         user_role = db.get_user_role_by_login(user_login)
     
+    logger.info(f"ADMIN_UNBIND_TELEGRAM: роль пользователя: {user_role}")
+    
     if user_role != 'admin':
+        logger.warning(f"ADMIN_UNBIND_TELEGRAM: доступ запрещен для роли {user_role}")
         session['flash_message'] = "Доступ запрещен"
         return redirect('/')
     
     # Получаем информацию о пользователе
     user = db.get_user_by_id(user_id)
     if not user:
+        logger.error(f"ADMIN_UNBIND_TELEGRAM: пользователь с ID {user_id} не найден")
         session['flash_message'] = f"Пользователь с ID {user_id} не найден"
         return redirect('/admin/users')
     
+    logger.info(f"ADMIN_UNBIND_TELEGRAM: найден пользователь: {user.get('login')} (Telegram: {user.get('telegram_id')})")
+    
     # Отвязываем Telegram аккаунт
-    if db.unbind_telegram_from_user(user.get('login')):
+    result = db.unbind_telegram_from_user(user_id)
+    if isinstance(result, tuple):
+        success, message = result
+    else:
+        success = result
+        message = "Результат операции"
+    
+    logger.info(f"ADMIN_UNBIND_TELEGRAM: результат отвязки: success={success}, message={message}")
+    
+    if success:
         session['flash_message'] = f"Telegram аккаунт отвязан от пользователя {user.get('login') or user.get('first_name') or user_id}"
     else:
-        session['flash_message'] = f"Ошибка отвязки Telegram аккаунта"
+        session['flash_message'] = f"Ошибка отвязки Telegram аккаунта: {message}"
     
     return redirect('/admin/users')
 
