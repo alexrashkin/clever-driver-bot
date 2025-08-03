@@ -198,6 +198,23 @@
             transform: translateY(-1px);
         }
         
+        .delete-invitation-btn {
+            background: #f56565;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .delete-invitation-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-1px);
+        }
+        
         .no-users {
             text-align: center;
             padding: 60px 20px;
@@ -436,7 +453,7 @@
                             <td>
                                 <form method="post" action="/admin/invitations/delete/{{ invitation.id }}" style="display: inline;" 
                                       onsubmit="return confirm('Удалить приглашение {{ invitation.invite_code }}?')">
-                                    <button type="submit" class="delete-btn">🗑️ Удалить</button>
+                                    <button type="submit" class="delete-invitation-btn">🗑️ Удалить</button>
                                 </form>
                             </td>
                         </tr>
