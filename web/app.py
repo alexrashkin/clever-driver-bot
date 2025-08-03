@@ -1343,6 +1343,45 @@ def admin_delete_user(user_id):
     
     return redirect('/admin/users')
 
+@app.route('/admin/invitations/delete/<int:invitation_id>', methods=['POST'])
+def admin_delete_invitation(invitation_id):
+    """Удаление приглашения администратором"""
+    logger.info(f"ADMIN_DELETE_INVITATION: попытка удаления приглашения ID {invitation_id}")
+    
+    # Проверяем авторизацию и права администратора
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        logger.warning("ADMIN_DELETE_INVITATION: пользователь не авторизован")
+        session['flash_message'] = "Необходимо авторизоваться"
+        return redirect('/login')
+    
+    # Проверяем роль
+    if telegram_id:
+        user_role = db.get_user_role(telegram_id)
+    else:
+        user_role = db.get_user_role_by_login(user_login)
+    
+    logger.info(f"ADMIN_DELETE_INVITATION: роль пользователя: {user_role}")
+    
+    if user_role != 'admin':
+        logger.warning(f"ADMIN_DELETE_INVITATION: доступ запрещен для роли {user_role}")
+        session['flash_message'] = "Доступ запрещен. Требуются права администратора"
+        return redirect('/')
+    
+    # Удаляем приглашение
+    success, message = db.delete_invitation(invitation_id)
+    
+    if success:
+        logger.info(f"ADMIN_DELETE_INVITATION: приглашение {invitation_id} успешно удалено")
+        session['flash_message'] = message
+    else:
+        logger.error(f"ADMIN_DELETE_INVITATION: ошибка удаления приглашения {invitation_id}: {message}")
+        session['flash_message'] = f"Ошибка удаления: {message}"
+    
+    return redirect('/admin/users')
+
 @app.route('/admin/users/unbind_telegram/<int:user_id>', methods=['POST'])
 def admin_unbind_telegram(user_id):
     """Отвязка Telegram аккаунта администратором"""

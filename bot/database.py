@@ -873,6 +873,40 @@ class Database:
                       'inviter_last_name', 'recipient_first_name_full', 'recipient_last_name_full']
             return [dict(zip(columns, row)) for row in rows]
         return []
+    
+    def delete_invitation(self, invitation_id):
+        """Удалить приглашение по ID"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            # Получаем информацию о приглашении перед удалением
+            c.execute('SELECT invite_code, status FROM invitations WHERE id = ?', (invitation_id,))
+            invitation = c.fetchone()
+            
+            if not invitation:
+                conn.close()
+                return False, "Приглашение не найдено"
+            
+            invite_code, status = invitation
+            
+            # Удаляем приглашение
+            c.execute('DELETE FROM invitations WHERE id = ?', (invitation_id,))
+            deleted = c.rowcount > 0
+            
+            conn.commit()
+            conn.close()
+            
+            if deleted:
+                logger.info(f"Приглашение {invite_code} (статус: {status}) удалено администратором")
+                return True, f"Приглашение {invite_code} удалено"
+            else:
+                return False, "Ошибка удаления приглашения"
+                
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка удаления приглашения {invitation_id}: {e}")
+            return False, f"Ошибка удаления: {e}"
 
 # Создаем глобальный экземпляр базы данных
 db = Database()

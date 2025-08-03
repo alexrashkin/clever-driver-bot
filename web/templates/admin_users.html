@@ -383,6 +383,7 @@
                             <th>Получатель</th>
                             <th>Создано</th>
                             <th>Принято</th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -431,6 +432,12 @@
                                 {% else %}
                                     <em>—</em>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="/admin/invitations/delete/{{ invitation.id }}" style="display: inline;" 
+                                      onsubmit="return confirm('Удалить приглашение {{ invitation.invite_code }}?')">
+                                    <button type="submit" class="delete-btn">🗑️ Удалить</button>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}
