@@ -48,6 +48,8 @@ def send_email(to_email, subject, html_content, text_content=None):
         
         # Создаем безопасное соединение
         context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
         
         # Подключаемся к серверу и отправляем email
         with smtplib.SMTP(config.EMAIL_SMTP_SERVER, config.EMAIL_SMTP_PORT) as server:
