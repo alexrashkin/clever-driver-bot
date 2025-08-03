@@ -60,6 +60,25 @@ class Database:
             )
         ''')
         
+        # Таблица приглашений получателей уведомлений
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS invitations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                inviter_id INTEGER NOT NULL,
+                inviter_telegram_id BIGINT,
+                inviter_login TEXT,
+                invite_code TEXT UNIQUE NOT NULL,
+                status TEXT DEFAULT 'pending',
+                recipient_telegram_id BIGINT,
+                recipient_username TEXT,
+                recipient_first_name TEXT,
+                recipient_last_name TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                accepted_at TIMESTAMP,
+                FOREIGN KEY (inviter_id) REFERENCES users (id)
+            )
+        ''')
+        
         # Таблица пользователей
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -726,6 +745,134 @@ class Database:
         
         logger.info(f"Пароль пользователя {login} сброшен")
         return True
+    
+    def create_invitation(self, inviter_id, invite_code):
+        """Создать приглашение получателя уведомлений"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        # Получаем информацию о приглашающем
+        inviter = self.get_user_by_id(inviter_id)
+        if not inviter:
+            conn.close()
+            return False, "Приглашающий пользователь не найден"
+        
+        try:
+            c.execute('''
+                INSERT INTO invitations (inviter_id, inviter_telegram_id, inviter_login, invite_code, status)
+                VALUES (?, ?, ?, ?, 'pending')
+            ''', (inviter_id, inviter.get('telegram_id'), inviter.get('login'), invite_code))
+            
+            conn.commit()
+            conn.close()
+            logger.info(f"Создано приглашение: {invite_code} от пользователя {inviter_id}")
+            return True, "Приглашение создано"
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка создания приглашения: {e}")
+            return False, "Ошибка создания приглашения"
+    
+    def get_invitation_by_code(self, invite_code):
+        """Получить приглашение по коду"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, inviter_id, inviter_telegram_id, inviter_login, invite_code, 
+                   status, recipient_telegram_id, recipient_username, recipient_first_name, 
+                   recipient_last_name, created_at, accepted_at
+            FROM invitations 
+            WHERE invite_code = ?
+        ''', (invite_code,))
+        
+        row = c.fetchone()
+        conn.close()
+        
+        if row:
+            columns = ['id', 'inviter_id', 'inviter_telegram_id', 'inviter_login', 'invite_code',
+                      'status', 'recipient_telegram_id', 'recipient_username', 'recipient_first_name',
+                      'recipient_last_name', 'created_at', 'accepted_at']
+            return dict(zip(columns, row))
+        return None
+    
+    def accept_invitation(self, invite_code, recipient_telegram_id, recipient_username=None, 
+                         recipient_first_name=None, recipient_last_name=None):
+        """Принять приглашение"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            c.execute('''
+                UPDATE invitations 
+                SET status = 'accepted', recipient_telegram_id = ?, recipient_username = ?,
+                    recipient_first_name = ?, recipient_last_name = ?, accepted_at = CURRENT_TIMESTAMP
+                WHERE invite_code = ? AND status = 'pending'
+            ''', (recipient_telegram_id, recipient_username, recipient_first_name, 
+                  recipient_last_name, invite_code))
+            
+            updated = c.rowcount > 0
+            conn.commit()
+            conn.close()
+            
+            if updated:
+                logger.info(f"Приглашение {invite_code} принято пользователем {recipient_telegram_id}")
+            return updated
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка принятия приглашения: {e}")
+            return False
+    
+    def get_user_invitations(self, user_id):
+        """Получить все приглашения пользователя (как приглашающего)"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, inviter_id, inviter_telegram_id, inviter_login, invite_code, 
+                   status, recipient_telegram_id, recipient_username, recipient_first_name, 
+                   recipient_last_name, created_at, accepted_at
+            FROM invitations 
+            WHERE inviter_id = ?
+            ORDER BY created_at DESC
+        ''', (user_id,))
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        if rows:
+            columns = ['id', 'inviter_id', 'inviter_telegram_id', 'inviter_login', 'invite_code',
+                      'status', 'recipient_telegram_id', 'recipient_username', 'recipient_first_name',
+                      'recipient_last_name', 'created_at', 'accepted_at']
+            return [dict(zip(columns, row)) for row in rows]
+        return []
+    
+    def get_all_invitations(self):
+        """Получить все приглашения для админ-панели"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT i.id, i.inviter_id, i.inviter_telegram_id, i.inviter_login, i.invite_code, 
+                   i.status, i.recipient_telegram_id, i.recipient_username, i.recipient_first_name, 
+                   i.recipient_last_name, i.created_at, i.accepted_at,
+                   u1.first_name as inviter_first_name, u1.last_name as inviter_last_name,
+                   u2.first_name as recipient_first_name_full, u2.last_name as recipient_last_name_full
+            FROM invitations i
+            LEFT JOIN users u1 ON i.inviter_id = u1.id
+            LEFT JOIN users u2 ON i.recipient_telegram_id = u2.telegram_id
+            ORDER BY i.created_at DESC
+        ''')
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        if rows:
+            columns = ['id', 'inviter_id', 'inviter_telegram_id', 'inviter_login', 'invite_code',
+                      'status', 'recipient_telegram_id', 'recipient_username', 'recipient_first_name',
+                      'recipient_last_name', 'created_at', 'accepted_at', 'inviter_first_name',
+                      'inviter_last_name', 'recipient_first_name_full', 'recipient_last_name_full']
+            return [dict(zip(columns, row)) for row in rows]
+        return []
 
 # Создаем глобальный экземпляр базы данных
 db = Database()

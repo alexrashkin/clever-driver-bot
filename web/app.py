@@ -1023,9 +1023,14 @@ def settings():
                 error = True
             user = db.get_user_by_login(user_login)  # Обновить данные
         
+        # Получаем приглашения пользователя (если он водитель или админ)
+        invitations = []
+        if user and user.get('role') in ['driver', 'admin']:
+            invitations = db.get_user_invitations(user.get('id'))
+        
         logger.info(f"SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
         logger.info(f"SETTINGS: рендеринг шаблона с user_role={user_role}")
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role)
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role, invitations=invitations)
     
     elif telegram_id:
         # Авторизация через Telegram
@@ -1069,9 +1074,14 @@ def settings():
                 error = True
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
         
+        # Получаем приглашения пользователя (если он водитель или админ)
+        invitations = []
+        if user and user.get('role') in ['driver', 'admin']:
+            invitations = db.get_user_invitations(user.get('id'))
+        
         logger.info(f"SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
         logger.info(f"SETTINGS: рендеринг шаблона с user_role={user_role}")
-        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role)
+        return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role, invitations=invitations)
     
     else:
         # Не авторизован
@@ -1298,10 +1308,11 @@ def admin_users():
         session['flash_message'] = "Доступ запрещен. Требуются права администратора"
         return redirect('/')
     
-    # Получаем всех пользователей
+    # Получаем всех пользователей и приглашения
     users = db.get_all_users()
+    invitations = db.get_all_invitations()
     
-    return render_template('admin_users.html', users=users)
+    return render_template('admin_users.html', users=users, invitations=invitations)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 def admin_delete_user(user_id):
@@ -1552,33 +1563,50 @@ def create_invite():
         session['flash_message'] = "Необходимо авторизоваться"
         return redirect('/login')
     
-    # Получаем роль пользователя
+    # Получаем информацию о пользователе
     if telegram_id:
         user_role = db.get_user_role(telegram_id)
-        user_id = telegram_id
+        user = db.get_user_by_telegram_id(telegram_id)
+        user_id = user.get('id') if user else None
     else:
         user_role = db.get_user_role_by_login(user_login)
         user = db.get_user_by_login(user_login)
-        # Если нет telegram_id, используем логин как идентификатор
-        user_id = user.get('telegram_id') if user and user.get('telegram_id') else user_login
+        user_id = user.get('id') if user else None
     
     # Проверяем права доступа
     if user_role not in ['driver', 'admin']:
         session['flash_message'] = "Недостаточно прав для создания приглашений"
         return redirect('/')
     
+    if not user_id:
+        session['flash_message'] = "Ошибка получения данных пользователя"
+        return redirect('/')
+    
+    # Генерируем уникальный код приглашения
+    import secrets
+    import string
+    invite_code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+    
+    # Создаем приглашение в базе данных
+    success, message = db.create_invitation(user_id, invite_code)
+    
+    if not success:
+        session['flash_message'] = f"Ошибка создания приглашения: {message}"
+        return redirect('/settings')
+    
     # Генерируем ссылку для приглашения
-    invite_url = url_for('invite', user_id=user_id, _external=True)
+    invite_url = url_for('invite', code=invite_code, _external=True)
     
     return render_template('create_invite.html', 
-                         invite_url=invite_url, 
+                         invite_url=invite_url,
+                         invite_code=invite_code,
                          year=datetime.now().year)
 
 @app.route('/invite')
 def invite():
     """Страница приглашения для получателей (только для неавторизованных пользователей)"""
-    user_id = request.args.get('user_id')
-    if not user_id:
+    invite_code = request.args.get('code')
+    if not invite_code:
         return 'Некорректная ссылка приглашения', 400
     
     # Проверяем, что пользователь НЕ авторизован (это страница для получателей)
@@ -1589,8 +1617,18 @@ def invite():
         # Если пользователь уже авторизован, перенаправляем на главную
         return redirect('/')
     
+    # Получаем информацию о приглашении
+    invitation = db.get_invitation_by_code(invite_code)
+    if not invitation:
+        return 'Приглашение не найдено или уже использовано', 404
+    
+    if invitation['status'] != 'pending':
+        return 'Приглашение уже использовано', 400
+    
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME
-    return render_template('invite.html', user_id=user_id, telegram_bot_id=telegram_bot_username)
+    return render_template('invite.html', 
+                         invite_code=invite_code,
+                         telegram_bot_id=telegram_bot_username)
 
 @app.route('/invite_auth', methods=['POST', 'GET'])
 def invite_auth():
@@ -1606,13 +1644,13 @@ def invite_auth():
             logger.error("INVITE_AUTH: отсутствует auth_date")
             return 'Ошибка авторизации Telegram: отсутствует auth_date', 400
         
-        user_id = auth_data.get('user_id')
-        if not user_id:
-            logger.error("INVITE_AUTH: отсутствует user_id")
+        invite_code = auth_data.get('invite_code')
+        if not invite_code:
+            logger.error("INVITE_AUTH: отсутствует invite_code")
             return 'Некорректная ссылка приглашения', 400
         
         hash_ = auth_data.pop('hash')
-        auth_data.pop('user_id', None)
+        auth_data.pop('invite_code', None)
         data_check_string = '\n'.join(
             f"{k}={v[0] if isinstance(v, list) else v}"
             for k, v in sorted(auth_data.items())
@@ -1634,12 +1672,26 @@ def invite_auth():
         
         logger.info(f"INVITE_AUTH: telegram_id={new_user_telegram_id}, username={username}, first_name={first_name}")
         
+        # Получаем информацию о приглашении
+        invitation = db.get_invitation_by_code(invite_code)
+        if not invitation:
+            logger.error(f"INVITE_AUTH: приглашение не найдено: {invite_code}")
+            return 'Приглашение не найдено или уже использовано', 404
+        
+        if invitation['status'] != 'pending':
+            logger.error(f"INVITE_AUTH: приглашение уже использовано: {invite_code}")
+            return 'Приглашение уже использовано', 400
+        
         # Проверяем, есть ли уже пользователь с таким Telegram ID
         existing_user = db.get_user_by_telegram_id(new_user_telegram_id)
         
         if existing_user:
             # Пользователь уже существует - не меняем его роль
             logger.info(f"INVITE_AUTH: пользователь уже существует: {new_user_telegram_id}, роль: {existing_user.get('role')}")
+            
+            # Принимаем приглашение
+            db.accept_invitation(invite_code, new_user_telegram_id, username, first_name, last_name)
+            
             session['telegram_id'] = new_user_telegram_id
             session.permanent = True
             logger.info("INVITE_AUTH: рендерим invite_success.html для существующего пользователя")
@@ -1649,6 +1701,9 @@ def invite_auth():
             logger.info(f"INVITE_AUTH: создаем нового пользователя с ролью recipient: {new_user_telegram_id}")
             db.create_user(new_user_telegram_id, username, first_name, last_name)
             db.set_user_role(new_user_telegram_id, 'recipient')
+            
+            # Принимаем приглашение
+            db.accept_invitation(invite_code, new_user_telegram_id, username, first_name, last_name)
             
             logger.info(f"INVITE_AUTH: новый получатель уведомлений зарегистрирован: {new_user_telegram_id}")
             session['telegram_id'] = new_user_telegram_id

@@ -370,6 +370,74 @@
                 <p>В системе пока нет зарегистрированных пользователей</p>
             </div>
             {% endif %}
+            
+            {% if invitations %}
+            <div class="invitations-section" style="margin-top: 40px;">
+                <h2 style="color: #1d4ed8; margin-bottom: 20px; font-size: 1.5em;">📋 Приглашения получателей</h2>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Код</th>
+                            <th>Приглашающий</th>
+                            <th>Статус</th>
+                            <th>Получатель</th>
+                            <th>Создано</th>
+                            <th>Принято</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invitation in invitations %}
+                        <tr>
+                            <td><code>{{ invitation.invite_code }}</code></td>
+                            <td>
+                                {% if invitation.inviter_first_name or invitation.inviter_last_name %}
+                                    {{ invitation.inviter_first_name or '' }} {{ invitation.inviter_last_name or '' }}
+                                    {% if invitation.inviter_login %}<br><small>@{{ invitation.inviter_login }}</small>{% endif %}
+                                {% elif invitation.inviter_login %}
+                                    <strong>{{ invitation.inviter_login }}</strong>
+                                {% else %}
+                                    ID: {{ invitation.inviter_id }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if invitation.status == 'pending' %}
+                                    <span class="role-badge" style="background: rgba(251, 191, 36, 0.1); color: #d97706;">⏳ Ожидает</span>
+                                {% elif invitation.status == 'accepted' %}
+                                    <span class="role-badge" style="background: rgba(34, 197, 94, 0.1); color: #15803d;">✅ Принято</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if invitation.status == 'accepted' and invitation.recipient_telegram_id %}
+                                    {% if invitation.recipient_first_name or invitation.recipient_last_name %}
+                                        {{ invitation.recipient_first_name or '' }} {{ invitation.recipient_last_name or '' }}
+                                        {% if invitation.recipient_username %}<br><small>@{{ invitation.recipient_username }}</small>{% endif %}
+                                    {% else %}
+                                        ID: {{ invitation.recipient_telegram_id }}
+                                    {% endif %}
+                                {% else %}
+                                    <em style="color: #999;">—</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if invitation.created_at %}
+                                    {{ invitation.created_at[:10] }}
+                                {% else %}
+                                    <em>—</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if invitation.accepted_at %}
+                                    {{ invitation.accepted_at[:10] }}
+                                {% else %}
+                                    <em>—</em>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
         </div>
     </div>
     
