@@ -295,7 +295,9 @@
         }
 
         .back-btn {
-            display: inline-block;
+            position: absolute;
+            top: 20px;
+            right: 20px;
             padding: 12px 24px;
             font-size: 1rem;
             border-radius: 10px;
@@ -309,6 +311,7 @@
             cursor: pointer;
             min-width: 140px;
             text-align: center;
+            z-index: 1000;
         }
 
         .back-btn:hover, .back-btn:focus {
@@ -324,7 +327,7 @@
     <div class="header">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <h1>🚗 Отслеживание автомобиля</h1>
-            <a href="/" class="back-btn" style="margin-left: auto;">← Назад на главную</a>
+            <a href="/" class="back-btn">← Назад на главную</a>
         </div>
         <div class="status-panel">
             <div class="status-item">

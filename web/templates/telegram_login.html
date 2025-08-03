@@ -42,7 +42,9 @@
             color: #4338ca;
         }
         .back-btn {
-            display: inline-block;
+            position: absolute;
+            top: 20px;
+            right: 20px;
             padding: 12px 24px;
             font-size: 1rem;
             border-radius: 10px;
@@ -52,9 +54,9 @@
             text-decoration: none;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
             transition: all 0.3s ease;
-            margin: 18px auto 0 auto;
             min-width: 140px;
             text-align: center;
+            z-index: 1000;
         }
         .back-btn:hover, .back-btn:focus {
             background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
@@ -83,7 +85,7 @@
     </style>
 </head>
 <body>
-    <a href="/" class="back-btn" style="display:block;margin:18px auto 0 auto;position:static;">← Назад на главную</a>
+    <a href="/" class="back-btn">← Назад на главную</a>
     
     <div class="container">
         <h2>📱 Вход через Telegram</h2>
