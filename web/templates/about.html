@@ -341,14 +341,16 @@
             </div>
         </div>
 
+        {% if user_role in ['driver', 'admin'] %}
         <!-- Отказ от ответственности только для водителей -->
-        <div class="disclaimer-section" style="margin-top: 40px; padding: 20px; background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; border-radius: 8px;">
-            <h2 style="color: #dc2626; margin-top: 0;">⚠️ Отказ от ответственности</h2>
+        <div class="disclaimer-section" style="margin-top: 40px; padding: 20px;">
+            <h2 style="margin-top: 0;">Отказ от ответственности</h2>
             <div style="color: #374151; font-size: 0.95em; line-height: 1.6;">
-                <p><strong>Сервис «Умный водитель» не несёт ответственности за использование и работу стороннего приложения "OwnTracks".</strong></p>
+                <p>Сервис «Умный водитель» не несёт ответственности за использование и работу стороннего приложения "OwnTracks".</p>
                 <p>Приложение "OwnTracks" является независимым продуктом, разработанным третьей стороной и имеющим открытый исходный код.</p>
             </div>
         </div>
+        {% endif %}
 
         <div class="contact">
             <b>Контакты для связи:</b><br>
