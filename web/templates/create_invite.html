@@ -190,14 +190,6 @@
             <button class="btn" onclick="copyLink()">📋 Скопировать ссылку</button>
         </div>
         
-        <div class="link-block">
-            <div class="link-title">
-                <span>🔑</span> Код приглашения
-            </div>
-            <input type="text" id="invite-code" class="link-input" value="{{ invite_code }}" readonly>
-            <button class="btn btn-secondary" onclick="copyCode()">📋 Скопировать код</button>
-        </div>
-        
         <div class="info-block">
             <div class="info-title">
                 <span>📋</span> Инструкция
@@ -240,27 +232,7 @@
             }
         }
         
-        function copyCode() {
-            const codeInput = document.getElementById('invite-code');
-            codeInput.select();
-            codeInput.setSelectionRange(0, 99999); // Для мобильных устройств
-            
-            try {
-                document.execCommand('copy');
-                showMessage('✅ Код скопирован!', false);
-            } catch (err) {
-                // Современный способ для HTTPS
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(codeInput.value).then(() => {
-                        showMessage('✅ Код скопирован!', false);
-                    }).catch(() => {
-                        showMessage('❌ Не удалось скопировать код', true);
-                    });
-                } else {
-                    showMessage('❌ Не удалось скопировать код', true);
-                }
-            }
-        }
+
         
 
         

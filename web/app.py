@@ -1599,7 +1599,6 @@ def create_invite():
     
     return render_template('create_invite.html', 
                          invite_url=invite_url,
-                         invite_code=invite_code,
                          year=datetime.now().year)
 
 @app.route('/invite')
