@@ -990,7 +990,7 @@ def settings():
             work_longitude = request.form.get('work_longitude')
             work_radius = request.form.get('work_radius')
             try:
-                # Для пользователей с логином/паролем обновляем настройки через telegram_id
+                # Для пользователей с логином/паролем обновляем настройки через логин
                 if user.get('telegram_id'):
                     db.update_user_settings(
                         user['telegram_id'],
@@ -1001,8 +1001,15 @@ def settings():
                     )
                     message = 'Настройки успешно сохранены'
                 else:
-                    message = 'Для сохранения настроек необходимо привязать Telegram'
-                    error = True
+                    # Пользователи без Telegram могут сохранять настройки по логину
+                    db.update_user_settings_by_login(
+                        user_login,
+                        buttons=buttons,
+                        work_latitude=work_latitude,
+                        work_longitude=work_longitude,
+                        work_radius=work_radius
+                    )
+                    message = 'Настройки успешно сохранены'
             except Exception as e:
                 message = f'Ошибка сохранения: {e}'
                 error = True

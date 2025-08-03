@@ -484,6 +484,28 @@ class Database:
         conn.close()
         logger.info(f"Обновлены настройки пользователя telegram_id={telegram_id}: {kwargs}")
 
+    def update_user_settings_by_login(self, login, **kwargs):
+        """Обновить настройки пользователя по логину (имена кнопок, радиус, координаты)"""
+        if not kwargs:
+            return
+        # Сериализация массива кнопок
+        if 'buttons' in kwargs and isinstance(kwargs['buttons'], list):
+            import json
+            kwargs['buttons'] = json.dumps(kwargs['buttons'], ensure_ascii=False)
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        fields = []
+        values = []
+        for key, value in kwargs.items():
+            fields.append(f"{key} = ?")
+            values.append(value)
+        values.append(login)
+        sql = f"UPDATE users SET {', '.join(fields)} WHERE login = ?"
+        c.execute(sql, values)
+        conn.commit()
+        conn.close()
+        logger.info(f"Обновлены настройки пользователя login={login}: {kwargs}")
+
     def bind_telegram_to_user(self, login, telegram_id, username=None, first_name=None, last_name=None):
         """Привязать Telegram ID к существующему пользователю по логину"""
         conn = sqlite3.connect(self.db_path)
