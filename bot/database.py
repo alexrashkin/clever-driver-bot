@@ -327,6 +327,26 @@ class Database:
             return user
         return None
 
+    def get_user_by_id(self, user_id):
+        """Получить пользователя по ID"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''
+            SELECT * FROM users WHERE id = ?
+        ''', (user_id,))
+        row = c.fetchone()
+        columns = [desc[0] for desc in c.description]
+        conn.close()
+        if row:
+            user = dict(zip(columns, row))
+            import json
+            try:
+                user['buttons'] = json.loads(user['buttons']) if user['buttons'] else []
+            except Exception:
+                user['buttons'] = []
+            return user
+        return None
+
     def get_user_role(self, telegram_id):
         """Получить роль пользователя"""
         conn = sqlite3.connect(self.db_path)

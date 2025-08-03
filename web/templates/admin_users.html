@@ -181,6 +181,23 @@
             transform: translateY(-1px);
         }
         
+        .unbind-btn {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .unbind-btn:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+        
         .no-users {
             text-align: center;
             padding: 60px 20px;
@@ -324,6 +341,12 @@
                             {% endif %}
                         </td>
                         <td>
+                            {% if user.telegram_id %}
+                            <form method="post" action="/admin/users/unbind_telegram/{{ user.id }}" style="display: inline; margin-right: 5px;" 
+                                  onsubmit="return confirm('Отвязать Telegram аккаунт от пользователя {{ user.first_name or user.login or user.id }}?')">
+                                <button type="submit" class="unbind-btn">🔗 Отвязать</button>
+                            </form>
+                            {% endif %}
                             <form method="post" action="/admin/users/delete/{{ user.id }}" style="display: inline;" 
                                   onsubmit="return confirm('Удалить пользователя {{ user.first_name or user.login or user.id }}?')">
                                 <button type="submit" class="delete-btn">🗑️ Удалить</button>

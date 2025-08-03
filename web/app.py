@@ -1258,6 +1258,41 @@ def admin_delete_user(user_id):
     
     return redirect('/admin/users')
 
+@app.route('/admin/users/unbind_telegram/<int:user_id>', methods=['POST'])
+def admin_unbind_telegram(user_id):
+    """Отвязка Telegram аккаунта администратором"""
+    # Проверяем авторизацию и права администратора
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Необходимо авторизоваться"
+        return redirect('/login')
+    
+    # Проверяем роль
+    if telegram_id:
+        user_role = db.get_user_role(telegram_id)
+    else:
+        user_role = db.get_user_role_by_login(user_login)
+    
+    if user_role != 'admin':
+        session['flash_message'] = "Доступ запрещен"
+        return redirect('/')
+    
+    # Получаем информацию о пользователе
+    user = db.get_user_by_id(user_id)
+    if not user:
+        session['flash_message'] = f"Пользователь с ID {user_id} не найден"
+        return redirect('/admin/users')
+    
+    # Отвязываем Telegram аккаунт
+    if db.unbind_telegram_from_user(user.get('login')):
+        session['flash_message'] = f"Telegram аккаунт отвязан от пользователя {user.get('login') or user.get('first_name') or user_id}"
+    else:
+        session['flash_message'] = f"Ошибка отвязки Telegram аккаунта"
+    
+    return redirect('/admin/users')
+
 @app.route('/telegram_auth', methods=['POST', 'GET'])
 def telegram_auth():
     try:
