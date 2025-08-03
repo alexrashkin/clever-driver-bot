@@ -1080,7 +1080,11 @@ def settings():
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    """Страница о сервисе с разным контентом для разных ролей"""
+    user = get_current_user()
+    user_role = get_current_user_role()
+    
+    return render_template('about.html', user=user, user_role=user_role)
 
 @app.route('/static/<path:filename>')
 def static_files(filename):
