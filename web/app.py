@@ -1116,8 +1116,18 @@ def register():
         confirm_password = request.form.get('confirm_password', '')
         first_name = request.form.get('first_name', '').strip() or None
         last_name = request.form.get('last_name', '').strip() or None
-        email = request.form.get('email', '').strip() or None
+        email = request.form.get('email', '').strip()
         role = request.form.get('role', 'driver')
+        
+        # Валидация email
+        if not email:
+            return render_template('register.html', error="Email обязателен для регистрации")
+        
+        # Проверка формата email
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return render_template('register.html', error="Введите корректный email адрес")
         
         # Валидация
         if not login or len(login) < 3:
@@ -1211,10 +1221,7 @@ def forgot_password():
         # Создаем код восстановления
         success, result = db.create_password_reset_code(login)
         if success:
-            if result == "Код отправлен в Telegram":
-                session['flash_message'] = 'Код восстановления отправлен в Telegram'
-            elif result == "Код отправлен на email":
-                session['flash_message'] = 'Код восстановления отправлен на email'
+            session['flash_message'] = 'Код восстановления отправлен на email'
             session['reset_login'] = login
             return redirect('/reset_password')
         else:

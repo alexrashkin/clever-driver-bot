@@ -287,6 +287,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Имя/Логин</th>
+                        <th>Email</th>
                         <th>Роль</th>
                         <th>Авторизация</th>
                         <th>Telegram ID</th>
@@ -306,6 +307,13 @@
                                 <strong>{{ user.login }}</strong>
                             {% else %}
                                 <em>Telegram пользователь</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.email %}
+                                <a href="mailto:{{ user.email }}" style="color: #667eea; text-decoration: none;">{{ user.email }}</a>
+                            {% else %}
+                                <em style="color: #999;">—</em>
                             {% endif %}
                         </td>
                         <td>
