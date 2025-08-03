@@ -1116,6 +1116,7 @@ def register():
         confirm_password = request.form.get('confirm_password', '')
         first_name = request.form.get('first_name', '').strip() or None
         last_name = request.form.get('last_name', '').strip() or None
+        email = request.form.get('email', '').strip() or None
         role = request.form.get('role', 'driver')
         
         # Валидация
@@ -1137,8 +1138,8 @@ def register():
             return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -")
         
         # Создание пользователя
-        logger.info(f"REGISTER: попытка создания пользователя login={login}, role={role}")
-        success, result = db.create_user_with_login(login, password, first_name, last_name, role)
+        logger.info(f"REGISTER: попытка создания пользователя login={login}, role={role}, email={email}")
+        success, result = db.create_user_with_login(login, password, first_name, last_name, role, email)
         logger.info(f"REGISTER: результат создания - success={success}, result={result}")
         
         if success:
@@ -1197,6 +1198,72 @@ def logout():
     logger.info(f"LOGOUT: сессия очищена, редирект на /")
     
     return response
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    """Страница восстановления пароля - запрос кода"""
+    if request.method == 'POST':
+        login = request.form.get('login')
+        if not login:
+            session['flash_message'] = 'Введите логин'
+            return redirect('/forgot_password')
+        
+        # Создаем код восстановления
+        success, result = db.create_password_reset_code(login)
+        if success:
+            if result == "Код отправлен в Telegram":
+                session['flash_message'] = 'Код восстановления отправлен в Telegram'
+            elif result == "Код отправлен на email":
+                session['flash_message'] = 'Код восстановления отправлен на email'
+            session['reset_login'] = login
+            return redirect('/reset_password')
+        else:
+            session['flash_message'] = result
+            return redirect('/forgot_password')
+    
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    """Страница сброса пароля с кодом"""
+    reset_login = session.get('reset_login')
+    if not reset_login:
+        return redirect('/forgot_password')
+    
+    if request.method == 'POST':
+        code = request.form.get('code')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not all([code, new_password, confirm_password]):
+            session['flash_message'] = 'Заполните все поля'
+            return redirect('/reset_password')
+        
+        if new_password != confirm_password:
+            session['flash_message'] = 'Пароли не совпадают'
+            return redirect('/reset_password')
+        
+        if len(new_password) < 6:
+            session['flash_message'] = 'Пароль должен содержать минимум 6 символов'
+            return redirect('/reset_password')
+        
+        # Проверяем код
+        success, result = db.verify_password_reset_code(reset_login, code)
+        if success:
+            reset_id = result
+            # Сбрасываем пароль
+            db.reset_user_password(reset_login, new_password)
+            # Отмечаем код как использованный
+            db.mark_reset_code_used(reset_id)
+            # Очищаем сессию
+            session.pop('reset_login', None)
+            session['flash_message'] = 'Пароль успешно изменен! Теперь вы можете войти в систему.'
+            return redirect('/login')
+        else:
+            session['flash_message'] = result
+            return redirect('/reset_password')
+    
+    return render_template('reset_password.html')
 
 @app.route('/admin')
 def admin_redirect():

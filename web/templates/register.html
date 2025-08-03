@@ -77,6 +77,13 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
+        .form-help {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #666;
+        }
+        
         .form-input.error {
             border-color: #f56565;
             box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
@@ -305,6 +312,14 @@
                 <input type="text" id="last_name" name="last_name" class="form-input" 
                        placeholder="Ваша фамилия" maxlength="100"
                        value="{{ request.form.last_name or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="email" class="form-label">Email (необязательно)</label>
+                <input type="email" id="email" name="email" class="form-input" 
+                       placeholder="your@email.com" maxlength="100"
+                       value="{{ request.form.email or '' }}">
+                <small class="form-help">Для восстановления пароля</small>
             </div>
             
             <div class="role-selection">

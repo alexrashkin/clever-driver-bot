@@ -48,6 +48,18 @@ class Database:
             )
         ''')
         
+        # Таблица кодов восстановления пароля
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS password_reset_codes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                login TEXT NOT NULL,
+                code TEXT NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                used BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         # Таблица пользователей
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -61,6 +73,8 @@ class Database:
                 auth_type TEXT DEFAULT 'telegram',
                 role TEXT DEFAULT NULL,
                 buttons TEXT DEFAULT NULL,
+                email TEXT,
+                phone TEXT,
                 work_latitude REAL,
                 work_longitude REAL,
                 work_radius INTEGER DEFAULT 100,
@@ -108,6 +122,12 @@ class Database:
         # Миграция: добавляем поле username, если его нет
         if 'username' not in columns:
             c.execute("ALTER TABLE users ADD COLUMN username TEXT")
+        
+        # Миграция: добавляем поля email и phone, если их нет
+        if 'email' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        if 'phone' not in columns:
+            c.execute("ALTER TABLE users ADD COLUMN phone TEXT")
         
         # Миграция: удаляем поле recipient_telegram_id, если оно есть (больше не используется)
         if 'recipient_telegram_id' in columns:
@@ -376,7 +396,7 @@ class Database:
         role = self.get_user_role(telegram_id)
         return role == 'recipient'
     
-    def create_user_with_login(self, login, password, first_name=None, last_name=None, role='driver'):
+    def create_user_with_login(self, login, password, first_name=None, last_name=None, role='driver', email=None, phone=None):
         """Создать пользователя с логином и паролем"""
         import hashlib
         import secrets
@@ -397,9 +417,9 @@ class Database:
         c = conn.cursor()
         try:
             c.execute('''
-                INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, buttons)
-                VALUES (?, ?, ?, ?, 'login', ?, ?)
-            ''', (login, password_hash_hex, first_name, last_name, role, default_buttons))
+                INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, buttons, email, phone)
+                VALUES (?, ?, ?, ?, 'login', ?, ?, ?, ?)
+            ''', (login, password_hash_hex, first_name, last_name, role, default_buttons, email, phone))
             conn.commit()
             user_id = c.lastrowid
             conn.close()
@@ -593,6 +613,144 @@ class Database:
         conn.close()
         logger.info(f"Telegram аккаунт отвязан от пользователя {login_or_id}")
         return True, "Telegram аккаунт успешно отвязан"
+
+    def create_password_reset_code(self, login):
+        """Создать код восстановления пароля для пользователя"""
+        import secrets
+        from datetime import datetime, timedelta
+        
+        # Проверяем, что пользователь существует
+        user = self.get_user_by_login(login)
+        if not user:
+            return False, "Пользователь с таким логином не найден"
+        
+        # Генерируем код
+        code = secrets.token_hex(3).upper()  # 6 символов
+        
+        # Устанавливаем время истечения (1 час)
+        expires_at = datetime.now() + timedelta(hours=1)
+        
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        # Удаляем старые коды для этого пользователя
+        c.execute('DELETE FROM password_reset_codes WHERE login = ?', (login,))
+        
+        # Создаем новый код
+        c.execute('''
+            INSERT INTO password_reset_codes (login, code, expires_at)
+            VALUES (?, ?, ?)
+        ''', (login, code, expires_at))
+        
+        conn.commit()
+        conn.close()
+        
+        # Пытаемся отправить код через Telegram, если у пользователя есть telegram_id
+        telegram_id = user.get('telegram_id')
+        if telegram_id:
+            try:
+                from config.settings import config
+                import requests
+                
+                message = f"🔐 Код восстановления пароля: {code}\n\nЭтот код действителен 1 час.\nЕсли вы не запрашивали восстановление пароля, проигнорируйте это сообщение."
+                
+                url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
+                data = {
+                    'chat_id': telegram_id,
+                    'text': message,
+                    'parse_mode': 'HTML'
+                }
+                
+                response = requests.post(url, data=data, timeout=10)
+                if response.status_code == 200:
+                    logger.info(f"Код восстановления отправлен в Telegram для пользователя {login}")
+                    return True, "Код отправлен в Telegram"
+                else:
+                    logger.warning(f"Не удалось отправить код в Telegram для {login}: {response.text}")
+            except Exception as e:
+                logger.error(f"Ошибка отправки кода в Telegram для {login}: {e}")
+        
+        # Пытаемся отправить код через Email, если у пользователя есть email
+        email = user.get('email')
+        if email:
+            try:
+                from bot.email_utils import send_password_reset_email
+                
+                if send_password_reset_email(email, login, code):
+                    logger.info(f"Код восстановления отправлен на email для пользователя {login}")
+                    return True, "Код отправлен на email"
+                else:
+                    logger.warning(f"Не удалось отправить код на email для {login}")
+            except Exception as e:
+                logger.error(f"Ошибка отправки кода на email для {login}: {e}")
+        
+        # Если нет способов отправки, возвращаем ошибку
+        logger.warning(f"Нет доступных способов отправки кода для пользователя {login}")
+        return False, "Для восстановления пароля необходимо иметь привязанный Telegram аккаунт или email"
+
+    def verify_password_reset_code(self, login, code):
+        """Проверить код восстановления пароля"""
+        from datetime import datetime
+        
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, expires_at, used FROM password_reset_codes 
+            WHERE login = ? AND code = ?
+        ''', (login, code))
+        
+        result = c.fetchone()
+        conn.close()
+        
+        if not result:
+            return False, "Код не найден"
+        
+        reset_id, expires_at, used = result
+        
+        if used:
+            return False, "Код уже использован"
+        
+        # Проверяем срок действия
+        expires_datetime = datetime.fromisoformat(expires_at)
+        if datetime.now() > expires_datetime:
+            return False, "Код истек"
+        
+        return True, reset_id
+
+    def mark_reset_code_used(self, reset_id):
+        """Отметить код восстановления как использованный"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('UPDATE password_reset_codes SET used = 1 WHERE id = ?', (reset_id,))
+        conn.commit()
+        conn.close()
+
+    def reset_user_password(self, login, new_password):
+        """Сбросить пароль пользователя"""
+        import hashlib
+        import secrets
+        
+        # Хешируем новый пароль
+        salt = secrets.token_hex(16)
+        password_hash = hashlib.pbkdf2_hmac('sha256', new_password.encode(), salt.encode(), 100000)
+        password_hash_hex = salt + password_hash.hex()
+        
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            UPDATE users 
+            SET password_hash = ?, auth_type = 'login'
+            WHERE login = ?
+        ''', (password_hash_hex, login))
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"Пароль пользователя {login} сброшен")
+        return True
 
 # Создаем глобальный экземпляр базы данных
 db = Database()
