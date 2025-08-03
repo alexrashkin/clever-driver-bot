@@ -188,7 +188,6 @@
             </div>
             <input type="text" id="invite-link" class="link-input" value="{{ invite_url }}" readonly>
             <button class="btn" onclick="copyLink()">📋 Скопировать ссылку</button>
-            <button class="btn btn-secondary" onclick="generateNewLink()">🔄 Создать новую ссылку</button>
         </div>
         
         <div class="info-block">
@@ -233,10 +232,7 @@
             }
         }
         
-        function generateNewLink() {
-            // Перезагружаем страницу для генерации новой ссылки
-            window.location.reload();
-        }
+
         
         function showMessage(text, isError) {
             // Удаляем существующие сообщения
