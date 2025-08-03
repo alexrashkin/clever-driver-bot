@@ -968,15 +968,23 @@ def settings():
     telegram_id = session.get('telegram_id')
     user_login = session.get('user_login')
     
+    logger.info(f"SETTINGS: telegram_id={telegram_id}, user_login={user_login}")
+    
     if user_login:
         # Авторизация через логин/пароль (приоритет)
+        logger.info(f"SETTINGS: авторизация через логин {user_login}")
         user_role = db.get_user_role_by_login(user_login)
+        logger.info(f"SETTINGS: роль пользователя {user_login} = {user_role}")
+        
         if user_role == 'recipient':
             session['flash_message'] = "Получатели уведомлений не имеют доступа к настройкам"
             return redirect('/')
         
         telegram_user = False
         user = db.get_user_by_login(user_login)
+        logger.info(f"SETTINGS: пользователь получен из БД: {user is not None}")
+        if user:
+            logger.info(f"SETTINGS: user_id={user.get('id')}, telegram_id={user.get('telegram_id')}, buttons={user.get('buttons')}")
         
         if request.method == 'POST':
             # Получаем данные формы
@@ -1016,18 +1024,25 @@ def settings():
             user = db.get_user_by_login(user_login)  # Обновить данные
         
         logger.info(f"SETTINGS (Login): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}, user_login={user_login}")
+        logger.info(f"SETTINGS: рендеринг шаблона с user_role={user_role}")
         return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role)
     
     elif telegram_id:
         # Авторизация через Telegram
+        logger.info(f"SETTINGS: авторизация через Telegram {telegram_id}")
         # Проверяем роль пользователя
         user_role = db.get_user_role(telegram_id)
+        logger.info(f"SETTINGS: роль пользователя telegram_id={telegram_id} = {user_role}")
+        
         if user_role == 'recipient':
             session['flash_message'] = "Получатели уведомлений не имеют доступа к настройкам"
             return redirect('/')
         
         telegram_user = True
         user = db.get_user_by_telegram_id(telegram_id)
+        logger.info(f"SETTINGS: пользователь получен из БД: {user is not None}")
+        if user:
+            logger.info(f"SETTINGS: user_id={user.get('id')}, telegram_id={user.get('telegram_id')}, buttons={user.get('buttons')}")
         
         if request.method == 'POST':
             # Получаем данные формы
@@ -1055,6 +1070,7 @@ def settings():
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
         
         logger.info(f"SETTINGS (Telegram): telegram_user={telegram_user}, user_id={user.get('id') if user else None}, user_name={user.get('first_name') if user else None}")
+        logger.info(f"SETTINGS: рендеринг шаблона с user_role={user_role}")
         return render_template('settings.html', telegram_user=telegram_user, user=user, message=message, error=error, telegram_bot_id=telegram_bot_username, user_role=user_role)
     
     else:
