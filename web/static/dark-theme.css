@@ -1,0 +1,235 @@
+/* Универсальные стили тёмной темы для всех страниц */
+
+/* Основные стили тёмной темы */
+body.dark {
+    background: #18181b !important;
+    color: #f1f5ff !important;
+}
+
+/* Контейнеры */
+body.dark .container,
+body.dark .register-container,
+body.dark .login-container,
+body.dark .settings-container,
+body.dark .about-container {
+    background: #23232b !important;
+    color: #f1f5ff !important;
+    box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25), 0 1.5px 6px #6366f133 !important;
+}
+
+/* Поля ввода */
+body.dark input[type="text"],
+body.dark input[type="password"],
+body.dark input[type="email"],
+body.dark input[type="number"],
+body.dark textarea,
+body.dark select {
+    background: #374151 !important;
+    color: #f1f5ff !important;
+    border-color: #4b5563 !important;
+}
+
+body.dark input[type="text"]:focus,
+body.dark input[type="password"]:focus,
+body.dark input[type="email"]:focus,
+body.dark input[type="number"]:focus,
+body.dark textarea:focus,
+body.dark select:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* Кнопки */
+body.dark .btn,
+body.dark button,
+body.dark .nav-btn,
+body.dark .back-btn,
+body.dark .back-link {
+    background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%) !important;
+    color: #fff !important;
+}
+
+/* Сообщения */
+body.dark .msg {
+    background: #35354a !important;
+    color: #4ade80 !important;
+    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18) !important;
+}
+
+body.dark .msg.error {
+    background: #4b2323 !important;
+    color: #ef4444 !important;
+}
+
+body.dark .success-message {
+    background: rgba(72, 187, 120, 0.1) !important;
+    color: #6ee7b7 !important;
+    border-left-color: #48bb78 !important;
+}
+
+body.dark .error-message {
+    background: rgba(245, 101, 101, 0.1) !important;
+    color: #fca5a5 !important;
+    border-left-color: #f56565 !important;
+}
+
+/* Информационные блоки */
+body.dark .info-block {
+    background: rgba(99, 102, 241, 0.1) !important;
+    color: #f1f5ff !important;
+}
+
+body.dark .info-block-title {
+    color: #a5b4fc !important;
+}
+
+body.dark .info-block-text {
+    color: #94a3b8 !important;
+}
+
+/* FAQ элементы */
+body.dark .faq-item {
+    background: #374151 !important;
+    border-left-color: #6366f1 !important;
+}
+
+body.dark .faq-item:hover {
+    background: #4b5563 !important;
+}
+
+body.dark .faq-q {
+    color: #f1f5ff !important;
+}
+
+body.dark .faq-a {
+    color: #94a3b8 !important;
+}
+
+/* Таблицы */
+body.dark table {
+    background: #374151 !important;
+    color: #f1f5ff !important;
+}
+
+body.dark th,
+body.dark td {
+    border-color: #4b5563 !important;
+    color: #f1f5ff !important;
+}
+
+body.dark .users-table {
+    background: #374151 !important;
+}
+
+body.dark .users-table th,
+body.dark .users-table td {
+    border-color: #4b5563 !important;
+    color: #f1f5ff !important;
+}
+
+/* Ссылки */
+body.dark a {
+    color: #a5b4fc !important;
+}
+
+body.dark a:hover {
+    color: #818cf8 !important;
+}
+
+/* Заголовки */
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6 {
+    color: #f1f5ff !important;
+}
+
+/* Параграфы */
+body.dark p {
+    color: #94a3b8 !important;
+}
+
+/* Списки */
+body.dark li {
+    color: #94a3b8 !important;
+}
+
+/* Разделители */
+body.dark .divider::before {
+    background: #4b5563 !important;
+}
+
+body.dark .divider-text {
+    background: #23232b !important;
+    color: #94a3b8 !important;
+}
+
+/* Роли пользователей */
+body.dark .role-option {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+body.dark .role-option:hover {
+    background: #4b5563 !important;
+}
+
+body.dark .role-label {
+    color: #f1f5ff !important;
+}
+
+body.dark .role-title {
+    color: #f1f5ff !important;
+}
+
+body.dark .role-description {
+    color: #94a3b8 !important;
+}
+
+/* Статус панели */
+body.dark .status-item {
+    background: rgba(45, 55, 72, 0.9) !important;
+    color: #e2e8f0 !important;
+}
+
+/* Footer */
+body.dark footer {
+    color: #94a3b8 !important;
+}
+
+/* Специальные элементы для разных страниц */
+body.dark .contact {
+    background: #374151 !important;
+    color: #94a3b8 !important;
+    border-color: #4b5563 !important;
+}
+
+body.dark .disclaimer-section {
+    background: #374151 !important;
+    color: #94a3b8 !important;
+}
+
+/* Кнопка переключения темы */
+body.dark #theme-toggle {
+    background: rgba(55, 65, 81, 0.9) !important;
+    color: #f1f5ff !important;
+    border: 1px solid #4b5563 !important;
+}
+
+body.dark #theme-toggle:hover {
+    background: rgba(75, 85, 99, 0.9) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    body.dark .container,
+    body.dark .register-container,
+    body.dark .login-container,
+    body.dark .settings-container {
+        background: #23232b !important;
+        color: #f1f5ff !important;
+    }
+} 

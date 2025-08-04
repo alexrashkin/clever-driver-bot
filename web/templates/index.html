@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/button-styles.css">
+    <link rel="stylesheet" href="/static/dark-theme.css">
     <style>
 body {
     font-family: 'Inter', Arial, sans-serif;
@@ -18,10 +19,7 @@ body {
     display: flex;
     flex-direction: column;
 }
-body.dark {
-    background: #18181b;
-    color: #f1f5ff;
-}
+
 .container {
     flex: 1 0 auto;
     max-width: 420px;
@@ -35,11 +33,7 @@ body.dark {
     gap: 18px;
     transition: background 0.3s, color 0.3s;
 }
-body.dark .container {
-    background: #23232b;
-    color: #f1f5ff;
-    box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25), 0 1.5px 6px #6366f133;
-}
+
 .logo-wrap {
     display: flex;
     justify-content: center;
@@ -66,11 +60,7 @@ body.dark .container {
     box-shadow: 0 1px 4px #0596691a;
     transition: background 0.3s, color 0.3s;
 }
-body.dark .user-info {
-    background: #064e3b;
-    color: #6ee7b7;
-    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
-}
+
 .status {
     text-align: center;
     margin-bottom: 8px;
@@ -83,11 +73,7 @@ body.dark .user-info {
     box-shadow: 0 1px 4px #6366f11a;
     transition: background 0.3s, color 0.3s;
 }
-body.dark .status {
-    background: #35354a;
-    color: #a5b4fc;
-    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
-}
+
 .msg {
     text-align: center;
     font-size: 1.05em;
@@ -100,21 +86,13 @@ body.dark .status {
     box-shadow: 0 1px 4px #22c55e22;
     transition: background 0.3s, color 0.3s;
 }
-body.dark .msg {
-    background: #35354a;
-    color: #4ade80;
-    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.18);
-}
+
 .msg.error {
     background: #ffe0e0;
     color: #ef4444;
     box-shadow: 0 1px 4px #ef444422;
 }
-body.dark .msg.error {
-    background: #4b2323;
-    color: #ef4444;
-    box-shadow: 0 1px 4px #ef444422;
-}
+
 .btn {
     display: block;
     width: 100%;
@@ -315,11 +293,7 @@ footer {
     }
 }
 
-/* Темная тема для статус-панели */
-.dark .status-item {
-    background: rgba(45, 55, 72, 0.9);
-    color: #e2e8f0;
-}
+
 
 /* Информационный блок */
 .info-block {
@@ -333,10 +307,7 @@ footer {
     transition: background 0.3s, border-color 0.3s;
 }
 
-.dark .info-block {
-    background: rgba(99, 102, 241, 0.2);
-    border-left-color: #818cf8;
-}
+
 
 .info-block-title {
     margin-bottom: 8px;
@@ -344,9 +315,7 @@ footer {
     color: #4338ca;
 }
 
-.dark .info-block-title {
-    color: #a5b4fc;
-}
+
 
 .info-block-text {
     font-size: 0.9em;
@@ -354,9 +323,7 @@ footer {
     line-height: 1.4;
 }
 
-.dark .info-block-text {
-    color: #94a3b8;
-}
+
 </style>
 </head>
 <body>
@@ -653,28 +620,6 @@ footer {
         window.IS_AUTHORIZED = "{{ is_authorized }}";
     </script>
     <script src="/static/main.js?v=2"></script>
-    <script>
-    // Тёмная/светлая тема + логотип
-    const btn = document.getElementById('theme-toggle');
-    const logoImg = document.getElementById('logo-img');
-    function updateLogo() {
-      if (document.body.classList.contains('dark')) {
-        logoImg.src = '/static/logo_dark.png';
-      } else {
-        logoImg.src = '/static/logo_light.png';
-      }
-    }
-    btn.onclick = function() {
-      document.body.classList.toggle('dark');
-      btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
-      localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-      updateLogo();
-    };
-    if (localStorage.getItem('theme') === 'dark') {
-      document.body.classList.add('dark');
-      btn.textContent = '☀️';
-    }
-    updateLogo();
-    </script>
+    <script src="/static/theme-manager.js"></script>
 </body>
 </html> 
