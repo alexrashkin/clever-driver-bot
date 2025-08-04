@@ -235,7 +235,7 @@
         
         .back-link {
             display: block;
-            margin: 18px 0 0 0;
+            margin: 18px 20px 0 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
@@ -246,7 +246,7 @@
             transition: all 0.3s ease;
             min-width: 140px;
             text-align: center;
-            width: 100%;
+            width: calc(100% - 40px);
         }
         
         .back-link:hover {
@@ -284,9 +284,7 @@
                 padding: 10px;
             }
             
-            body > div:first-child {
-                padding: 0 10px;
-            }
+
             
             .admin-container {
                 margin: 0;
@@ -390,9 +388,7 @@
                 padding: 5px;
             }
             
-            body > div:first-child {
-                padding: 0 5px;
-            }
+
             
             .admin-header {
                 padding: 15px 10px;
@@ -471,9 +467,10 @@
             }
             
             .back-link {
-                margin: 10px 0 0 0;
+                margin: 10px 5px 0 5px;
                 padding: 10px 20px;
                 font-size: 0.9em;
+                width: calc(100% - 10px);
             }
             
             .theme-btn {
@@ -487,7 +484,7 @@
     </style>
 </head>
 <body>
-    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+    <div style="max-width: 1200px; margin: 0 auto;">
         <a href="/" class="back-link">← Назад на главную</a>
     </div>
     <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
