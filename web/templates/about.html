@@ -79,16 +79,52 @@
             margin-top: 0;
         }
         .faq-item {
-            margin-bottom: 32px;
-            padding: 24px;
+            margin-bottom: 16px;
             background: #f7fafc;
             border-radius: 12px;
             border-left: 4px solid #667eea;
             transition: all 0.2s ease;
+            overflow: hidden;
         }
         .faq-item:hover {
             background: #edf2f7;
-            transform: translateY(-1px);
+        }
+        .faq-q {
+            font-weight: 600;
+            margin: 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+            padding: 20px 24px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .faq-q:hover {
+            background: #edf2f7;
+        }
+        .faq-q::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+        .faq-item.active .faq-q::after {
+            transform: rotate(180deg);
+        }
+        .faq-a {
+            color: #4a5568;
+            line-height: 1.7;
+            padding: 0 24px 20px 24px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .faq-item.active .faq-a {
+            max-height: 2000px;
+            padding: 0 24px 20px 24px;
         }
         .faq-item:last-child {
             margin-bottom: 0;
@@ -365,5 +401,35 @@
             Email: <a href="mailto:info@cleverdriver.ru">info@cleverdriver.ru</a><br>
         </div>
     </div>
+    
+    <script>
+        // Интерактивные FAQ
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-q');
+                const answer = item.querySelector('.faq-a');
+                
+                question.addEventListener('click', function() {
+                    const isActive = item.classList.contains('active');
+                    
+                    // Закрываем все остальные элементы
+                    faqItems.forEach(otherItem => {
+                        if (otherItem !== item) {
+                            otherItem.classList.remove('active');
+                        }
+                    });
+                    
+                    // Переключаем текущий элемент
+                    if (isActive) {
+                        item.classList.remove('active');
+                    } else {
+                        item.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html> 
