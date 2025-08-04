@@ -223,6 +223,15 @@ body.dark #theme-toggle:hover {
     transform: scale(1.05) !important;
 }
 
+/* Кнопка темы в навигации */
+.theme-btn {
+    transition: all 0.3s ease !important;
+}
+
+.theme-btn:hover {
+    transform: scale(1.05) !important;
+}
+
 /* Адаптация для мобильных устройств */
 @media (max-width: 768px) {
     body.dark .container,

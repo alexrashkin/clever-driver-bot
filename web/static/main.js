@@ -90,24 +90,4 @@ function sendDynamicButton(event, idx) {
     return false;
 }
 
-// Тёмная/светлая тема + логотип
-const btn = document.getElementById('theme-toggle');
-const logoImg = document.getElementById('logo-img');
-function updateLogo() {
-  if (document.body.classList.contains('dark')) {
-    logoImg.src = '/static/logo_dark.png';
-  } else {
-    logoImg.src = '/static/logo_light.png';
-  }
-}
-btn.onclick = function() {
-  document.body.classList.toggle('dark');
-  btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
-  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-  updateLogo();
-};
-if (localStorage.getItem('theme') === 'dark') {
-  document.body.classList.add('dark');
-  btn.textContent = '☀️';
-}
-updateLogo(); 
+// Управление темой теперь в theme-manager.js 
