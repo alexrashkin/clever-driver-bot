@@ -79,6 +79,57 @@ class Database:
             )
         ''')
         
+        # Таблица логов уведомлений
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS notification_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                notification_type TEXT NOT NULL,
+                sender_id INTEGER,
+                sender_telegram_id BIGINT,
+                sender_login TEXT,
+                notification_text TEXT NOT NULL,
+                recipients_count INTEGER DEFAULT 0,
+                sent_count INTEGER DEFAULT 0,
+                failed_count INTEGER DEFAULT 0,
+                confirmation_sent BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP,
+                FOREIGN KEY (sender_id) REFERENCES users (id)
+            )
+        ''')
+        
+        # Таблица деталей отправки уведомлений
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS notification_details (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                notification_log_id INTEGER NOT NULL,
+                recipient_telegram_id BIGINT NOT NULL,
+                recipient_name TEXT,
+                status TEXT NOT NULL,
+                error_message TEXT,
+                sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (notification_log_id) REFERENCES notification_logs (id)
+            )
+        ''')
+        
+        # Таблица местоположений пользователей
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS user_locations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                telegram_id BIGINT NOT NULL,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+                accuracy REAL,
+                altitude REAL,
+                speed REAL,
+                heading REAL,
+                is_at_work BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        
         # Таблица пользователей
         c.execute('''
             CREATE TABLE IF NOT EXISTS users (
@@ -907,6 +958,318 @@ class Database:
             conn.close()
             logger.error(f"Ошибка удаления приглашения {invitation_id}: {e}")
             return False, f"Ошибка удаления: {e}"
+
+    # Методы для системы подтверждений уведомлений
+    
+    def create_notification_log(self, notification_type, sender_id=None, sender_telegram_id=None, 
+                               sender_login=None, notification_text=""):
+        """Создать запись в логе уведомлений"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            c.execute('''
+                INSERT INTO notification_logs 
+                (notification_type, sender_id, sender_telegram_id, sender_login, notification_text)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (notification_type, sender_id, sender_telegram_id, sender_login, notification_text))
+            
+            notification_log_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            
+            logger.info(f"Создан лог уведомления ID: {notification_log_id}, тип: {notification_type}")
+            return notification_log_id
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка создания лога уведомления: {e}")
+            return None
+    
+    def add_notification_detail(self, notification_log_id, recipient_telegram_id, 
+                               recipient_name=None, status="pending", error_message=None):
+        """Добавить деталь отправки уведомления"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            c.execute('''
+                INSERT INTO notification_details 
+                (notification_log_id, recipient_telegram_id, recipient_name, status, error_message)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (notification_log_id, recipient_telegram_id, recipient_name, status, error_message))
+            
+            detail_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            
+            return detail_id
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка добавления детали уведомления: {e}")
+            return None
+    
+    def update_notification_detail(self, notification_log_id, recipient_telegram_id, 
+                                  status, error_message=None):
+        """Обновить статус отправки уведомления"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            c.execute('''
+                UPDATE notification_details 
+                SET status = ?, error_message = ?, sent_at = CURRENT_TIMESTAMP
+                WHERE notification_log_id = ? AND recipient_telegram_id = ?
+            ''', (status, error_message, notification_log_id, recipient_telegram_id))
+            
+            updated = c.rowcount > 0
+            conn.commit()
+            conn.close()
+            
+            return updated
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка обновления детали уведомления: {e}")
+            return False
+    
+    def complete_notification_log(self, notification_log_id, sent_count, failed_count):
+        """Завершить лог уведомления с итоговой статистикой"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            c.execute('''
+                UPDATE notification_logs 
+                SET sent_count = ?, failed_count = ?, completed_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (sent_count, failed_count, notification_log_id))
+            
+            updated = c.rowcount > 0
+            conn.commit()
+            conn.close()
+            
+            if updated:
+                logger.info(f"Завершен лог уведомления ID: {notification_log_id}, отправлено: {sent_count}, ошибок: {failed_count}")
+            return updated
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка завершения лога уведомления: {e}")
+            return False
+    
+    def mark_confirmation_sent(self, notification_log_id):
+        """Отметить, что подтверждение отправлено"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            c.execute('''
+                UPDATE notification_logs 
+                SET confirmation_sent = 1
+                WHERE id = ?
+            ''', (notification_log_id,))
+            
+            updated = c.rowcount > 0
+            conn.commit()
+            conn.close()
+            
+            if updated:
+                logger.info(f"Подтверждение отправлено для лога уведомления ID: {notification_log_id}")
+            return updated
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка отметки подтверждения: {e}")
+            return False
+    
+    def get_notification_log(self, notification_log_id):
+        """Получить лог уведомления по ID"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, notification_type, sender_id, sender_telegram_id, sender_login,
+                   notification_text, recipients_count, sent_count, failed_count,
+                   confirmation_sent, created_at, completed_at
+            FROM notification_logs 
+            WHERE id = ?
+        ''', (notification_log_id,))
+        
+        row = c.fetchone()
+        conn.close()
+        
+        if row:
+            columns = ['id', 'notification_type', 'sender_id', 'sender_telegram_id', 'sender_login',
+                      'notification_text', 'recipients_count', 'sent_count', 'failed_count',
+                      'confirmation_sent', 'created_at', 'completed_at']
+            return dict(zip(columns, row))
+        return None
+    
+    def get_notification_details(self, notification_log_id):
+        """Получить детали отправки уведомления"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, notification_log_id, recipient_telegram_id, recipient_name,
+                   status, error_message, sent_at
+            FROM notification_details 
+            WHERE notification_log_id = ?
+            ORDER BY sent_at
+        ''', (notification_log_id,))
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        if rows:
+            columns = ['id', 'notification_log_id', 'recipient_telegram_id', 'recipient_name',
+                      'status', 'error_message', 'sent_at']
+            return [dict(zip(columns, row)) for row in rows]
+        return []
+    
+    def get_recent_notifications(self, limit=10):
+        """Получить последние уведомления"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT nl.id, nl.notification_type, nl.sender_telegram_id, nl.sender_login,
+                   nl.notification_text, nl.recipients_count, nl.sent_count, nl.failed_count,
+                   nl.confirmation_sent, nl.created_at, nl.completed_at,
+                   u.first_name, u.last_name
+            FROM notification_logs nl
+            LEFT JOIN users u ON nl.sender_id = u.id
+            ORDER BY nl.created_at DESC
+            LIMIT ?
+        ''', (limit,))
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        if rows:
+            columns = ['id', 'notification_type', 'sender_telegram_id', 'sender_login',
+                      'notification_text', 'recipients_count', 'sent_count', 'failed_count',
+                      'confirmation_sent', 'created_at', 'completed_at', 'sender_first_name', 'sender_last_name']
+            return [dict(zip(columns, row)) for row in rows]
+        return []
+
+    # Методы для работы с местоположениями пользователей
+    
+    def add_user_location(self, telegram_id, latitude, longitude, accuracy=None, 
+                         altitude=None, speed=None, heading=None, is_at_work=False):
+        """Добавить местоположение пользователя"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        try:
+            # Получаем user_id по telegram_id
+            user_info = self.get_user_by_telegram_id(telegram_id)
+            if not user_info:
+                conn.close()
+                return False
+            
+            c.execute('''
+                INSERT INTO user_locations 
+                (user_id, telegram_id, latitude, longitude, accuracy, altitude, speed, heading, is_at_work)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (user_info['id'], telegram_id, latitude, longitude, accuracy, altitude, speed, heading, is_at_work))
+            
+            location_id = c.lastrowid
+            conn.commit()
+            conn.close()
+            
+            logger.info(f"Местоположение пользователя {telegram_id} добавлено: {latitude}, {longitude}")
+            return location_id
+        except Exception as e:
+            conn.close()
+            logger.error(f"Ошибка добавления местоположения пользователя {telegram_id}: {e}")
+            return False
+    
+    def get_user_last_location(self, telegram_id):
+        """Получить последнее местоположение пользователя"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT ul.id, ul.user_id, ul.telegram_id, ul.latitude, ul.longitude,
+                   ul.accuracy, ul.altitude, ul.speed, ul.heading, ul.is_at_work, ul.created_at,
+                   u.first_name, u.last_name, u.username
+            FROM user_locations ul
+            JOIN users u ON ul.user_id = u.id
+            WHERE ul.telegram_id = ?
+            ORDER BY ul.created_at DESC
+            LIMIT 1
+        ''', (telegram_id,))
+        
+        row = c.fetchone()
+        conn.close()
+        
+        if row:
+            columns = ['id', 'user_id', 'telegram_id', 'latitude', 'longitude',
+                      'accuracy', 'altitude', 'speed', 'heading', 'is_at_work', 'created_at',
+                      'first_name', 'last_name', 'username']
+            return dict(zip(columns, row))
+        return None
+    
+    def get_user_location_history(self, telegram_id, limit=10):
+        """Получить историю местоположений пользователя"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT ul.id, ul.user_id, ul.telegram_id, ul.latitude, ul.longitude,
+                   ul.accuracy, ul.altitude, ul.speed, ul.heading, ul.is_at_work, ul.created_at,
+                   u.first_name, u.last_name, u.username
+            FROM user_locations ul
+            JOIN users u ON ul.user_id = u.id
+            WHERE ul.telegram_id = ?
+            ORDER BY ul.created_at DESC
+            LIMIT ?
+        ''', (telegram_id, limit))
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        if rows:
+            columns = ['id', 'user_id', 'telegram_id', 'latitude', 'longitude',
+                      'accuracy', 'altitude', 'speed', 'heading', 'is_at_work', 'created_at',
+                      'first_name', 'last_name', 'username']
+            return [dict(zip(columns, row)) for row in rows]
+        return []
+    
+    def get_recipient_locations(self, limit=50):
+        """Получить последние местоположения всех получателей уведомлений"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT ul.id, ul.user_id, ul.telegram_id, ul.latitude, ul.longitude,
+                   ul.accuracy, ul.altitude, ul.speed, ul.heading, ul.is_at_work, ul.created_at,
+                   u.first_name, u.last_name, u.username, u.role
+            FROM user_locations ul
+            JOIN users u ON ul.user_id = u.id
+            WHERE u.role = 'recipient' AND ul.telegram_id IS NOT NULL
+            ORDER BY ul.telegram_id, ul.created_at DESC
+            LIMIT ?
+        ''', (limit,))
+        
+        rows = c.fetchall()
+        conn.close()
+        
+        if rows:
+            columns = ['id', 'user_id', 'telegram_id', 'latitude', 'longitude',
+                      'accuracy', 'altitude', 'speed', 'heading', 'is_at_work', 'created_at',
+                      'first_name', 'last_name', 'username', 'role']
+            return [dict(zip(columns, row)) for row in rows]
+        return []
+    
+    def get_user_by_telegram_id_with_location(self, telegram_id):
+        """Получить информацию о пользователе с последним местоположением"""
+        user_info = self.get_user_by_telegram_id(telegram_id)
+        if not user_info:
+            return None
+        
+        last_location = self.get_user_last_location(telegram_id)
+        user_info['last_location'] = last_location
+        
+        return user_info
 
 # Создаем глобальный экземпляр базы данных
 db = Database()

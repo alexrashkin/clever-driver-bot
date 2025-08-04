@@ -6,6 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from config.settings import config
 from bot.database import Database  # Импортируем класс, а не экземпляр
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
+from web.location_web_tracker import location_web_tracker, web_tracker
 import logging
 import requests
 from datetime import datetime, timedelta
@@ -44,6 +45,9 @@ app.secret_key = config.WEB_SECRET_KEY
 # Создаем новый экземпляр базы данных
 db = Database("driver.db")
 
+# Регистрируем Blueprint для веб-отслеживания
+app.register_blueprint(location_web_tracker)
+
 def get_current_user():
     """Получить текущего пользователя из сессии (Telegram или логин/пароль)"""
     telegram_id = session.get('telegram_id')
@@ -73,17 +77,15 @@ def send_telegram_arrival(user_id):
     if isinstance(user_id, (int, str)) and str(user_id).isdigit():
         # Это telegram_id
         user_role = db.get_user_role(int(user_id))
+        user_info = db.get_user_by_telegram_id(int(user_id))
     else:
         # Это login
         user_role = db.get_user_role_by_login(user_id)
+        user_info = db.get_user_by_login(user_id)
     
     if user_role not in ['admin', 'driver']:
         logger.error(f"Пользователь {user_id} с ролью {user_role} не может отправлять ручные уведомления")
         return False
-    
-    token = config.TELEGRAM_TOKEN
-    text = create_work_notification()
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
     
     # Получаем всех пользователей с ролями и telegram_id
     conn = db.get_connection()
@@ -96,23 +98,90 @@ def send_telegram_arrival(user_id):
         logger.warning("Нет пользователей с ролями для отправки уведомлений")
         return False
     
+    # Создаем лог уведомления
+    notification_text = create_work_notification()
+    notification_log_id = db.create_notification_log(
+        notification_type='manual',
+        sender_id=user_info.get('id') if user_info else None,
+        sender_telegram_id=user_info.get('telegram_id') if user_info else None,
+        sender_login=user_info.get('login') if user_info else None,
+        notification_text=notification_text
+    )
+    
+    if not notification_log_id:
+        logger.error("Не удалось создать лог уведомления")
+        return False
+    
+    # Добавляем получателей в детали
+    for (telegram_id,) in users:
+        recipient_info = db.get_user_by_telegram_id(telegram_id)
+        recipient_name = f"{recipient_info.get('first_name', '')} {recipient_info.get('last_name', '')}".strip() if recipient_info else None
+        
+        db.add_notification_detail(
+            notification_log_id=notification_log_id,
+            recipient_telegram_id=telegram_id,
+            recipient_name=recipient_name,
+            status="pending"
+        )
+    
+    # Отправляем уведомления
+    token = config.TELEGRAM_TOKEN
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    
     sent_count = 0
+    failed_count = 0
     total_users = len(users)
     
     for (telegram_id,) in users:
         try:
-            response = requests.post(url, data={"chat_id": telegram_id, "text": text}, timeout=15)
+            response = requests.post(url, data={"chat_id": telegram_id, "text": notification_text}, timeout=15)
             if response.status_code == 200:
                 data = response.json()
                 if data.get('ok'):
                     logger.info(f"Ручное уведомление отправлено пользователю {telegram_id}")
                     sent_count += 1
+                    db.update_notification_detail(
+                        notification_log_id=notification_log_id,
+                        recipient_telegram_id=telegram_id,
+                        status="sent"
+                    )
                 else:
-                    logger.error(f"Ошибка Telegram API для пользователя {telegram_id}: {data.get('description')}")
+                    error_msg = data.get('description', 'Unknown error')
+                    logger.error(f"Ошибка Telegram API для пользователя {telegram_id}: {error_msg}")
+                    failed_count += 1
+                    db.update_notification_detail(
+                        notification_log_id=notification_log_id,
+                        recipient_telegram_id=telegram_id,
+                        status="failed",
+                        error_message=error_msg
+                    )
             else:
+                error_msg = f"HTTP {response.status_code}"
                 logger.error(f"HTTP ошибка Telegram для пользователя {telegram_id}: {response.status_code}")
+                failed_count += 1
+                db.update_notification_detail(
+                    notification_log_id=notification_log_id,
+                    recipient_telegram_id=telegram_id,
+                    status="failed",
+                    error_message=error_msg
+                )
         except Exception as e:
+            error_msg = str(e)
             logger.error(f"Ошибка отправки уведомления пользователю {telegram_id}: {e}")
+            failed_count += 1
+            db.update_notification_detail(
+                notification_log_id=notification_log_id,
+                recipient_telegram_id=telegram_id,
+                status="failed",
+                error_message=error_msg
+            )
+    
+    # Завершаем лог
+    db.complete_notification_log(notification_log_id, sent_count, failed_count)
+    
+    # Отправляем подтверждения
+    if sent_count > 0 and user_info:
+        send_confirmation_messages(notification_log_id, user_info, notification_text, 'manual')
     
     logger.info(f"Отправлено уведомлений: {sent_count} из {total_users}")
     
@@ -128,6 +197,101 @@ def send_alternative_notification():
     except Exception as e:
         logger.error(f"Ошибка альтернативного уведомления: {e}")
         return False
+
+def send_confirmation_messages(notification_log_id, sender_info, notification_text, notification_type):
+    """Отправить подтверждения об отправке уведомлений"""
+    from datetime import datetime
+    current_time = datetime.now().strftime('%H:%M:%S')
+    
+    # Получаем детали отправки
+    details = db.get_notification_details(notification_log_id)
+    successful_recipients = []
+    failed_recipients = []
+    
+    for detail in details:
+        if detail['status'] == 'sent':
+            recipient_name = detail['recipient_name'] or f"ID: {detail['recipient_telegram_id']}"
+            successful_recipients.append(f"• {recipient_name}")
+        else:
+            error_msg = detail.get('error_message', 'Unknown error')
+            recipient_name = detail['recipient_name'] or f"ID: {detail['recipient_telegram_id']}"
+            failed_recipients.append(f"• {recipient_name} (ошибка: {error_msg})")
+    
+    # Отправляем подтверждение водителям
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT telegram_id FROM users WHERE role = 'driver' AND telegram_id IS NOT NULL")
+    drivers = cursor.fetchall()
+    conn.close()
+    
+    if drivers:
+        driver_confirmation = f"""✅ Уведомления отправлены {len(successful_recipients)} получателям:
+📅 Время: {current_time}
+📢 Текст: '{notification_text}'
+
+🎯 Успешно отправлено:
+{chr(10).join(successful_recipients)}"""
+        
+        if failed_recipients:
+            driver_confirmation += f"""
+
+❌ Ошибки отправки:
+{chr(10).join(failed_recipients)}"""
+        
+        # Отправляем подтверждение водителям
+        token = config.TELEGRAM_TOKEN
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        
+        for (driver_telegram_id,) in drivers:
+            try:
+                response = requests.post(url, data={"chat_id": driver_telegram_id, "text": driver_confirmation}, timeout=15)
+                if response.status_code == 200 and response.json().get('ok'):
+                    logger.info(f"✅ Подтверждение отправлено водителю {driver_telegram_id}")
+                else:
+                    logger.error(f"❌ Ошибка отправки подтверждения водителю {driver_telegram_id}")
+            except Exception as e:
+                logger.error(f"❌ Ошибка отправки подтверждения водителю {driver_telegram_id}: {e}")
+    
+    # Отправляем подтверждение администраторам
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT telegram_id FROM users WHERE role = 'admin' AND telegram_id IS NOT NULL")
+    admins = cursor.fetchall()
+    conn.close()
+    
+    if admins:
+        sender_name = f"{sender_info.get('first_name', '')} {sender_info.get('last_name', '')}".strip()
+        if not sender_name:
+            sender_name = sender_info.get('login', 'Неизвестный пользователь')
+        
+        admin_confirmation = f"""🔔 УВЕДОМЛЕНИЯ ОТПРАВЛЕНЫ
+📅 Время: {current_time}
+👤 Отправитель: {sender_name}
+📝 Тип: {notification_type}
+📢 Текст: '{notification_text}'
+
+🎯 Получатели ({len(successful_recipients)}):
+{chr(10).join(successful_recipients)}"""
+        
+        if failed_recipients:
+            admin_confirmation += f"""
+
+❌ Ошибки ({len(failed_recipients)}):
+{chr(10).join(failed_recipients)}"""
+        
+        # Отправляем подтверждение администраторам
+        for (admin_telegram_id,) in admins:
+            try:
+                response = requests.post(url, data={"chat_id": admin_telegram_id, "text": admin_confirmation}, timeout=15)
+                if response.status_code == 200 and response.json().get('ok'):
+                    logger.info(f"✅ Подтверждение отправлено администратору {admin_telegram_id}")
+                else:
+                    logger.error(f"❌ Ошибка отправки подтверждения администратору {admin_telegram_id}")
+            except Exception as e:
+                logger.error(f"❌ Ошибка отправки подтверждения администратору {admin_telegram_id}: {e}")
+    
+    # Отмечаем, что подтверждения отправлены
+    db.mark_confirmation_sent(notification_log_id)
 
 def send_telegram_code(telegram_contact, code):
     """Отправить код подтверждения через Telegram бота"""
@@ -1853,11 +2017,27 @@ def real_time_tracker():
         return redirect('/')
     
     try:
+        # Если пользователь является получателем, автоматически создаем сессию отслеживания
+        user_info = None
+        if telegram_id:
+            user_info = db.get_user_by_telegram_id(telegram_id)
+        elif user_login:
+            user_info = db.get_user_by_login(user_login)
+        
+        # Создаем сессию отслеживания для получателей
+        session_token = None
+        if user_info and user_info.get('role') == 'recipient':
+            from web.location_web_tracker import web_tracker
+            session_token = web_tracker.create_auto_session_for_user(telegram_id or user_info.get('telegram_id'), duration_minutes=60)
+            logger.info(f"Автоматически создана сессия отслеживания для получателя {telegram_id or user_info.get('telegram_id')}: {session_token}")
+        
         return render_template('real_time_tracker.html', 
                              year=datetime.now().year,
                              work_lat=config.WORK_LATITUDE,
                              work_lon=config.WORK_LONGITUDE,
-                             work_radius=config.WORK_RADIUS)
+                             work_radius=config.WORK_RADIUS,
+                             user_info=user_info,
+                             session_token=session_token)
     except Exception as e:
         logger.error(f"Ошибка загрузки страницы трекера: {e}")
         return 'Ошибка загрузки страницы', 500
@@ -2059,6 +2239,251 @@ def view_logs():
         return "Лог файл не найден"
     except Exception as e:
         return f"Ошибка чтения логов: {e}"
+
+@app.route('/notification_logs')
+def view_notification_logs():
+    """Просмотр логов уведомлений"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return redirect(url_for('login'))
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return "Доступ запрещен", 403
+        
+        # Получаем последние уведомления
+        notifications = db.get_recent_notifications(limit=50)
+        
+        return render_template('notification_logs.html', notifications=notifications)
+    except Exception as e:
+        logger.error(f"Ошибка просмотра логов уведомлений: {e}")
+        return "Ошибка загрузки логов уведомлений", 500
+
+@app.route('/notification_details/<int:notification_id>')
+def view_notification_details(notification_id):
+    """Просмотр деталей уведомления"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return redirect(url_for('login'))
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return "Доступ запрещен", 403
+        
+        # Получаем информацию об уведомлении
+        notification = db.get_notification_log(notification_id)
+        if not notification:
+            return "Уведомление не найдено", 404
+        
+        # Получаем детали отправки
+        details = db.get_notification_details(notification_id)
+        
+        return render_template('notification_details.html', notification=notification, details=details)
+    except Exception as e:
+        logger.error(f"Ошибка просмотра деталей уведомления: {e}")
+        return "Ошибка загрузки деталей", 500
+
+@app.route('/user_location/<int:telegram_id>')
+def view_user_location(telegram_id):
+    """Просмотр местоположения конкретного пользователя"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return redirect(url_for('login'))
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return "Доступ запрещен", 403
+        
+        # Получаем информацию о пользователе с местоположением
+        user_info = db.get_user_by_telegram_id_with_location(telegram_id)
+        if not user_info:
+            return "Пользователь не найден", 404
+        
+        # Получаем историю местоположений
+        location_history = db.get_user_location_history(telegram_id, limit=20)
+        
+        return render_template('user_location.html', user=user_info, location_history=location_history)
+    except Exception as e:
+        logger.error(f"Ошибка просмотра местоположения пользователя {telegram_id}: {e}")
+        return "Ошибка загрузки местоположения", 500
+
+@app.route('/recipient_locations')
+def view_recipient_locations():
+    """Просмотр местоположений всех получателей уведомлений"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return redirect(url_for('login'))
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return "Доступ запрещен", 403
+        
+        # Получаем местоположения всех получателей
+        recipient_locations = db.get_recipient_locations(limit=100)
+        
+        return render_template('recipient_locations.html', recipient_locations=recipient_locations)
+    except Exception as e:
+        logger.error(f"Ошибка просмотра местоположений получателей: {e}")
+        return "Ошибка загрузки местоположений", 500
+
+@app.route('/api/user_location/<int:telegram_id>')
+def api_user_location(telegram_id):
+    """API для получения местоположения пользователя"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return jsonify({'success': False, 'error': 'Доступ запрещен'}), 403
+        
+        # Получаем информацию о пользователе с местоположением
+        user_info = db.get_user_by_telegram_id_with_location(telegram_id)
+        if not user_info:
+            return jsonify({'success': False, 'error': 'Пользователь не найден'}), 404
+        
+        return jsonify({
+            'success': True,
+            'user': user_info
+        })
+    except Exception as e:
+        logger.error(f"Ошибка API местоположения пользователя {telegram_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/start_tracking/<int:telegram_id>')
+def api_start_tracking(telegram_id):
+    """API для запуска отслеживания местоположения получателя"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return jsonify({'success': False, 'error': 'Доступ запрещен'}), 403
+        
+        # Получаем параметры
+        duration = request.args.get('duration', 60, type=int)
+        if duration < 1 or duration > 1440:
+            return jsonify({'success': False, 'error': 'Длительность должна быть от 1 до 1440 минут'}), 400
+        
+        # Проверяем, что пользователь является получателем
+        user_info = db.get_user_by_telegram_id(telegram_id)
+        if not user_info:
+            return jsonify({'success': False, 'error': 'Пользователь не найден'}), 404
+        
+        if user_info.get('role') != 'recipient':
+            return jsonify({'success': False, 'error': 'Пользователь не является получателем уведомлений'}), 400
+        
+        # Здесь должна быть логика запуска отслеживания через бота
+        # Пока возвращаем заглушку
+        return jsonify({
+            'success': True,
+            'message': f'Запрос на отслеживание отправлен пользователю {telegram_id}',
+            'duration': duration,
+            'user_name': f"{user_info.get('first_name', '')} {user_info.get('last_name', '')}".strip()
+        })
+        
+    except Exception as e:
+        logger.error(f"Ошибка API запуска отслеживания для {telegram_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/stop_tracking/<int:telegram_id>')
+def api_stop_tracking(telegram_id):
+    """API для остановки отслеживания местоположения получателя"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return jsonify({'success': False, 'error': 'Доступ запрещен'}), 403
+        
+        # Здесь должна быть логика остановки отслеживания через бота
+        # Пока возвращаем заглушку
+        return jsonify({
+            'success': True,
+            'message': f'Отслеживание пользователя {telegram_id} остановлено'
+        })
+        
+    except Exception as e:
+        logger.error(f"Ошибка API остановки отслеживания для {telegram_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/tracking_status')
+def api_tracking_status():
+    """API для получения статуса отслеживания"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return jsonify({'success': False, 'error': 'Доступ запрещен'}), 403
+        
+        # Получаем активные сессии веб-отслеживания
+        active_sessions = web_tracker.get_active_sessions_info()
+        
+        return jsonify({
+            'success': True,
+            'active_tracking': len(active_sessions),
+            'sessions': active_sessions,
+            'total_tracked': len(active_sessions)
+        })
+        
+    except Exception as e:
+        logger.error(f"Ошибка API статуса отслеживания: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/web_tracking')
+def view_web_tracking():
+    """Страница управления веб-отслеживанием"""
+    try:
+        # Проверяем права администратора
+        user = get_current_user()
+        if not user:
+            return redirect(url_for('login'))
+        
+        user_role = get_current_user_role()
+        if user_role != 'admin':
+            return "Доступ запрещен", 403
+        
+        # Получаем всех получателей для создания сессий
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, telegram_id, first_name, last_name, username 
+            FROM users 
+            WHERE role = 'recipient' AND telegram_id IS NOT NULL
+            ORDER BY first_name, last_name
+        """)
+        recipients = cursor.fetchall()
+        conn.close()
+        
+        # Получаем активные сессии отслеживания
+        active_sessions = web_tracker.get_active_sessions_info()
+        
+        return render_template('web_tracking.html', 
+                             recipients=recipients,
+                             active_sessions=active_sessions)
+    except Exception as e:
+        logger.error(f"Ошибка загрузки страницы веб-отслеживания: {e}")
+        return "Ошибка загрузки страницы", 500
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")

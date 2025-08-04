@@ -13,12 +13,12 @@ from telegram.ext import (
 )
 from config.settings import config
 from bot.handlers import (
-    start_command, help_command, track_command, status_command,
-    handle_location, handle_text, error_handler, bind_command
+    start_command, help_command, handle_text, error_handler, bind_command
 )
 from bot.database import db
 from bot.utils import create_work_notification
 from bot.state import load_last_checked_id, save_last_checked_id, load_last_checked_time, save_last_checked_time
+from bot.notification_system import notification_system
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LAST_ID_FILE = os.path.join(BASE_DIR, "last_checked_id.txt")  # Теперь файл будет рядом с bot/main.py
@@ -64,32 +64,42 @@ async def monitor_database(application: Application):
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
                         if db.get_tracking_status():
-                            # Отправляем уведомления всем пользователям (админы, водители и получатели)
+                            # Инициализируем систему уведомлений с ботом
+                            notification_system.bot = application.bot
+                            
+                            # Получаем получателей уведомлений
                             conn = db.get_connection()
                             cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
-                            users = cursor.fetchall()
+                            cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient'")
+                            recipients = cursor.fetchall()
                             conn.close()
                             
-                            notification = create_work_notification()
-                            sent_count = 0
-                            
-                            for (telegram_id,) in users:
-                                try:
-                                    logger.info(f"DEBUG: Отправляю уведомление пользователю {telegram_id}: '{notification}'")
-                                    await application.bot.send_message(
-                                        chat_id=telegram_id,
-                                        text=notification
-                                    )
-                                    sent_count += 1
-                                    logger.info(f"Автоматическое уведомление отправлено пользователю {telegram_id}")
-                                except Exception as e:
-                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {telegram_id}: {e}")
-                            
-                            if sent_count > 0:
-                                logger.info(f"Автоматические уведомления отправлены {sent_count} пользователям для записи ID: {curr_id}")
+                            if recipients:
+                                # Получаем информацию о системе (автоматическое уведомление)
+                                system_info = {
+                                    'id': None,
+                                    'telegram_id': None,
+                                    'login': 'system',
+                                    'role': 'system'
+                                }
+                                
+                                # Отправляем уведомления через новую систему
+                                result = await notification_system.send_notification_with_confirmation(
+                                    notification_type='automatic',
+                                    sender_info=system_info,
+                                    recipients=[r[0] for r in recipients],
+                                    notification_text=create_work_notification(),
+                                    custom_confirmation=True
+                                )
+                                
+                                if result['success']:
+                                    logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
+                                    logger.info(f"📍 Местоположение: {latitude:.6f}, {longitude:.6f}")
+                                    logger.info(f"🏢 Статус: {'В рабочей зоне' if is_at_work else 'В пути'}")
+                                else:
+                                    logger.warning("❌ Не удалось отправить автоматические уведомления")
                             else:
-                                logger.warning("Нет пользователей с ролями для отправки автоматических уведомлений")
+                                logger.warning("❌ Нет получателей для отправки уведомлений")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
                 # Только если был переход с 1 на 0 (выезд из радиуса)
@@ -139,26 +149,23 @@ async def main():
     try:
         # Создаем приложение с настройками таймаутов
         application = Application.builder().token(config.TELEGRAM_TOKEN).build()
-        # УДАЛЕНО: нельзя устанавливать timeout через application.bot.request
-        # application.bot.request.timeout = 30.0
-        # application.bot.request.connect_timeout = 10.0
-        # application.bot.request.read_timeout = 30.0
-
+        
         # Добавляем обработчики команд
         application.add_handler(CommandHandler("start", start_command))
         application.add_handler(CommandHandler("help", help_command))
-        application.add_handler(CommandHandler("track", track_command))
-        application.add_handler(CommandHandler("status", status_command))
         application.add_handler(CommandHandler("bind", bind_command))
         
         # Добавляем обработчики сообщений
-        application.add_handler(MessageHandler(filters.LOCATION, handle_location))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
         
         # Добавляем обработчик ошибок
         application.add_error_handler(error_handler)
         
+        # Инициализируем систему уведомлений
+        notification_system.bot = application.bot
+        
         logger.info("Бот настроен успешно")
+        logger.info("Система подтверждений уведомлений инициализирована")
         logger.info("Запуск бота...")
         
         # Запускаем мониторинг базы данных в отдельной задаче

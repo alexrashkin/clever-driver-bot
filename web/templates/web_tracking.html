@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Веб-отслеживание местоположений</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .recipients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .recipient-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .recipient-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .recipient-info {
+            margin-bottom: 15px;
+        }
+        .recipient-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .recipient-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .tracking-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .sessions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .sessions-table th,
+        .sessions-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .sessions-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        .sessions-table tr:hover {
+            background: #f8f9fa;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .duration-input {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9em;
+            width: 80px;
+        }
+        .message {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .empty-state i {
+            font-size: 3em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-map-marker-alt"></i> Веб-отслеживание местоположений</h1>
+            <p>Управление отслеживанием местоположений получателей через веб-интерфейс</p>
+        </div>
+        
+        <div class="content">
+            <a href="/admin/users" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                Вернуться в админ-панель
+            </a>
+            
+            <div id="message-container"></div>
+            
+            <!-- Активные сессии -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-play-circle"></i>
+                    Активные сессии отслеживания
+                </h2>
+                
+                <div id="active-sessions">
+                    {% if active_sessions %}
+                        <table class="sessions-table">
+                            <thead>
+                                <tr>
+                                    <th>Пользователь</th>
+                                    <th>Telegram ID</th>
+                                    <th>Длительность</th>
+                                    <th>Осталось</th>
+                                    <th>Обновлений</th>
+                                    <th>Создана</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for session in active_sessions %}
+                                <tr>
+                                    <td>{{ session.user_name }}</td>
+                                    <td>{{ session.telegram_id }}</td>
+                                    <td>{{ session.duration_minutes }} мин</td>
+                                    <td>
+                                        <span class="status-badge status-active">
+                                            {{ session.remaining_minutes }} мин
+                                        </span>
+                                    </td>
+                                    <td>{{ session.locations_count }}</td>
+                                    <td>{{ session.created_at[:19] }}</td>
+                                    <td>
+                                        <button class="btn btn-danger" onclick="stopSession('{{ session.session_token }}')">
+                                            <i class="fas fa-stop"></i> Остановить
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-clock"></i>
+                            <h3>Нет активных сессий</h3>
+                            <p>Создайте новую сессию отслеживания для получения местоположения</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Создание новых сессий -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-plus-circle"></i>
+                    Создать новую сессию отслеживания
+                </h2>
+                
+                <div class="recipients-grid">
+                    {% for recipient in recipients %}
+                    <div class="recipient-card">
+                        <div class="recipient-info">
+                            <div class="recipient-name">
+                                {{ recipient[2] or '' }} {{ recipient[3] or '' }}
+                            </div>
+                            <div class="recipient-details">
+                                ID: {{ recipient[0] }} | Telegram: {{ recipient[1] }}
+                                {% if recipient[4] %}
+                                <br>@{{ recipient[4] }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="tracking-controls">
+                            <input type="number" 
+                                   class="duration-input" 
+                                   id="duration-{{ recipient[1] }}" 
+                                   value="60" 
+                                   min="1" 
+                                   max="1440" 
+                                   placeholder="мин">
+                            <button class="btn btn-primary" 
+                                    onclick="createSession({{ recipient[1] }})">
+                                <i class="fas fa-play"></i> Начать
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if not recipients %}
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>Нет получателей</h3>
+                    <p>Добавьте получателей уведомлений для создания сессий отслеживания</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Показать сообщение
+        function showMessage(text, type = 'success') {
+            const container = document.getElementById('message-container');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            
+            container.innerHTML = '';
+            container.appendChild(message);
+            message.style.display = 'block';
+            
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Создать сессию отслеживания
+        async function createSession(telegramId) {
+            try {
+                const durationInput = document.getElementById(`duration-${telegramId}`);
+                const duration = parseInt(durationInput.value);
+                
+                if (!duration || duration < 1 || duration > 1440) {
+                    showMessage('Длительность должна быть от 1 до 1440 минут', 'error');
+                    return;
+                }
+                
+                const response = await fetch('/api/admin/tracking/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        telegram_id: telegramId,
+                        duration_minutes: duration
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`Сессия создана! URL: ${window.location.origin}${data.tracking_url}`);
+                    
+                    // Обновляем страницу через 2 секунды
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showMessage(`Ошибка: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка создания сессии:', error);
+                showMessage('Ошибка создания сессии', 'error');
+            }
+        }
+        
+        // Остановить сессию
+        async function stopSession(sessionToken) {
+            try {
+                const response = await fetch(`/api/tracking/${sessionToken}/stop`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Сессия остановлена');
+                    
+                    // Обновляем страницу через 1 секунду
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showMessage(`Ошибка: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка остановки сессии:', error);
+                showMessage('Ошибка остановки сессии', 'error');
+            }
+        }
+        
+        // Автообновление активных сессий каждые 30 секунд
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/admin/tracking/sessions');
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Обновляем только если количество сессий изменилось
+                    const currentCount = document.querySelectorAll('.sessions-table tbody tr').length;
+                    if (currentCount !== data.total_count) {
+                        location.reload();
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка обновления сессий:', error);
+            }
+        }, 30000);
+    </script>
+</body>
+</html> 

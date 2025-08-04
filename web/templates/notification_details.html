@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детали уведомления - Умный водитель</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .notification-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 1.1em;
+        }
+        .notification-text {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .details-table th,
+        .details-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .details-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .details-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .status-sent {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-failed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .btn:hover {
+            background-color: #5a6fd8;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .back-link {
+            margin-bottom: 20px;
+        }
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 3px solid #667eea;
+        }
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 8px;
+            color: #721c24;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .notification-type {
+            font-weight: 500;
+        }
+        .type-manual { color: #007bff; }
+        .type-automatic { color: #28a745; }
+        .type-arrival { color: #ffc107; }
+        .type-departure { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Детали уведомления #{{ notification.id }}</h1>
+        <p>Подробная информация об отправке уведомления</p>
+    </div>
+
+    <div class="container">
+        <div class="back-link">
+            <a href="/notification_logs" class="btn btn-secondary">← Назад к логам</a>
+        </div>
+
+        <div class="notification-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Тип уведомления</div>
+                    <div class="info-value">
+                        <span class="notification-type type-{{ notification.notification_type }}">
+                            {% if notification.notification_type == 'manual' %}
+                                📝 Ручное
+                            {% elif notification.notification_type == 'automatic' %}
+                                🤖 Автоматическое
+                            {% elif notification.notification_type == 'arrival' %}
+                                🏢 Прибытие
+                            {% elif notification.notification_type == 'departure' %}
+                                🚗 Выезд
+                            {% else %}
+                                {{ notification.notification_type }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Отправитель</div>
+                    <div class="info-value">
+                        {% if notification.sender_telegram_id %}
+                            {{ notification.sender_first_name or '' }} {{ notification.sender_last_name or '' }}
+                            <br><small>ID: {{ notification.sender_telegram_id }}</small>
+                        {% elif notification.sender_login %}
+                            {{ notification.sender_login }}
+                        {% else %}
+                            Система
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Время создания</div>
+                    <div class="info-value">{{ notification.created_at }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Время завершения</div>
+                    <div class="info-value">{{ notification.completed_at or 'Не завершено' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Подтверждение</div>
+                    <div class="info-value">
+                        {% if notification.confirmation_sent %}
+                            <span class="status-badge status-sent">✅ Отправлено</span>
+                        {% else %}
+                            <span class="status-badge status-pending">⏳ Ожидает</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="notification-text">{{ notification.notification_text }}</div>
+        </div>
+
+        <div class="stats-summary">
+            <div class="stat-item">
+                <div class="stat-number">{{ details|length }}</div>
+                <div class="stat-label">Всего получателей</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ details|selectattr('status', 'equalto', 'sent')|list|length }}</div>
+                <div class="stat-label">Успешно отправлено</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ details|selectattr('status', 'equalto', 'failed')|list|length }}</div>
+                <div class="stat-label">Ошибок отправки</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">{{ details|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                <div class="stat-label">В ожидании</div>
+            </div>
+        </div>
+
+        <h3>📤 Детали отправки</h3>
+        {% if details %}
+            <table class="details-table">
+                <thead>
+                    <tr>
+                        <th>Получатель</th>
+                        <th>Telegram ID</th>
+                        <th>Статус</th>
+                        <th>Время отправки</th>
+                        <th>Ошибка</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detail in details %}
+                    <tr>
+                        <td>
+                            {% if detail.recipient_name %}
+                                {{ detail.recipient_name }}
+                            {% else %}
+                                <em>Неизвестный пользователь</em>
+                            {% endif %}
+                        </td>
+                        <td>{{ detail.recipient_telegram_id }}</td>
+                        <td>
+                            {% if detail.status == 'sent' %}
+                                <span class="status-badge status-sent">✅ Отправлено</span>
+                            {% elif detail.status == 'failed' %}
+                                <span class="status-badge status-failed">❌ Ошибка</span>
+                            {% elif detail.status == 'pending' %}
+                                <span class="status-badge status-pending">⏳ Ожидает</span>
+                            {% else %}
+                                <span class="status-badge status-pending">{{ detail.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if detail.sent_at %}
+                                {{ detail.sent_at.split(' ')[0] if detail.sent_at else '' }}
+                                <br>
+                                <small>{{ detail.sent_at.split(' ')[1] if detail.sent_at else '' }}</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if detail.error_message %}
+                                <div class="error-message">{{ detail.error_message }}</div>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Детали отправки не найдены.</p>
+        {% endif %}
+    </div>
+</body>
+</html> 

@@ -187,6 +187,8 @@
             background: #667eea;
             color: white;
         }
+        
+
 
         .loading {
             display: flex;
@@ -322,6 +324,8 @@
     </style>
 </head>
 <body>
+
+    
     <div class="header">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <h1>🚗 Отслеживание автомобиля</h1>
@@ -641,6 +645,34 @@
             document.getElementById('detailedStatus').textContent = '❌ ' + message;
         }
 
+        // Автоматическое сохранение местоположения получателя
+        {% if session_token and user_info and user_info.role == 'recipient' %}
+        navigator.geolocation.watchPosition(
+            async function(position) {
+                try {
+                    await fetch(`/api/tracking/{{ session_token }}/location`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                            altitude: position.coords.altitude,
+                            speed: position.coords.speed,
+                            heading: position.coords.heading
+                        })
+                    });
+                } catch (error) {
+                    console.error('Ошибка сохранения местоположения:', error);
+                }
+            },
+            function(error) {
+                console.error('Ошибка получения местоположения:', error);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+        );
+        {% endif %}
+        
         // Очистка при закрытии страницы
         window.addEventListener('beforeunload', function() {
             stopAutoUpdate();

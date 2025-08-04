@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Местоположения получателей - Умный водитель</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .map-container {
+            height: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 2px solid #e9ecef;
+        }
+        .recipients-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .recipients-table th,
+        .recipients-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .recipients-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .recipients-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        .status-work {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-not-work {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-no-location {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .btn:hover {
+            background-color: #5a6fd8;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 0.8em;
+        }
+        .back-link {
+            margin-bottom: 20px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .coordinates {
+            font-family: monospace;
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .user-name {
+            font-weight: 500;
+        }
+        .telegram-id {
+            font-family: monospace;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .last-update {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .filters {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .filter-item input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .filter-item select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📍 Местоположения получателей</h1>
+        <p>Просмотр местоположений всех получателей уведомлений</p>
+    </div>
+
+    <div class="container">
+        <div class="back-link">
+            <a href="/admin" class="btn btn-secondary">← Назад к админ-панели</a>
+        </div>
+
+        {% if recipient_locations %}
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number">{{ recipient_locations|length }}</div>
+                    <div class="stat-label">Всего получателей</div>
+                </div>
+
+            </div>
+
+            <div class="filters">
+                <h3>🔍 Фильтры</h3>
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label for="search-name">Поиск по имени:</label>
+                        <input type="text" id="search-name" placeholder="Введите имя...">
+                    </div>
+
+                    <div class="filter-item">
+                        <button onclick="applyFilters()" class="btn btn-small">Применить</button>
+                        <button onclick="clearFilters()" class="btn btn-small btn-secondary">Сбросить</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-container" id="map"></div>
+
+            <h3>📋 Список получателей</h3>
+            <table class="recipients-table" id="recipients-table">
+                <thead>
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>Telegram ID</th>
+                        <th>Местоположение</th>
+
+                        <th>Последнее обновление</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for location in recipient_locations %}
+                    <tr class="recipient-row" 
+                        data-name="{{ location.first_name or '' }} {{ location.last_name or '' }}">
+                        <td>
+                            <div class="user-name">{{ location.first_name or 'Не указано' }} {{ location.last_name or '' }}</div>
+                            {% if location.username %}<div class="telegram-id">@{{ location.username }}</div>{% endif %}
+                        </td>
+                        <td>
+                            <div class="telegram-id">{{ location.telegram_id }}</div>
+                        </td>
+                        <td>
+                            {% if location.latitude and location.longitude %}
+                                <div class="coordinates">
+                                    {{ "%.6f"|format(location.latitude) }}, {{ "%.6f"|format(location.longitude) }}
+                                </div>
+                                {% if location.accuracy %}
+                                    <div class="last-update">Точность: ±{{ "%.0f"|format(location.accuracy) }}м</div>
+                                {% endif %}
+                            {% else %}
+                                <em>Нет данных</em>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if location.created_at %}
+                                <div class="last-update">
+                                    {{ location.created_at.split(' ')[0] if location.created_at else '' }}
+                                    <br>
+                                    {{ location.created_at.split(' ')[1] if location.created_at else '' }}
+                                </div>
+                            {% else %}
+                                <em>Нет данных</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/user_location/{{ location.telegram_id }}" class="btn btn-small">👁️ Детали</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <h3>📭 Нет получателей уведомлений</h3>
+                <p>Пока нет пользователей с ролью "Получатель уведомлений" или у них нет данных о местоположении.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if recipient_locations %}
+    <script>
+        // Инициализация карты
+        var map = L.map('map');
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        var markers = [];
+        var bounds = L.latLngBounds();
+        
+        // Добавляем маркеры для всех получателей с местоположением
+        {% for location in recipient_locations %}
+        {% if location.latitude and location.longitude %}
+        var marker = L.marker([{{ location.latitude }}, {{ location.longitude }}], {
+            title: '{{ location.first_name or "Пользователь" }} {{ location.last_name or "" }}'
+        }).addTo(map);
+        
+        marker.bindPopup(`
+            <strong>{{ location.first_name or "Пользователь" }} {{ location.last_name or "" }}</strong><br>
+            <strong>Telegram ID:</strong> {{ location.telegram_id }}<br>
+            <strong>Время:</strong> {{ location.created_at or 'Неизвестно' }}<br>
+            {% if location.accuracy %}<strong>Точность:</strong> ±{{ "%.0f"|format(location.accuracy) }}м<br>{% endif %}
+            <a href="/user_location/{{ location.telegram_id }}" style="color: #667eea;">👁️ Подробнее</a>
+        `);
+        
+        markers.push(marker);
+        bounds.extend([{{ location.latitude }}, {{ location.longitude }}]);
+        {% endif %}
+        {% endfor %}
+        
+        // Устанавливаем границы карты
+        if (!bounds.isEmpty()) {
+            map.fitBounds(bounds, { padding: [20, 20] });
+        } else {
+            // Если нет местоположений, показываем центр города
+            map.setView([55.7558, 37.6176], 10); // Москва
+        }
+        
+        // Функции фильтрации
+        function applyFilters() {
+            var searchName = document.getElementById('search-name').value.toLowerCase();
+            var filterStatus = document.getElementById('filter-status').value;
+            var rows = document.querySelectorAll('.recipient-row');
+            
+            rows.forEach(function(row) {
+                var name = row.getAttribute('data-name').toLowerCase();
+                var status = row.getAttribute('data-status');
+                var show = true;
+                
+                // Фильтр по имени
+                if (searchName && !name.includes(searchName)) {
+                    show = false;
+                }
+                
+                // Фильтр по статусу
+                if (filterStatus && status !== filterStatus) {
+                    show = false;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        function clearFilters() {
+            document.getElementById('search-name').value = '';
+            document.getElementById('filter-status').value = '';
+            var rows = document.querySelectorAll('.recipient-row');
+            rows.forEach(function(row) {
+                row.style.display = '';
+            });
+        }
+        
+        // Обработчики событий для фильтров
+        document.getElementById('search-name').addEventListener('input', applyFilters);
+        document.getElementById('filter-status').addEventListener('change', applyFilters);
+        
+
+        
+        // Обновление статуса отслеживания каждые 30 секунд
+        function updateTrackingStatus() {
+            fetch('/api/tracking_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Здесь можно обновить UI с информацией об активном отслеживании
+                        console.log('Активное отслеживание:', data.active_tracking);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка получения статуса отслеживания:', error);
+                });
+        }
+        
+        // Запускаем обновление статуса
+        setInterval(updateTrackingStatus, 30000);
+    </script>
+    {% endif %}
+</body>
+</html> 
