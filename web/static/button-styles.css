@@ -1,0 +1,69 @@
+/* Универсальные стили для центрирования текста на кнопках */
+
+/* Основные кнопки */
+.btn, 
+button[type="submit"],
+button[type="button"],
+input[type="submit"],
+input[type="button"] {
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Кнопки навигации */
+.nav-btn,
+.back-btn,
+.back-link {
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Кнопки в формах */
+.form-btn,
+.login-btn,
+.register-btn,
+.telegram-btn {
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ссылки-кнопки */
+a.btn,
+a[class*="btn"] {
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .btn, 
+    button[type="submit"],
+    button[type="button"],
+    input[type="submit"],
+    input[type="button"],
+    .nav-btn,
+    .back-btn,
+    .back-link,
+    .form-btn,
+    .login-btn,
+    .register-btn,
+    .telegram-btn,
+    a.btn,
+    a[class*="btn"] {
+        text-align: center !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+} 
