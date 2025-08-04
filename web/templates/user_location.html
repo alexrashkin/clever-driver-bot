@@ -227,6 +227,48 @@
             <strong>Время:</strong> {{ user.last_location.created_at }}
         `);
         
+        // Автоматическое обновление местоположения каждые 5 секунд
+        var updateInterval = setInterval(function() {
+            fetch('/api/user_location/{{ user.telegram_id }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.location) {
+                        var newLat = data.location.latitude;
+                        var newLon = data.location.longitude;
+                        var newTime = data.location.created_at;
+                        
+                        // Проверяем, изменились ли координаты
+                        var currentPos = currentMarker.getLatLng();
+                        if (currentPos.lat !== newLat || currentPos.lng !== newLon) {
+                            // Обновляем позицию маркера
+                            currentMarker.setLatLng([newLat, newLon]);
+                            
+                            // Обновляем всплывающую информацию
+                            currentMarker.bindPopup(`
+                                <strong>{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}</strong><br>
+                                <strong>Telegram ID:</strong> {{ user.telegram_id }}<br>
+                                <strong>Время:</strong> ${newTime}
+                            `);
+                            
+                            // Обновляем координаты в интерфейсе
+                            document.querySelector('.coordinates').innerHTML = `
+                                <strong>Координаты:</strong> ${newLat.toFixed(6)}, ${newLon.toFixed(6)}<br>
+                                <strong>Время:</strong> ${newTime}
+                            `;
+                            
+                            console.log('Местоположение обновлено:', newLat, newLon);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка обновления местоположения:', error);
+                });
+        }, 5000); // Обновляем каждые 5 секунд
+        
+        // Очистка интервала при закрытии страницы
+        window.addEventListener('beforeunload', function() {
+            clearInterval(updateInterval);
+        });
 
     </script>
     {% endif %}
