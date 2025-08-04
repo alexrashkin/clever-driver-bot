@@ -223,6 +223,16 @@
             color: #6b7280;
         }
         
+        .invitations-section {
+            margin-top: 40px;
+        }
+        
+        .invitations-section h2 {
+            color: #1d4ed8;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
         .back-link {
             display: block;
             margin: 18px auto 0 auto;
@@ -244,30 +254,232 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
         
+        .theme-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
             .admin-container {
                 margin: 0;
                 border-radius: 0;
             }
             
-            .users-table {
-                font-size: 0.9em;
-            }
-            
-            .users-table th,
-            .users-table td {
-                padding: 10px 8px;
+            .admin-header {
+                padding: 20px 15px;
             }
             
             .admin-title {
                 font-size: 1.5em;
+            }
+            
+            .admin-subtitle {
+                font-size: 1em;
+            }
+            
+            .admin-nav {
+                padding: 10px 15px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .nav-link {
+                margin-right: 0;
+                padding: 6px 12px;
+                font-size: 0.9em;
+            }
+            
+            .admin-content {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-number {
+                font-size: 2em;
+            }
+            
+            .stat-label {
+                font-size: 0.8em;
+            }
+            
+            .users-table,
+            .invitations-section table {
+                font-size: 0.85em;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .users-table th,
+            .users-table td {
+                padding: 8px 6px;
+                min-width: 80px;
+            }
+            
+            .role-badge,
+            .auth-badge {
+                font-size: 0.7em;
+                padding: 3px 8px;
+            }
+            
+            .delete-btn,
+            .unbind-btn,
+            .delete-invitation-btn {
+                padding: 4px 8px;
+                font-size: 0.7em;
+            }
+            
+            .invitations-section {
+                margin-top: 20px;
+            }
+            
+            .invitations-section h2 {
+                font-size: 1.3em;
+                margin-bottom: 15px;
+            }
+            
+            .theme-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1em;
+                top: 15px;
+                right: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .admin-header {
+                padding: 15px 10px;
+            }
+            
+            .admin-title {
+                font-size: 1.3em;
+            }
+            
+            .admin-subtitle {
+                font-size: 0.9em;
+            }
+            
+            .admin-nav {
+                padding: 8px 10px;
+                gap: 8px;
+            }
+            
+            .nav-link {
+                padding: 5px 10px;
+                font-size: 0.8em;
+            }
+            
+            .admin-content {
+                padding: 10px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-number {
+                font-size: 1.8em;
+            }
+            
+            .stat-label {
+                font-size: 0.75em;
+            }
+            
+            .users-table,
+            .invitations-section table {
+                font-size: 0.8em;
+            }
+            
+            .users-table th,
+            .users-table td {
+                padding: 6px 4px;
+                min-width: 70px;
+            }
+            
+            .role-badge,
+            .auth-badge {
+                font-size: 0.65em;
+                padding: 2px 6px;
+            }
+            
+            .delete-btn,
+            .unbind-btn,
+            .delete-invitation-btn {
+                padding: 3px 6px;
+                font-size: 0.65em;
+            }
+            
+            .invitations-section {
+                margin-top: 15px;
+            }
+            
+            .invitations-section h2 {
+                font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+            
+            .back-link {
+                margin: 10px auto 0 auto;
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+            
+            .theme-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9em;
+                top: 10px;
+                right: 10px;
             }
         }
     </style>
 </head>
 <body>
     <a href="/" class="back-link">← Назад на главную</a>
-    <button id="theme-toggle" class="nav-btn theme-btn" style="position: fixed; top: 20px; right: 20px; z-index: 1001; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">🌙</button>
+    <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
     
     <div class="admin-container">
         <div class="admin-header">
