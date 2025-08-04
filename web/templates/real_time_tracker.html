@@ -573,9 +573,18 @@
                             map.geoObjects.remove(userPlacemark);
                         }
 
+                        // Определяем текст метки в зависимости от роли пользователя
+                        {% if user_info and user_info.role == 'admin' %}
+                        const userLabel = '📱 Получатель';
+                        const userHint = 'Получатель';
+                        {% else %}
+                        const userLabel = '📱 Ваше местоположение';
+                        const userHint = 'Вы здесь';
+                        {% endif %}
+
                         userPlacemark = new ymaps.Placemark([userLocation.latitude, userLocation.longitude], {
-                            balloonContent: '📱 Ваше местоположение',
-                            hintContent: 'Вы здесь'
+                            balloonContent: userLabel,
+                            hintContent: userHint
                         }, {
                             preset: 'islands#personIcon',
                             iconColor: '#e91e63'
