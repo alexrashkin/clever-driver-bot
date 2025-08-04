@@ -98,22 +98,11 @@
             cursor: pointer;
             position: relative;
             transition: all 0.2s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
         .faq-q:hover {
             background: #edf2f7;
         }
-        .faq-q::after {
-            content: '▼';
-            font-size: 0.8rem;
-            color: #667eea;
-            transition: transform 0.3s ease;
-        }
-        .faq-item.active .faq-q::after {
-            transform: rotate(180deg);
-        }
+
         .faq-a {
             color: #4a5568;
             line-height: 1.7;
@@ -121,10 +110,12 @@
             max-height: 0;
             overflow: hidden;
             transition: all 0.3s ease;
+            opacity: 0;
         }
         .faq-item.active .faq-a {
             max-height: 2000px;
             padding: 0 24px 20px 24px;
+            opacity: 1;
         }
         .faq-item:last-child {
             margin-bottom: 0;
