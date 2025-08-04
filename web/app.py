@@ -2031,11 +2031,25 @@ def real_time_tracker():
             session_token = web_tracker.create_auto_session_for_user(telegram_id or user_info.get('telegram_id'), duration_minutes=60)
             logger.info(f"Автоматически создана сессия отслеживания для получателя {telegram_id or user_info.get('telegram_id')}: {session_token}")
         
+        # Получаем координаты рабочей зоны из настроек пользователя
+        work_lat = config.WORK_LATITUDE
+        work_lon = config.WORK_LONGITUDE
+        work_radius = config.WORK_RADIUS
+        
+        if user_info:
+            # Если у пользователя есть свои настройки, используем их
+            if user_info.get('work_latitude') is not None:
+                work_lat = user_info.get('work_latitude')
+            if user_info.get('work_longitude') is not None:
+                work_lon = user_info.get('work_longitude')
+            if user_info.get('work_radius') is not None:
+                work_radius = user_info.get('work_radius')
+        
         return render_template('real_time_tracker.html', 
                              year=datetime.now().year,
-                             work_lat=config.WORK_LATITUDE,
-                             work_lon=config.WORK_LONGITUDE,
-                             work_radius=config.WORK_RADIUS,
+                             work_lat=work_lat,
+                             work_lon=work_lon,
+                             work_radius=work_radius,
                              user_info=user_info,
                              session_token=session_token)
     except Exception as e:
