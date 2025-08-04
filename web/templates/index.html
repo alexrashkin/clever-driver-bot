@@ -216,6 +216,40 @@ a.btn {
         gap: 6px;
         padding-top: 12px;
         margin-bottom: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .nav-btn {
+        font-size: 0.85em;
+        padding: 6px 12px;
+        min-width: 70px;
+    }
+    
+    .theme-btn {
+        min-width: 36px;
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-nav {
+        gap: 4px;
+        padding-top: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .nav-btn {
+        font-size: 0.8em;
+        padding: 5px 10px;
+        min-width: 60px;
+    }
+    
+    .theme-btn {
+        min-width: 32px;
+        padding: 5px 10px;
     }
 }
 footer {
@@ -551,9 +585,9 @@ footer {
         </div>
         
         <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-                            <a href="/bind_telegram_form" class="btn btn-toggle" style="background: linear-gradient(90deg, #0088cc 0%, #229ED9 100%); color: white; font-weight: 500; text-decoration: none;">
-                    📱 Привязать Telegram
-                </a>
+            <a href="/bind_telegram_form" class="btn btn-toggle" style="background: linear-gradient(90deg, #0088cc 0%, #229ED9 100%); color: white; font-weight: 500; text-decoration: none;">
+                📱 Привязать Telegram
+            </a>
             <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
                 🗺️ Трекер
             </a>
