@@ -212,13 +212,15 @@ body.dark .disclaimer-section {
 }
 
 /* Кнопка переключения темы */
-body.dark #theme-toggle {
+body.dark #theme-toggle,
+body.dark .theme-btn {
     background: rgba(55, 65, 81, 0.9) !important;
     color: #f1f5ff !important;
     border: 1px solid #4b5563 !important;
 }
 
-body.dark #theme-toggle:hover {
+body.dark #theme-toggle:hover,
+body.dark .theme-btn:hover {
     background: rgba(75, 85, 99, 0.9) !important;
     transform: scale(1.05) !important;
 }
