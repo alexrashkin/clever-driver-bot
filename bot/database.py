@@ -495,7 +495,7 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         c.execute('''
-            SELECT id, telegram_id, login, first_name, last_name, auth_type, role, created_at, last_login, email, phone
+            SELECT id, telegram_id, login, first_name, last_name, auth_type, role, created_at, last_login, email, phone, password_hash
             FROM users ORDER BY created_at DESC
         ''')
         rows = c.fetchall()

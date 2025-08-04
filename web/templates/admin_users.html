@@ -357,7 +357,13 @@
             .users-table th,
             .users-table td {
                 padding: 8px 6px;
-                min-width: 80px;
+                min-width: 70px;
+            }
+            
+            /* Скрываем колонку пароля на мобильных устройствах */
+            .users-table th:nth-child(4),
+            .users-table td:nth-child(4) {
+                display: none;
             }
             
             .role-badge,
@@ -457,7 +463,13 @@
             .users-table th,
             .users-table td {
                 padding: 6px 4px;
-                min-width: 70px;
+                min-width: 60px;
+            }
+            
+            /* Скрываем колонку пароля на мобильных устройствах */
+            .users-table th:nth-child(4),
+            .users-table td:nth-child(4) {
+                display: none;
             }
             
             .role-badge,
@@ -544,6 +556,7 @@
                         <th>ID</th>
                         <th>Имя/Логин</th>
                         <th>Email</th>
+                        <th>Пароль</th>
                         <th>Роль</th>
                         <th>Авторизация</th>
                         <th>Telegram ID</th>
@@ -568,6 +581,14 @@
                         <td>
                             {% if user.email %}
                                 <a href="mailto:{{ user.email }}" style="color: #667eea; text-decoration: none;">{{ user.email }}</a>
+                            {% else %}
+                                <em style="color: #999;">—</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.password_hash %}
+                                <code style="font-size: 0.8em; background: #f3f4f6; padding: 2px 4px; border-radius: 3px; color: #374151;">{{ user.password_hash[:20] }}...</code>
+                                <button onclick="copyToClipboard('{{ user.password_hash }}')" style="background: #667eea; color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 0.7em; cursor: pointer; margin-left: 5px;">Копировать</button>
                             {% else %}
                                 <em style="color: #999;">—</em>
                             {% endif %}
@@ -720,6 +741,64 @@
                 }
             });
         });
+        
+        // Функция копирования пароля в буфер обмена
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopyMessage('Пароль скопирован!');
+                }).catch(err => {
+                    console.error('Ошибка копирования:', err);
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+        
+        // Fallback для старых браузеров
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCopyMessage('Пароль скопирован!');
+            } catch (err) {
+                console.error('Fallback: Ошибка копирования', err);
+                showCopyMessage('Ошибка копирования');
+            }
+            document.body.removeChild(textArea);
+        }
+        
+        // Показать сообщение о копировании
+        function showCopyMessage(message) {
+            const msgDiv = document.createElement('div');
+            msgDiv.textContent = message;
+            msgDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 10px 15px;
+                border-radius: 5px;
+                z-index: 10000;
+                font-size: 14px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            `;
+            document.body.appendChild(msgDiv);
+            setTimeout(() => {
+                if (msgDiv.parentNode) {
+                    msgDiv.remove();
+                }
+            }, 2000);
+        }
     </script>
 </body>
 </html> 
