@@ -17,12 +17,12 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
         }
         
         .admin-container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: white;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -235,7 +235,7 @@
         
         .back-link {
             display: block;
-            margin: 18px 20px 0 20px;
+            margin: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
@@ -246,7 +246,7 @@
             transition: all 0.3s ease;
             min-width: 140px;
             text-align: center;
-            width: calc(100% - 40px);
+            width: 100%;
         }
         
         .back-link:hover {
@@ -281,7 +281,15 @@
         
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 0;
+            }
+            
+            .admin-container {
+                margin: 10px auto;
+            }
+            
+            body > div:first-child {
+                margin: 10px auto;
             }
             
 
@@ -385,7 +393,15 @@
         
         @media (max-width: 480px) {
             body {
-                padding: 5px;
+                padding: 0;
+            }
+            
+            .admin-container {
+                margin: 5px auto;
+            }
+            
+            body > div:first-child {
+                margin: 5px auto;
             }
             
 
@@ -467,10 +483,10 @@
             }
             
             .back-link {
-                margin: 10px 5px 0 5px;
+                margin: 0;
                 padding: 10px 20px;
                 font-size: 0.9em;
-                width: calc(100% - 10px);
+                width: 100%;
             }
             
             .theme-btn {
@@ -484,7 +500,7 @@
     </style>
 </head>
 <body>
-    <div style="max-width: 1200px; margin: 0 auto;">
+    <div style="max-width: 1200px; margin: 20px auto;">
         <a href="/" class="back-link">← Назад на главную</a>
     </div>
     <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
