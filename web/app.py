@@ -829,29 +829,103 @@ def api_location():
             if telegram_id:
                 user = db.get_user_by_telegram_id(telegram_id)
             
+            # Для OwnTracks проверяем параметр user_id в URL или заголовке
+            if data.get('_type') == 'location' and not telegram_id:
+                # Проверяем параметр user_id в URL
+                user_id_param = request.args.get('user_id')
+                if user_id_param:
+                    try:
+                        telegram_id = int(user_id_param)
+                        user = db.get_user_by_telegram_id(telegram_id)
+                        if user:
+                            logger.info(f"OwnTracks: найден пользователь по user_id={telegram_id}")
+                        else:
+                            logger.warning(f"OwnTracks: пользователь с user_id={telegram_id} не найден")
+                    except ValueError:
+                        logger.warning(f"OwnTracks: неверный user_id={user_id_param}")
+                
+                # Если user_id не указан или не найден, используем fallback
+                if not user:
+                    # Fallback: ищем любого активного водителя
+                    users = db.get_all_users()
+                    for u in users:
+                        if u.get('role') in ['driver', 'admin']:
+                            telegram_id = u.get('telegram_id')
+                            user = u
+                            logger.info(f"OwnTracks: используем fallback пользователя ID={u.get('id')}, telegram_id={telegram_id}")
+                            break
+                    
+                    # Если не нашли пользователя с telegram_id, используем первого водителя
+                    if not user:
+                        for u in users:
+                            if u.get('role') in ['driver', 'admin']:
+                                user = u
+                                telegram_id = u.get('telegram_id')  # может быть None
+                                logger.info(f"OwnTracks: используем водителя без telegram_id ID={u.get('id')}")
+                                break
+            
             # Сохраняем в базу, если координаты валидны
             if validate_coordinates(latitude, longitude):
                 if user:
                     # Используем новую систему с user_locations
-                    location_id = db.add_user_location(
-                        telegram_id=telegram_id,
-                        latitude=latitude,
-                        longitude=longitude,
-                        accuracy=data.get('accuracy'),
-                        altitude=data.get('altitude'),
-                        speed=data.get('speed'),
-                        heading=data.get('heading')
-                    )
-                    
-                    if location_id:
-                        # Получаем сохраненное местоположение для получения правильного статуса
-                        last_location = db.get_user_last_location(telegram_id)
-                        at_work = last_location.get('is_at_work', False) if last_location else False
-                        distance = last_location.get('distance_to_work', 0) if last_location else 0
-                        logger.info(f"Сохранено в user_locations: latitude={latitude}, longitude={longitude}, is_at_work={at_work}")
+                    if telegram_id:
+                        # Для пользователей с telegram_id
+                        location_id = db.add_user_location(
+                            telegram_id=telegram_id,
+                            latitude=latitude,
+                            longitude=longitude,
+                            accuracy=data.get('accuracy'),
+                            altitude=data.get('altitude'),
+                            speed=data.get('speed'),
+                            heading=data.get('heading')
+                        )
+                        
+                        if location_id:
+                            # Получаем сохраненное местоположение для получения правильного статуса
+                            last_location = db.get_user_last_location(telegram_id)
+                            at_work = last_location.get('is_at_work', False) if last_location else False
+                            distance = last_location.get('distance_to_work', 0) if last_location else 0
+                            logger.info(f"Сохранено в user_locations: latitude={latitude}, longitude={longitude}, is_at_work={at_work}")
+                        else:
+                            logger.error(f"Не удалось сохранить местоположение пользователя {telegram_id}")
+                            return jsonify({'success': False, 'error': 'Database error'}), 500
                     else:
-                        logger.error(f"Не удалось сохранить местоположение пользователя {telegram_id}")
-                        return jsonify({'success': False, 'error': 'Database error'}), 500
+                        # Для пользователей без telegram_id (прямое сохранение)
+                        conn = sqlite3.connect(db.db_path)
+                        c = conn.cursor()
+                        try:
+                            from bot.utils import is_at_work
+                            user_role = user.get('role')
+                            user_work_lat = user.get('work_latitude')
+                            user_work_lon = user.get('work_longitude')
+                            user_work_radius = user.get('work_radius')
+                            is_at_work_status = is_at_work(latitude, longitude, user_role, user_work_lat, user_work_lon, user_work_radius)
+                            
+                            c.execute('''
+                                INSERT INTO user_locations 
+                                (user_id, telegram_id, latitude, longitude, accuracy, altitude, speed, heading, is_at_work)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            ''', (user['id'], user['id'], latitude, longitude, data.get('accuracy'), data.get('altitude'), data.get('speed'), data.get('heading'), is_at_work_status))
+                            
+                            location_id = c.lastrowid
+                            conn.commit()
+                            logger.info(f"Сохранено в user_locations (без telegram_id): latitude={latitude}, longitude={longitude}, is_at_work={is_at_work_status}")
+                            
+                            # Вычисляем расстояние
+                            from bot.utils import calculate_distance
+                            if user_work_lat and user_work_lon:
+                                distance = calculate_distance(latitude, longitude, user_work_lat, user_work_lon)
+                            else:
+                                from config.settings import config
+                                distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
+                            
+                            at_work = is_at_work_status
+                        except Exception as e:
+                            conn.close()
+                            logger.error(f"Ошибка сохранения местоположения пользователя без telegram_id: {e}")
+                            return jsonify({'success': False, 'error': 'Database error'}), 500
+                        finally:
+                            conn.close()
                 else:
                     # Fallback для случаев без пользователя (старая логика)
                     work_latitude = config.WORK_LATITUDE
