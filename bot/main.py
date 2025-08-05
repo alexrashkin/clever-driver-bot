@@ -193,5 +193,30 @@ async def main():
         raise
 
 if __name__ == "__main__":
+<<<<<<< Updated upstream
     # Простой запуск для локального тестирования
     asyncio.run(main()) 
+=======
+    try:
+        # Для Linux сервера
+        import platform
+        if platform.system() == "Linux":
+            try:
+                import nest_asyncio
+                nest_asyncio.apply()
+            except ImportError:
+                pass
+        
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "event loop is already running" in str(e):
+            # Альтернативный способ для случаев с уже запущенным loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(main())
+            finally:
+                loop.close()
+        else:
+            raise 
+>>>>>>> Stashed changes
