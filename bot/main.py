@@ -4,6 +4,7 @@ import contextlib
 import os
 import sys
 import time
+import sqlite3
 
 # Добавляем путь к корневой директории проекта
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -37,14 +38,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def monitor_database(application: Application):
-    """Мониторинг базы данных для автоматических уведомлений"""
     last_checked_id = load_last_checked_id()
     last_checked_time = load_last_checked_time()
+    logger.info(f"🚀 Мониторинг базы данных запущен. last_checked_id: {last_checked_id}, last_checked_time: {last_checked_time}")
+
     while True:
         try:
-            conn = db.get_connection()
+            conn = sqlite3.connect('driver.db')
             cursor = conn.cursor()
-            # Получаем две последние записи из новой таблицы user_locations
             cursor.execute("""
                 SELECT ul.id, ul.is_at_work, ul.created_at, ul.latitude, ul.longitude
                 FROM user_locations ul
@@ -55,39 +56,43 @@ async def monitor_database(application: Application):
             rows = cursor.fetchall()
             conn.close()
 
-            if len(rows) == 2:
+            logger.info(f"📊 Мониторинг: найдено {len(rows)} записей")
+            if len(rows) >= 2:
                 curr_id, curr_is_at_work, curr_time, curr_lat, curr_lon = rows[0]
                 prev_id, prev_is_at_work, prev_time, prev_lat, prev_lon = rows[1]
-                # Только если был переход с 0 на 1
+                logger.info(f"📍 Текущая: ID {curr_id}, is_at_work: {curr_is_at_work}, время: {curr_time}")
+                logger.info(f"📍 Предыдущая: ID {prev_id}, is_at_work: {prev_is_at_work}, время: {prev_time}")
+
+                # Переход 0→1 (въезд в зону)
                 if prev_is_at_work == 0 and curr_is_at_work == 1 and curr_id != last_checked_id:
-                    curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
+                    import time as t
+                    curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 0→1, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
-                    # Проверяем интервал
-                    if curr_ts - last_checked_time >= 10:  # 10 секунд
+                    if curr_ts - last_checked_time >= 10:
                         last_checked_id = curr_id
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
-                        if db.get_tracking_status():
-                            # Инициализируем систему уведомлений с ботом
-                            notification_system.bot = application.bot
-                            
-                            # Получаем получателей уведомлений
-                            conn = db.get_connection()
+                        # Проверяем статус отслеживания
+                        conn = sqlite3.connect('driver.db')
+                        cursor = conn.cursor()
+                        cursor.execute('SELECT is_active FROM tracking_status WHERE id = 1')
+                        result = cursor.fetchone()
+                        tracking_active = result[0] if result else False
+                        conn.close()
+                        logger.info(f"📡 Отслеживание активно: {tracking_active}")
+                        if tracking_active:
+                            # Получаем получателей
+                            conn = sqlite3.connect('driver.db')
                             cursor = conn.cursor()
                             cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient'")
                             recipients = cursor.fetchall()
                             conn.close()
-                            
+                            logger.info(f"👥 Получателей: {len(recipients)}")
                             if recipients:
-                                # Получаем информацию о системе (автоматическое уведомление)
-                                system_info = {
-                                    'id': None,
-                                    'telegram_id': None,
-                                    'login': 'system',
-                                    'role': 'system'
-                                }
-                                
-                                # Отправляем уведомления через новую систему
+                                logger.info(f"Пробую отправить уведомление! recipients: {recipients}")
+                                # Отправляем уведомление через Telegram
+                                from bot.utils import create_work_notification
+                                system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
                                 result = await notification_system.send_notification_with_confirmation(
                                     notification_type='automatic',
                                     sender_info=system_info,
@@ -95,58 +100,55 @@ async def monitor_database(application: Application):
                                     notification_text=create_work_notification(),
                                     custom_confirmation=True
                                 )
-                                
                                 if result['success']:
                                     logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
-                                    logger.info(f"📍 Местоположение: {curr_lat:.6f}, {curr_lon:.6f}")
-                                    logger.info(f"🏢 Статус: {'В рабочей зоне' if curr_is_at_work else 'В пути'}")
                                 else:
                                     logger.warning("❌ Не удалось отправить автоматические уведомления")
                             else:
                                 logger.warning("❌ Нет получателей для отправки уведомлений")
+                        else:
+                            logger.info("Отслеживание выключено, уведомление не отправлено")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
-                # Только если был переход с 1 на 0 (выезд из радиуса)
+                # Переход 1→0 (выезд из зоны)
                 if prev_is_at_work == 1 and curr_is_at_work == 0 and curr_id != last_checked_id:
-                    curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
+                    import time as t
+                    curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 1→0, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
-                    if curr_ts - last_checked_time >= 10:  # 10 секунд
+                    if curr_ts - last_checked_time >= 10:
                         last_checked_id = curr_id
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
-                        if db.get_tracking_status():
-                            # Отправляем уведомления о выезде всем пользователям (админы, водители и получатели)
-                            conn = db.get_connection()
-                            cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
-                            users = cursor.fetchall()
-                            conn.close()
-                            
+                        # Получаем всех пользователей
+                        conn = sqlite3.connect('driver.db')
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+                        users = cursor.fetchall()
+                        conn.close()
+                        logger.info(f"👥 Пользователей для уведомления о выезде: {len(users)}")
+                        if users:
                             notification = "Выехали"
                             sent_count = 0
-                            
                             for (telegram_id,) in users:
                                 try:
                                     logger.info(f"DEBUG: Отправляю уведомление о выезде пользователю {telegram_id}: '{notification}'")
-                                    await application.bot.send_message(
-                                        chat_id=telegram_id,
-                                        text=notification
-                                    )
+                                    await application.bot.send_message(chat_id=telegram_id, text=notification)
                                     sent_count += 1
                                     logger.info(f"Автоматическое уведомление 'Выехали' отправлено пользователю {telegram_id}")
                                 except Exception as e:
                                     logger.error(f"Ошибка отправки автоматического уведомления пользователю {telegram_id}: {e}")
-                            
                             if sent_count > 0:
                                 logger.info(f"Автоматические уведомления о выезде отправлены {sent_count} пользователям для записи ID: {curr_id}")
                             else:
                                 logger.warning("Нет пользователей с ролями для отправки автоматических уведомлений о выезде")
+                        else:
+                            logger.warning("❌ Нет пользователей для отправки уведомлений о выезде")
                     else:
                         logger.info(f"Переход из радиуса, но уведомление не отправлено: прошло меньше 10 секунд")
             await asyncio.sleep(2)
         except Exception as e:
             logger.error(f"Ошибка мониторинга базы данных: {e}")
-            await asyncio.sleep(60)  # При ошибке ждём дольше
+            await asyncio.sleep(5)
 
 async def main():
     """Основная функция"""
@@ -191,4 +193,22 @@ async def main():
         raise
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    try:
+        # Для Windows с Git Bash
+        import platform
+        if platform.system() == "Windows":
+            import nest_asyncio
+            nest_asyncio.apply()
+        
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "event loop is already running" in str(e):
+            # Альтернативный способ для Windows
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(main())
+            finally:
+                loop.close()
+        else:
+            raise 
