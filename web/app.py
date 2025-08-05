@@ -823,24 +823,44 @@ def api_location():
             tst = pytime.time()
         
         if latitude is not None and longitude is not None:
-            # Получаем индивидуальные настройки пользователя
+            # Получаем информацию о пользователе
             telegram_id = session.get('telegram_id')
+            user = None
             if telegram_id:
                 user = db.get_user_by_telegram_id(telegram_id)
-                work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
-                work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
-                work_radius = user.get('work_radius', config.WORK_RADIUS)
-            else:
-                work_latitude = config.WORK_LATITUDE
-                work_longitude = config.WORK_LONGITUDE
-                work_radius = config.WORK_RADIUS
             
             # Сохраняем в базу, если координаты валидны
             if validate_coordinates(latitude, longitude):
-                distance = calculate_distance(latitude, longitude, work_latitude, work_longitude)
-                at_work = distance <= float(work_radius)
-                db.add_location(latitude, longitude, distance, at_work)
-                logger.info(f"Сохранено в базу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
+                if user:
+                    # Используем новую систему с user_locations
+                    location_id = db.add_user_location(
+                        telegram_id=telegram_id,
+                        latitude=latitude,
+                        longitude=longitude,
+                        accuracy=data.get('accuracy'),
+                        altitude=data.get('altitude'),
+                        speed=data.get('speed'),
+                        heading=data.get('heading')
+                    )
+                    
+                    if location_id:
+                        # Получаем сохраненное местоположение для получения правильного статуса
+                        last_location = db.get_user_last_location(telegram_id)
+                        at_work = last_location.get('is_at_work', False) if last_location else False
+                        distance = last_location.get('distance_to_work', 0) if last_location else 0
+                        logger.info(f"Сохранено в user_locations: latitude={latitude}, longitude={longitude}, is_at_work={at_work}")
+                    else:
+                        logger.error(f"Не удалось сохранить местоположение пользователя {telegram_id}")
+                        return jsonify({'success': False, 'error': 'Database error'}), 500
+                else:
+                    # Fallback для случаев без пользователя (старая логика)
+                    work_latitude = config.WORK_LATITUDE
+                    work_longitude = config.WORK_LONGITUDE
+                    work_radius = config.WORK_RADIUS
+                    distance = calculate_distance(latitude, longitude, work_latitude, work_longitude)
+                    at_work = distance <= float(work_radius)
+                    db.add_location(latitude, longitude, distance, at_work)
+                    logger.info(f"Сохранено в старую таблицу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
                 
                 # Возвращаем успешный результат в зависимости от формата запроса
                 if data.get('_type') == 'location':
@@ -1927,70 +1947,95 @@ def current_location():
         import sqlite3
         conn = sqlite3.connect('driver.db')
         cursor = conn.cursor()
+        
+        # Сначала пробуем получить из новой таблицы user_locations (для водителей)
         cursor.execute("""
-            SELECT latitude, longitude, distance, is_at_work, timestamp 
-            FROM locations 
-            ORDER BY id DESC LIMIT 1
+            SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at,
+                   u.role, u.work_latitude, u.work_longitude, u.work_radius
+            FROM user_locations ul
+            JOIN users u ON ul.user_id = u.id
+            WHERE u.role IN ('driver', 'admin')
+            ORDER BY ul.created_at DESC LIMIT 1
         """)
-        location = cursor.fetchone()
+        user_location = cursor.fetchone()
+        
+        if user_location:
+            lat, lon, is_at_work, timestamp, role, work_lat, work_lon, work_radius = user_location
+            
+            # Вычисляем расстояние до работы
+            from bot.utils import calculate_distance
+            if work_lat and work_lon:
+                distance = calculate_distance(lat, lon, work_lat, work_lon)
+            else:
+                distance = calculate_distance(lat, lon, config.WORK_LATITUDE, config.WORK_LONGITUDE)
+        else:
+            # Если нет данных в новой таблице, берем из старой
+            cursor.execute("""
+                SELECT latitude, longitude, distance, is_at_work, timestamp 
+                FROM locations 
+                ORDER BY id DESC LIMIT 1
+            """)
+            location = cursor.fetchone()
+            conn.close()
+            
+            if location:
+                lat, lon, distance, is_at_work, timestamp = location
+                role = 'driver'  # Предполагаем, что это водитель
+                work_lat = config.WORK_LATITUDE
+                work_lon = config.WORK_LONGITUDE
+                work_radius = config.WORK_RADIUS
+            else:
+                return jsonify({
+                    'success': True,
+                    'location': {
+                        'latitude': None,
+                        'longitude': None,
+                        'distance_to_work': None,
+                        'is_at_work': False,
+                        'timestamp': None,
+                        'formatted_time': '--:--:--'
+                    },
+                    'work_zone': {
+                        'latitude': config.WORK_LATITUDE,
+                        'longitude': config.WORK_LONGITUDE,
+                        'radius': config.WORK_RADIUS
+                    },
+                    'status': 'Нет данных о местоположении'
+                })
+        
         conn.close()
         
-        if location:
-            lat, lon, distance, is_at_work, timestamp = location
-            
-            # Получаем координаты рабочей зоны
-            work_lat = config.WORK_LATITUDE
-            work_lon = config.WORK_LONGITUDE
-            work_radius = config.WORK_RADIUS
-            
-            # Безопасное форматирование времени
-            try:
-                if timestamp:
-                    if isinstance(timestamp, str):
-                        dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
-                    else:
-                        dt = timestamp
-                    formatted_time = (dt + timedelta(hours=3)).strftime("%H:%M:%S")
+        # Безопасное форматирование времени
+        try:
+            if timestamp:
+                if isinstance(timestamp, str):
+                    dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
                 else:
-                    formatted_time = "--:--:--"
-            except:
+                    dt = timestamp
+                formatted_time = (dt + timedelta(hours=3)).strftime("%H:%M:%S")
+            else:
                 formatted_time = "--:--:--"
-            
-            return jsonify({
-                'success': True,
-                'location': {
-                    'latitude': lat,
-                    'longitude': lon,
-                    'distance_to_work': distance,
-                    'is_at_work': bool(is_at_work),
-                    'timestamp': timestamp,
-                    'formatted_time': formatted_time
-                },
-                'work_zone': {
-                    'latitude': work_lat,
-                    'longitude': work_lon,
-                    'radius': work_radius
-                },
-                'status': 'В пути' if distance and distance > work_radius else 'Водитель ожидает'
-            })
-        else:
-            return jsonify({
-                'success': True,
-                'location': {
-                    'latitude': None,
-                    'longitude': None,
-                    'distance_to_work': None,
-                    'is_at_work': False,
-                    'timestamp': None,
-                    'formatted_time': '--:--:--'
-                },
-                'work_zone': {
-                    'latitude': config.WORK_LATITUDE,
-                    'longitude': config.WORK_LONGITUDE,
-                    'radius': config.WORK_RADIUS
-                },
-                'status': 'Нет данных о местоположении'
-            })
+        except:
+            formatted_time = "--:--:--"
+        
+        return jsonify({
+            'success': True,
+            'location': {
+                'latitude': lat,
+                'longitude': lon,
+                'distance_to_work': distance,
+                'is_at_work': bool(is_at_work),
+                'timestamp': timestamp,
+                'formatted_time': formatted_time,
+                'role': role
+            },
+            'work_zone': {
+                'latitude': work_lat,
+                'longitude': work_lon,
+                'radius': work_radius
+            },
+            'status': 'В пути' if distance and distance > work_radius else 'Водитель ожидает'
+        })
             
     except Exception as e:
         logger.error(f"Ошибка получения текущего местоположения: {e}")

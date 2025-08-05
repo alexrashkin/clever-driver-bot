@@ -1199,7 +1199,8 @@ class Database:
         c.execute('''
             SELECT ul.id, ul.user_id, ul.telegram_id, ul.latitude, ul.longitude,
                    ul.accuracy, ul.altitude, ul.speed, ul.heading, ul.is_at_work, ul.created_at,
-                   u.first_name, u.last_name, u.username
+                   u.first_name, u.last_name, u.username, u.role,
+                   u.work_latitude, u.work_longitude, u.work_radius
             FROM user_locations ul
             JOIN users u ON ul.user_id = u.id
             WHERE ul.telegram_id = ?
@@ -1213,8 +1214,26 @@ class Database:
         if row:
             columns = ['id', 'user_id', 'telegram_id', 'latitude', 'longitude',
                       'accuracy', 'altitude', 'speed', 'heading', 'is_at_work', 'created_at',
-                      'first_name', 'last_name', 'username']
-            return dict(zip(columns, row))
+                      'first_name', 'last_name', 'username', 'role',
+                      'work_latitude', 'work_longitude', 'work_radius']
+            location_data = dict(zip(columns, row))
+            
+            # Вычисляем расстояние до работы
+            from bot.utils import calculate_distance
+            if location_data['work_latitude'] and location_data['work_longitude']:
+                distance = calculate_distance(
+                    location_data['latitude'], location_data['longitude'],
+                    location_data['work_latitude'], location_data['work_longitude']
+                )
+            else:
+                from config.settings import config
+                distance = calculate_distance(
+                    location_data['latitude'], location_data['longitude'],
+                    config.WORK_LATITUDE, config.WORK_LONGITUDE
+                )
+            
+            location_data['distance_to_work'] = distance
+            return location_data
         return None
     
     def get_user_location_history(self, telegram_id, limit=10):

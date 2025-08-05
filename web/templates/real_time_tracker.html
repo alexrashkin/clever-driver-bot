@@ -571,14 +571,10 @@
                             map.geoObjects.remove(userPlacemark);
                         }
 
-                        // Определяем текст метки в зависимости от роли пользователя
-                        {% if user_info and user_info.role == 'admin' %}
+                        // Показываем метку пользователя только для получателей
+                        {% if user_info and user_info.role == 'recipient' %}
                         const userLabel = '📱 Получатель';
                         const userHint = 'Получатель';
-                        {% else %}
-                        const userLabel = '📱 Ваше местоположение';
-                        const userHint = 'Вы здесь';
-                        {% endif %}
 
                         userPlacemark = new ymaps.Placemark([userLocation.latitude, userLocation.longitude], {
                             balloonContent: userLabel,
@@ -589,6 +585,7 @@
                         });
 
                         map.geoObjects.add(userPlacemark);
+                        {% endif %}
                         
                         // Обновляем расстояние, если есть данные о машине
                         updateLocation();
