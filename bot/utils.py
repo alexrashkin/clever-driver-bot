@@ -26,15 +26,33 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     
     return distance
 
-def is_at_work(latitude, longitude):
+def is_at_work(latitude, longitude, user_role=None, user_work_lat=None, user_work_lon=None, user_work_radius=None):
     """
     Проверка, ожидает ли водитель (находится в рабочей зоне)
+    Работает только для водителей (driver) и администраторов (admin)
+    Получатели (recipient) всегда возвращают False
     """
+    # Если пользователь - получатель, он не может быть "в работе"
+    if user_role == 'recipient':
+        return False
+    
+    # Для водителей и администраторов определяем рабочую зону
+    if user_work_lat is not None and user_work_lon is not None and user_work_radius is not None:
+        # Используем индивидуальные настройки пользователя
+        work_lat = user_work_lat
+        work_lon = user_work_lon
+        work_radius = user_work_radius
+    else:
+        # Используем глобальные настройки
+        work_lat = config.WORK_LATITUDE
+        work_lon = config.WORK_LONGITUDE
+        work_radius = config.WORK_RADIUS
+    
     distance = calculate_distance(
         latitude, longitude,
-        config.WORK_LATITUDE, config.WORK_LONGITUDE
+        work_lat, work_lon
     )
-    return distance <= config.WORK_RADIUS
+    return distance <= work_radius
 
 def get_greeting():
     """

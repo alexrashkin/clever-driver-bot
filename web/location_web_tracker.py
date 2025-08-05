@@ -99,11 +99,19 @@ class WebLocationTracker:
                 session_data['is_active'] = False
                 return False
             
-            # Определяем статус "в работе"
+            # Определяем статус "в работе" с учетом роли и индивидуальных настроек пользователя
             from bot.utils import is_at_work
-            at_work = is_at_work(latitude, longitude)
+            user_info = session_data['user_info']
             
-            # Сохраняем в базу данных
+            # Получаем роль и индивидуальные настройки рабочей зоны пользователя
+            user_role = user_info.get('role')
+            user_work_lat = user_info.get('work_latitude')
+            user_work_lon = user_info.get('work_longitude')
+            user_work_radius = user_info.get('work_radius')
+            
+            at_work = is_at_work(latitude, longitude, user_role, user_work_lat, user_work_lon, user_work_radius)
+            
+            # Сохраняем в базу данных (статус "в работе" определяется автоматически)
             location_id = db.add_user_location(
                 telegram_id=session_data['telegram_id'],
                 latitude=latitude,
@@ -111,11 +119,14 @@ class WebLocationTracker:
                 accuracy=accuracy,
                 altitude=altitude,
                 speed=speed,
-                heading=heading,
-                is_at_work=at_work
+                heading=heading
             )
             
             if location_id:
+                # Получаем сохраненное местоположение для получения правильного статуса "в работе"
+                saved_location = db.get_user_last_location(session_data['telegram_id'])
+                at_work = saved_location.get('is_at_work', False) if saved_location else False
+                
                 # Добавляем в историю сессии
                 location_data = {
                     'id': location_id,

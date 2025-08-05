@@ -1153,7 +1153,7 @@ class Database:
     # Методы для работы с местоположениями пользователей
     
     def add_user_location(self, telegram_id, latitude, longitude, accuracy=None, 
-                         altitude=None, speed=None, heading=None, is_at_work=False):
+                         altitude=None, speed=None, heading=None, is_at_work=None):
         """Добавить местоположение пользователя"""
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
@@ -1164,6 +1164,15 @@ class Database:
             if not user_info:
                 conn.close()
                 return False
+            
+            # Если статус "в работе" не передан, определяем автоматически с учетом роли
+            if is_at_work is None:
+                from bot.utils import is_at_work
+                user_role = user_info.get('role')
+                user_work_lat = user_info.get('work_latitude')
+                user_work_lon = user_info.get('work_longitude')
+                user_work_radius = user_info.get('work_radius')
+                is_at_work = is_at_work(latitude, longitude, user_role, user_work_lat, user_work_lon, user_work_radius)
             
             c.execute('''
                 INSERT INTO user_locations 
