@@ -154,6 +154,9 @@
     <div class="container">
         <div class="back-link">
             <a href="/admin" class="btn btn-secondary">← Назад к админ-панели</a>
+            <button onclick="fixRecipientLocations()" class="btn" style="margin-left: 10px; background-color: #dc3545;">
+                🔧 Исправить данные получателей
+            </button>
         </div>
 
         {% if recipient_locations %}
@@ -299,6 +302,32 @@
             setTimeout(updateTrackingStatus, 1000);
             setInterval(updateTrackingStatus, 30000);
         });
+        
+        // Функция для исправления данных получателей
+        function fixRecipientLocations() {
+            if (confirm('Это действие исправит статус "в работе" для всех получателей. Продолжить?')) {
+                fetch('/fix_recipient_locations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        // Перезагружаем страницу для отображения исправленных данных
+                        location.reload();
+                    } else {
+                        alert('Ошибка: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка исправления данных:', error);
+                    alert('Произошла ошибка при исправлении данных');
+                });
+            }
+        }
     </script>
     {% endif %}
 </body>
