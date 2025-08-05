@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Местоположения получателей - Умный водитель</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -144,35 +143,6 @@
             font-size: 0.8em;
             color: #666;
         }
-        .filters {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .filter-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .filter-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .filter-item input[type="text"] {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-        .filter-item select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
     </style>
 </head>
 <body>
@@ -192,22 +162,6 @@
                     <div class="stat-number">{{ recipient_locations|length }}</div>
                     <div class="stat-label">Всего получателей</div>
                 </div>
-
-            </div>
-
-            <div class="filters">
-                <h3>🔍 Фильтры</h3>
-                <div class="filter-group">
-                    <div class="filter-item">
-                        <label for="search-name">Поиск по имени:</label>
-                        <input type="text" id="search-name" placeholder="Введите имя...">
-                    </div>
-
-                    <div class="filter-item">
-                        <button onclick="applyFilters()" class="btn btn-small">Применить</button>
-                        <button onclick="clearFilters()" class="btn btn-small btn-secondary">Сбросить</button>
-                    </div>
-                </div>
             </div>
 
             <div class="map-container" id="map"></div>
@@ -219,7 +173,6 @@
                         <th>Пользователь</th>
                         <th>Telegram ID</th>
                         <th>Местоположение</th>
-
                         <th>Последнее обновление</th>
                         <th>Действия</th>
                     </tr>
@@ -247,7 +200,6 @@
                                 <em>Нет данных</em>
                             {% endif %}
                         </td>
-
                         <td>
                             {% if location.created_at %}
                                 <div class="last-update">
@@ -276,83 +228,58 @@
 
     {% if recipient_locations %}
     <script>
-        // Инициализация карты
-        var map = L.map('map');
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        
+        // Инициализация Яндекс Карт
+        var map;
         var markers = [];
-        var bounds = L.latLngBounds();
+        var bounds = [];
         
-        // Добавляем маркеры для всех получателей с местоположением
-        {% for location in recipient_locations %}
-        {% if location.latitude and location.longitude %}
-        var marker = L.marker([{{ location.latitude }}, {{ location.longitude }}], {
-            title: '{{ location.first_name or "Пользователь" }} {{ location.last_name or "" }}'
-        }).addTo(map);
-        
-        marker.bindPopup(`
-            <strong>{{ location.first_name or "Пользователь" }} {{ location.last_name or "" }}</strong><br>
-            <strong>Telegram ID:</strong> {{ location.telegram_id }}<br>
-            <strong>Время:</strong> {{ location.created_at or 'Неизвестно' }}<br>
-            {% if location.accuracy %}<strong>Точность:</strong> ±{{ "%.0f"|format(location.accuracy) }}м<br>{% endif %}
-            <a href="/user_location/{{ location.telegram_id }}" style="color: #667eea;">👁️ Подробнее</a>
-        `);
-        
-        markers.push(marker);
-        bounds.extend([{{ location.latitude }}, {{ location.longitude }}]);
-        {% endif %}
-        {% endfor %}
-        
-        // Устанавливаем границы карты
-        if (!bounds.isEmpty()) {
-            map.fitBounds(bounds, { padding: [20, 20] });
-        } else {
-            // Если нет местоположений, показываем центр города
-            map.setView([55.7558, 37.6176], 10); // Москва
-        }
-        
-        // Функции фильтрации
-        function applyFilters() {
-            var searchName = document.getElementById('search-name').value.toLowerCase();
-            var filterStatus = document.getElementById('filter-status').value;
-            var rows = document.querySelectorAll('.recipient-row');
+        function initMap() {
+            // Создаем карту
+            map = new ymaps.Map('map', {
+                center: [55.7558, 37.6176], // Москва по умолчанию
+                zoom: 10,
+                controls: ['zoomControl', 'fullscreenControl']
+            });
             
-            rows.forEach(function(row) {
-                var name = row.getAttribute('data-name').toLowerCase();
-                var status = row.getAttribute('data-status');
-                var show = true;
-                
-                // Фильтр по имени
-                if (searchName && !name.includes(searchName)) {
-                    show = false;
-                }
-                
-                // Фильтр по статусу
-                if (filterStatus && status !== filterStatus) {
-                    show = false;
-                }
-                
-                row.style.display = show ? '' : 'none';
+            // Добавляем маркеры для всех получателей с местоположением
+            {% for location in recipient_locations %}
+            {% if location.latitude and location.longitude %}
+            var position = [{{ location.latitude }}, {{ location.longitude }}];
+            
+            // Создаем кастомный маркер
+            var marker = new ymaps.Placemark(position, {
+                balloonContentHeader: '{{ location.first_name or "Пользователь" }} {{ location.last_name or "" }}',
+                balloonContentBody: `
+                    <div style="padding: 5px 0;">
+                        <p style="margin: 5px 0;"><strong>Telegram ID:</strong> {{ location.telegram_id }}</p>
+                        <p style="margin: 5px 0;"><strong>Время:</strong> {{ location.created_at or 'Неизвестно' }}</p>
+                        {% if location.accuracy %}<p style="margin: 5px 0;"><strong>Точность:</strong> ±{{ "%.0f"|format(location.accuracy) }}м</p>{% endif %}
+                        <a href="/user_location/{{ location.telegram_id }}" style="color: #667eea; text-decoration: none;">👁️ Подробнее</a>
+                    </div>
+                `,
+                hintContent: '{{ location.first_name or "Пользователь" }} {{ location.last_name or "" }}'
+            }, {
+                preset: 'islands#redDotIcon',
+                iconColor: '#ff0000'
             });
+            
+            map.geoObjects.add(marker);
+            markers.push(marker);
+            bounds.push(position);
+            {% endif %}
+            {% endfor %}
+            
+            // Устанавливаем границы карты
+            if (bounds.length > 0) {
+                map.setBounds(bounds, {
+                    checkZoomRange: true,
+                    zoomMargin: 50
+                });
+            }
         }
         
-        function clearFilters() {
-            document.getElementById('search-name').value = '';
-            document.getElementById('filter-status').value = '';
-            var rows = document.querySelectorAll('.recipient-row');
-            rows.forEach(function(row) {
-                row.style.display = '';
-            });
-        }
-        
-        // Обработчики событий для фильтров
-        document.getElementById('search-name').addEventListener('input', applyFilters);
-        document.getElementById('filter-status').addEventListener('change', applyFilters);
-        
-
+        // Инициализируем карту после загрузки API
+        ymaps.ready(initMap);
         
         // Обновление статуса отслеживания каждые 30 секунд
         function updateTrackingStatus() {
@@ -369,8 +296,11 @@
                 });
         }
         
-        // Запускаем обновление статуса
-        setInterval(updateTrackingStatus, 30000);
+        // Запускаем обновление статуса после инициализации карты
+        ymaps.ready(function() {
+            setTimeout(updateTrackingStatus, 1000);
+            setInterval(updateTrackingStatus, 30000);
+        });
     </script>
     {% endif %}
 </body>

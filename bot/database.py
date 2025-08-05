@@ -1246,7 +1246,12 @@ class Database:
             FROM user_locations ul
             JOIN users u ON ul.user_id = u.id
             WHERE u.role = 'recipient' AND ul.telegram_id IS NOT NULL
-            ORDER BY ul.telegram_id, ul.created_at DESC
+            AND ul.id = (
+                SELECT MAX(ul2.id) 
+                FROM user_locations ul2 
+                WHERE ul2.telegram_id = ul.telegram_id
+            )
+            ORDER BY ul.created_at DESC
             LIMIT ?
         ''', (limit,))
         
