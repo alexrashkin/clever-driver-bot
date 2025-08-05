@@ -186,7 +186,7 @@
             <div class="coordinates">
                 <strong>Координаты:</strong> {{ "%.6f"|format(user.last_location.latitude) }}, {{ "%.6f"|format(user.last_location.longitude) }}
                 <br>
-                <strong>Время:</strong> {{ user.last_location.created_at }}
+                <strong>Время:</strong> {{ format_timestamp(user.last_location.created_at) }}
             </div>
 
             <div class="map-container" id="map"></div>
@@ -224,7 +224,7 @@
         currentMarker.bindPopup(`
             <strong>{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}</strong><br>
             <strong>Telegram ID:</strong> {{ user.telegram_id }}<br>
-            <strong>Время:</strong> {{ user.last_location.created_at }}
+            <strong>Время:</strong> {{ format_timestamp(user.last_location.created_at) }}
         `);
         
         // Автоматическое обновление местоположения каждые 5 секунд
@@ -232,10 +232,10 @@
             fetch('/api/user_location/{{ user.telegram_id }}')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.location) {
-                        var newLat = data.location.latitude;
-                        var newLon = data.location.longitude;
-                        var newTime = data.location.created_at;
+                                            if (data.success && data.user && data.user.last_location) {
+                            var newLat = data.user.last_location.latitude;
+                            var newLon = data.user.last_location.longitude;
+                            var newTime = data.user.last_location.formatted_time || data.user.last_location.created_at;
                         
                         // Проверяем, изменились ли координаты
                         var currentPos = currentMarker.getLatLng();

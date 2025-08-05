@@ -2322,7 +2322,10 @@ def view_user_location(telegram_id):
         # Получаем историю местоположений
         location_history = db.get_user_location_history(telegram_id, limit=20)
         
-        return render_template('user_location.html', user=user_info, location_history=location_history)
+        return render_template('user_location.html', 
+                             user=user_info, 
+                             location_history=location_history,
+                             format_timestamp=format_timestamp)
     except Exception as e:
         logger.error(f"Ошибка просмотра местоположения пользователя {telegram_id}: {e}")
         return "Ошибка загрузки местоположения", 500
@@ -2367,6 +2370,10 @@ def api_user_location(telegram_id):
         user_info = db.get_user_by_telegram_id_with_location(telegram_id)
         if not user_info:
             return jsonify({'success': False, 'error': 'Пользователь не найден'}), 404
+        
+        # Форматируем время для ответа
+        if user_info.get('last_location') and user_info['last_location'].get('created_at'):
+            user_info['last_location']['formatted_time'] = format_timestamp(user_info['last_location']['created_at'])
         
         return jsonify({
             'success': True,
