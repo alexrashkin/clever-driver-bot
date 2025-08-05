@@ -1948,14 +1948,13 @@ def current_location():
         conn = sqlite3.connect('driver.db')
         cursor = conn.cursor()
         
-        # Сначала пробуем получить из новой таблицы user_locations (для водителей)
+        # Получаем последние данные из новой таблицы user_locations (от любого пользователя)
         cursor.execute("""
             SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at,
                    u.role, u.work_latitude, u.work_longitude, u.work_radius
             FROM user_locations ul
             JOIN users u ON ul.user_id = u.id
-            WHERE u.role IN ('driver', 'admin')
-            ORDER BY ul.created_at DESC LIMIT 1
+            ORDER BY ul.id DESC LIMIT 1
         """)
         user_location = cursor.fetchone()
         
@@ -2012,6 +2011,7 @@ def current_location():
                     dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
                 else:
                     dt = timestamp
+                # Добавляем 3 часа для московского времени (UTC+3)
                 formatted_time = (dt + timedelta(hours=3)).strftime("%H:%M:%S")
             else:
                 formatted_time = "--:--:--"
