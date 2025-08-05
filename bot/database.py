@@ -1304,32 +1304,7 @@ class Database:
         
         return user_info
     
-    def fix_recipient_locations(self):
-        """Исправить статус is_at_work для всех получателей (должен быть False)"""
-        conn = sqlite3.connect(self.db_path)
-        c = conn.cursor()
-        
-        try:
-            # Обновляем все записи получателей, устанавливая is_at_work = False
-            c.execute('''
-                UPDATE user_locations 
-                SET is_at_work = 0 
-                WHERE user_id IN (
-                    SELECT id FROM users WHERE role = 'recipient'
-                )
-            ''')
-            
-            updated_count = c.rowcount
-            conn.commit()
-            conn.close()
-            
-            logger.info(f"Исправлено {updated_count} записей местоположений получателей")
-            return updated_count
-            
-        except Exception as e:
-            conn.close()
-            logger.error(f"Ошибка исправления записей получателей: {e}")
-            return 0
+
 
 # Создаем глобальный экземпляр базы данных
 db = Database()

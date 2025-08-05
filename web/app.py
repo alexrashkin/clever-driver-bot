@@ -2553,31 +2553,7 @@ def view_web_tracking():
         logger.error(f"Ошибка загрузки страницы веб-отслеживания: {e}")
         return "Ошибка загрузки страницы", 500
 
-@app.route('/fix_recipient_locations', methods=['POST'])
-def fix_recipient_locations():
-    """Исправить статус is_at_work для всех получателей"""
-    try:
-        # Проверяем права администратора
-        user = get_current_user()
-        if not user:
-            return jsonify({'success': False, 'error': 'Необходимо авторизоваться'}), 401
-        
-        user_role = get_current_user_role()
-        if user_role != 'admin':
-            return jsonify({'success': False, 'error': 'Доступ запрещен'}), 403
-        
-        # Исправляем записи получателей
-        updated_count = db.fix_recipient_locations()
-        
-        return jsonify({
-            'success': True,
-            'message': f'Исправлено {updated_count} записей получателей',
-            'updated_count': updated_count
-        })
-        
-    except Exception as e:
-        logger.error(f"Ошибка исправления записей получателей: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
