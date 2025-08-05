@@ -361,7 +361,7 @@
                 <span class="info-value" id="coordinates">--</span>
             </div>
             <div class="info-item">
-                <span class="info-label">До работы:</span>
+                <span class="info-label">До квартиры:</span>
                 <span class="info-value" id="distanceToWork">-- м</span>
             </div>
             <div class="info-item">
@@ -433,20 +433,20 @@
         }
 
         function createWorkZone() {
-            // Метка рабочей зоны
+            // Метка квартиры
             workZonePlacemark = new ymaps.Placemark([WORK_LAT, WORK_LON], {
-                balloonContent: '🏢 Рабочая зона',
-                hintContent: 'Рабочая зона'
+                balloonContent: '🏢 Квартира',
+                hintContent: 'Квартира'
             }, {
                 preset: 'islands#workIcon',
                 iconColor: '#1e88e5'
             });
 
-            // Круг рабочей зоны
+            // Круг квартиры
             workZoneCircle = new ymaps.Circle([
                 [WORK_LAT, WORK_LON], WORK_RADIUS
             ], {
-                balloonContent: `Рабочая зона (радиус ${WORK_RADIUS}м)`
+                balloonContent: `Квартира (радиус ${WORK_RADIUS}м)`
             }, {
                 fillColor: '#1e88e520',
                 strokeColor: '#1e88e5',
@@ -492,7 +492,7 @@
                     <div style="padding: 10px;">
                         <h4>🚗 Автомобиль</h4>
                         <p><strong>Статус:</strong> ${location.is_at_work ? 'Водитель ожидает' : 'Не на работе'}</p>
-                        <p><strong>Расстояние до работы:</strong> ${Math.round(location.distance_to_work)}м</p>
+                        <p><strong>Расстояние до квартиры:</strong> ${Math.round(location.distance_to_work)}м</p>
                         <p><strong>Время:</strong> ${location.formatted_time}</p>
                         <p><strong>Координаты:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
                     </div>
