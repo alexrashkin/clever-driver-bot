@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Местоположение пользователя - Умный водитель</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -207,69 +206,88 @@
     </div>
 
     {% if user.last_location %}
-    <script>
-        // Инициализация карты
-        var map = L.map('map').setView([{{ user.last_location.latitude }}, {{ user.last_location.longitude }}], 15);
+        <script>
+        // Инициализация Яндекс Карт
+        var map;
+        var currentMarker;
         
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        
-        // Добавляем маркер текущего местоположения
-        var currentMarker = L.marker([{{ user.last_location.latitude }}, {{ user.last_location.longitude }}], {
-            title: '{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}'
-        }).addTo(map);
-        
-        // Добавляем всплывающую информацию
-        currentMarker.bindPopup(`
-            <strong>{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}</strong><br>
-            <strong>Telegram ID:</strong> {{ user.telegram_id }}<br>
-            <strong>Время:</strong> {{ format_timestamp(user.last_location.created_at) }}
-        `);
-        
-        // Автоматическое обновление местоположения каждые 5 секунд
-        var updateInterval = setInterval(function() {
-            fetch('/api/user_location/{{ user.telegram_id }}')
-                .then(response => response.json())
-                .then(data => {
-                                            if (data.success && data.user && data.user.last_location) {
+        function initMap() {
+            // Создаем карту
+            map = new ymaps.Map('map', {
+                center: [{{ user.last_location.latitude }}, {{ user.last_location.longitude }}],
+                zoom: 15,
+                controls: ['zoomControl', 'fullscreenControl']
+            });
+            
+            // Добавляем маркер текущего местоположения
+            currentMarker = new ymaps.Placemark([{{ user.last_location.latitude }}, {{ user.last_location.longitude }}], {
+                balloonContentHeader: '{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}',
+                balloonContentBody: `
+                    <div style="padding: 5px 0;">
+                        <p style="margin: 5px 0;"><strong>Telegram ID:</strong> {{ user.telegram_id }}</p>
+                        <p style="margin: 5px 0;"><strong>Время:</strong> {{ format_timestamp(user.last_location.created_at) }}</p>
+                        {% if user.last_location.accuracy %}<p style="margin: 5px 0;"><strong>Точность:</strong> ±{{ "%.0f"|format(user.last_location.accuracy) }}м</p>{% endif %}
+                    </div>
+                `,
+                hintContent: '{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}'
+            }, {
+                preset: 'islands#redDotIcon',
+                iconColor: '#ff0000'
+            });
+            
+            map.geoObjects.add(currentMarker);
+            
+            // Автоматическое обновление местоположения каждые 5 секунд
+            var updateInterval = setInterval(function() {
+                fetch('/api/user_location/{{ user.telegram_id }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.user && data.user.last_location) {
                             var newLat = data.user.last_location.latitude;
                             var newLon = data.user.last_location.longitude;
                             var newTime = data.user.last_location.formatted_time || data.user.last_location.created_at;
-                        
-                        // Проверяем, изменились ли координаты
-                        var currentPos = currentMarker.getLatLng();
-                        if (currentPos.lat !== newLat || currentPos.lng !== newLon) {
-                            // Обновляем позицию маркера
-                            currentMarker.setLatLng([newLat, newLon]);
                             
-                            // Обновляем всплывающую информацию
-                            currentMarker.bindPopup(`
-                                <strong>{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}</strong><br>
-                                <strong>Telegram ID:</strong> {{ user.telegram_id }}<br>
-                                <strong>Время:</strong> ${newTime}
-                            `);
-                            
-                            // Обновляем координаты в интерфейсе
-                            document.querySelector('.coordinates').innerHTML = `
-                                <strong>Координаты:</strong> ${newLat.toFixed(6)}, ${newLon.toFixed(6)}<br>
-                                <strong>Время:</strong> ${newTime}
-                            `;
-                            
-                            console.log('Местоположение обновлено:', newLat, newLon);
+                            // Проверяем, изменились ли координаты
+                            var currentPos = currentMarker.geometry.getCoordinates();
+                            if (currentPos[0] !== newLat || currentPos[1] !== newLon) {
+                                // Обновляем позицию маркера
+                                currentMarker.geometry.setCoordinates([newLat, newLon]);
+                                
+                                // Обновляем всплывающую информацию
+                                currentMarker.properties.set({
+                                    balloonContentHeader: '{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}',
+                                    balloonContentBody: `
+                                        <div style="padding: 5px 0;">
+                                            <p style="margin: 5px 0;"><strong>Telegram ID:</strong> {{ user.telegram_id }}</p>
+                                            <p style="margin: 5px 0;"><strong>Время:</strong> ${newTime}</p>
+                                            {% if user.last_location.accuracy %}<p style="margin: 5px 0;"><strong>Точность:</strong> ±{{ "%.0f"|format(user.last_location.accuracy) }}м</p>{% endif %}
+                                        </div>
+                                    `
+                                });
+                                
+                                // Обновляем координаты в интерфейсе
+                                document.querySelector('.coordinates').innerHTML = `
+                                    <strong>Координаты:</strong> ${newLat.toFixed(6)}, ${newLon.toFixed(6)}<br>
+                                    <strong>Время:</strong> ${newTime}
+                                `;
+                                
+                                console.log('Местоположение обновлено:', newLat, newLon);
+                            }
                         }
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка обновления местоположения:', error);
-                });
-        }, 5000); // Обновляем каждые 5 секунд
+                    })
+                    .catch(error => {
+                        console.error('Ошибка обновления местоположения:', error);
+                    });
+            }, 5000); // Обновляем каждые 5 секунд
+            
+            // Очистка интервала при закрытии страницы
+            window.addEventListener('beforeunload', function() {
+                clearInterval(updateInterval);
+            });
+        }
         
-        // Очистка интервала при закрытии страницы
-        window.addEventListener('beforeunload', function() {
-            clearInterval(updateInterval);
-        });
-
+        // Инициализируем карту после загрузки API
+        ymaps.ready(initMap);
     </script>
     {% endif %}
 </body>
