@@ -44,16 +44,20 @@ async def monitor_database(application: Application):
         try:
             conn = db.get_connection()
             cursor = conn.cursor()
-            # Получаем две последние записи
+            # Получаем две последние записи из новой таблицы user_locations
             cursor.execute("""
-                SELECT id, is_at_work, timestamp FROM locations ORDER BY id DESC LIMIT 2
+                SELECT ul.id, ul.is_at_work, ul.created_at, ul.latitude, ul.longitude
+                FROM user_locations ul
+                JOIN users u ON ul.user_id = u.id
+                WHERE u.role IN ('driver', 'admin')
+                ORDER BY ul.id DESC LIMIT 2
             """)
             rows = cursor.fetchall()
             conn.close()
 
             if len(rows) == 2:
-                curr_id, curr_is_at_work, curr_time = rows[0]
-                prev_id, prev_is_at_work, prev_time = rows[1]
+                curr_id, curr_is_at_work, curr_time, curr_lat, curr_lon = rows[0]
+                prev_id, prev_is_at_work, prev_time, prev_lat, prev_lon = rows[1]
                 # Только если был переход с 0 на 1
                 if prev_is_at_work == 0 and curr_is_at_work == 1 and curr_id != last_checked_id:
                     curr_ts = time.mktime(time.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
@@ -94,8 +98,8 @@ async def monitor_database(application: Application):
                                 
                                 if result['success']:
                                     logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
-                                    logger.info(f"📍 Местоположение: {latitude:.6f}, {longitude:.6f}")
-                                    logger.info(f"🏢 Статус: {'В рабочей зоне' if is_at_work else 'В пути'}")
+                                    logger.info(f"📍 Местоположение: {curr_lat:.6f}, {curr_lon:.6f}")
+                                    logger.info(f"🏢 Статус: {'В рабочей зоне' if curr_is_at_work else 'В пути'}")
                                 else:
                                     logger.warning("❌ Не удалось отправить автоматические уведомления")
                             else:
