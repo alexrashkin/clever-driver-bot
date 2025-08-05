@@ -203,9 +203,7 @@
                         <td>
                             {% if location.created_at %}
                                 <div class="last-update">
-                                    {{ location.created_at.split(' ')[0] if location.created_at else '' }}
-                                    <br>
-                                    {{ location.created_at.split(' ')[1] if location.created_at else '' }}
+                                    {{ format_timestamp(location.created_at) }}
                                 </div>
                             {% else %}
                                 <em>Нет данных</em>
@@ -252,7 +250,7 @@
                 balloonContentBody: `
                     <div style="padding: 5px 0;">
                         <p style="margin: 5px 0;"><strong>Telegram ID:</strong> {{ location.telegram_id }}</p>
-                        <p style="margin: 5px 0;"><strong>Время:</strong> {{ location.created_at or 'Неизвестно' }}</p>
+                        <p style="margin: 5px 0;"><strong>Время:</strong> {{ format_timestamp(location.created_at) or 'Неизвестно' }}</p>
                         {% if location.accuracy %}<p style="margin: 5px 0;"><strong>Точность:</strong> ±{{ "%.0f"|format(location.accuracy) }}м</p>{% endif %}
                         <a href="/user_location/{{ location.telegram_id }}" style="color: #667eea; text-decoration: none;">👁️ Подробнее</a>
                     </div>

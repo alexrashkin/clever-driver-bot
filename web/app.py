@@ -2343,7 +2343,9 @@ def view_recipient_locations():
         # Получаем местоположения всех получателей
         recipient_locations = db.get_recipient_locations(limit=100)
         
-        return render_template('recipient_locations.html', recipient_locations=recipient_locations)
+        return render_template('recipient_locations.html', 
+                             recipient_locations=recipient_locations,
+                             format_timestamp=format_timestamp)
     except Exception as e:
         logger.error(f"Ошибка просмотра местоположений получателей: {e}")
         return "Ошибка загрузки местоположений", 500
