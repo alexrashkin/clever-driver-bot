@@ -193,22 +193,5 @@ async def main():
         raise
 
 if __name__ == "__main__":
-    try:
-        # Для Windows с Git Bash
-        import platform
-        if platform.system() == "Windows":
-            import nest_asyncio
-            nest_asyncio.apply()
-        
-        asyncio.run(main())
-    except RuntimeError as e:
-        if "event loop is already running" in str(e):
-            # Альтернативный способ для Windows
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(main())
-            finally:
-                loop.close()
-        else:
-            raise 
+    # Простой запуск для локального тестирования
+    asyncio.run(main()) 
