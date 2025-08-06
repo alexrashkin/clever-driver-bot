@@ -165,7 +165,7 @@
 
 
         <div class="user-info">
-            <h2>👤 {{ user.first_name or 'Не указано' }} {{ user.last_name or '' }}</h2>
+            <h2>👤 {{ (user.first_name or 'Не указано') | e }} {{ (user.last_name or '') | e }}</h2>
             <div class="user-details">
                 <div class="detail-item">
                     <div class="detail-label">Telegram ID</div>
@@ -221,7 +221,7 @@
             
             // Добавляем маркер текущего местоположения
             currentMarker = new ymaps.Placemark([{{ user.last_location.latitude }}, {{ user.last_location.longitude }}], {
-                balloonContentHeader: '{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}',
+                balloonContentHeader: '{{ (user.first_name or "Пользователь") | e }} {{ (user.last_name or "") | e }}',
                 balloonContentBody: `
                     <div style="padding: 5px 0;">
                         <p style="margin: 5px 0;"><strong>Telegram ID:</strong> {{ user.telegram_id }}</p>
@@ -229,7 +229,7 @@
                         {% if user.last_location.accuracy %}<p style="margin: 5px 0;"><strong>Точность:</strong> ±{{ "%.0f"|format(user.last_location.accuracy) }}м</p>{% endif %}
                     </div>
                 `,
-                hintContent: '{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}'
+                hintContent: '{{ (user.first_name or "Пользователь") | e }} {{ (user.last_name or "") | e }}'
             }, {
                 preset: 'islands#redDotIcon',
                 iconColor: '#ff0000'
@@ -255,7 +255,7 @@
                                 
                                 // Обновляем всплывающую информацию
                                 currentMarker.properties.set({
-                                    balloonContentHeader: '{{ user.first_name or "Пользователь" }} {{ user.last_name or "" }}',
+                                    balloonContentHeader: '{{ (user.first_name or "Пользователь") | e }} {{ (user.last_name or "") | e }}',
                                     balloonContentBody: `
                                         <div style="padding: 5px 0;">
                                             <p style="margin: 5px 0;"><strong>Telegram ID:</strong> {{ user.telegram_id }}</p>

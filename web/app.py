@@ -7,6 +7,7 @@ from config.settings import config
 from bot.database import Database  # Импортируем класс, а не экземпляр
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
 from web.location_web_tracker import location_web_tracker, web_tracker
+from web.security import security_check, security_manager, log_security_event
 import logging
 import requests
 from datetime import datetime, timedelta
@@ -420,8 +421,10 @@ def find_telegram_user_by_username(username):
         return None
 
 @app.route('/')
+@security_check
 def index():
     """Главная страница"""
+    
     try:
         tracking_status = db.get_tracking_status()
         
@@ -592,6 +595,7 @@ def index():
         return render_template('index.html', tracking_status=False, message="Ошибка загрузки статуса", year=datetime.now().year)
 
 @app.route('/mobile')
+@security_check
 def mobile_tracker():
     """Мобильный трекер"""
     # Проверяем авторизацию через Telegram или логин/пароль
@@ -604,6 +608,7 @@ def mobile_tracker():
     return render_template('mobile_tracker.html', year=datetime.now().year)
 
 @app.route('/debug_status')
+@security_check
 def debug_status():
     """Отладочная страница для мониторинга статуса"""
     # Проверяем авторизацию через Telegram или логин/пароль
@@ -616,6 +621,7 @@ def debug_status():
     return render_template('debug_status.html')
 
 @app.route('/mobile_tracker.html')
+@security_check
 def mobile_tracker_redirect():
     """Редирект для старой ссылки"""
     # Проверяем авторизацию через Telegram или логин/пароль
@@ -628,6 +634,7 @@ def mobile_tracker_redirect():
     return redirect('/mobile')
 
 @app.route('/toggle', methods=['POST'])
+@security_check
 def toggle_tracking():
     """Переключение отслеживания через веб-форму"""
     # Проверяем авторизацию
@@ -703,6 +710,7 @@ def toggle_tracking():
         return redirect_html
 
 @app.route('/manual_arrival', methods=['POST'])
+@security_check
 def manual_arrival():
     """Ручное уведомление о прибытии через веб-форму"""
     try:
@@ -740,6 +748,7 @@ def manual_arrival():
         return redirect(url_for('index'))
 
 @app.route('/api/status')
+@security_check
 def api_status():
     """API статуса отслеживания"""
     try:
@@ -754,6 +763,7 @@ def api_status():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/toggle', methods=['POST'])
+@security_check
 def api_toggle():
     """API переключения отслеживания"""
     try:
@@ -773,6 +783,7 @@ def api_toggle():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/history')
+@security_check
 def api_history():
     """API истории местоположений"""
     try:
@@ -800,8 +811,10 @@ def api_history():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/location', methods=['POST'])
+@security_check
 def api_location():
     """API добавления местоположения"""
+    
     try:
         data = request.get_json()
         if not data:
@@ -959,6 +972,7 @@ def api_location():
         return jsonify({'_type': 'status'}), 200
 
 @app.route('/api/notify', methods=['POST'])
+@security_check
 def api_notify():
     """API ручного уведомления"""
     try:
@@ -984,6 +998,7 @@ def api_notify():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/user1', methods=['POST'])
+@security_check
 def api_user1():
     try:
         user = get_current_user()
@@ -1035,6 +1050,7 @@ def api_user1():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/user2', methods=['POST'])
+@security_check
 def api_user2():
     try:
         user = get_current_user()
@@ -1086,6 +1102,7 @@ def api_user2():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/button/<int:idx>', methods=['POST'])
+@security_check
 def api_button(idx):
     """API для отправки уведомления через кнопку с индексом idx"""
     try:
@@ -1147,11 +1164,13 @@ def api_button(idx):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/test')
+@security_check
 def test_route():
     """Тестовый маршрут для проверки обновления"""
     return "✅ Код обновлен! Время: " + str(datetime.now())
 
 @app.route('/debug_session')
+@security_check
 def debug_session():
     """Страница для отладки сессий"""
     telegram_id = session.get('telegram_id')
@@ -1183,6 +1202,7 @@ def debug_session():
                          user_name=user_name)
 
 @app.route('/debug_settings')
+@security_check
 def debug_settings():
     """Страница для отладки настроек"""
     telegram_id = session.get('telegram_id')
@@ -1215,6 +1235,7 @@ def debug_settings():
 
 
 @app.route('/settings', methods=['GET', 'POST'])
+@security_check
 def settings():
     telegram_user = None
     user = None
@@ -1347,6 +1368,7 @@ def settings():
         return redirect('/login')
 
 @app.route('/about')
+@security_check
 def about():
     """Страница о сервисе с разным контентом для разных ролей"""
     user = get_current_user()
@@ -1376,9 +1398,15 @@ def static_files(filename):
     return response
 
 @app.route('/register', methods=['GET', 'POST'])
+@security_check
 def register():
-    """Регистрация нового пользователя"""
+    """Регистрация нового пользователя - ВРЕМЕННО ЗАБЛОКИРОВАНА"""
+    # Логируем все попытки регистрации
+    logger.warning(f"SECURITY: Попытка регистрации с IP {request.remote_addr}, User-Agent: {request.headers.get('User-Agent', 'Unknown')}")
+    
     if request.method == 'POST':
+        logger.error(f"SECURITY: БЛОКИРОВАНА регистрация от IP {request.remote_addr}")
+        return render_template('register.html', error="Регистрация временно заблокирована из-за технических работ")
         login = request.form.get('login', '').strip()
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
@@ -1386,6 +1414,13 @@ def register():
         last_name = request.form.get('last_name', '').strip() or None
         email = request.form.get('email', '').strip()
         role = request.form.get('role', 'driver')
+        
+        # Защита от XSS - очистка HTML тегов
+        import html
+        if first_name:
+            first_name = html.escape(first_name)
+        if last_name:
+            last_name = html.escape(last_name)
         
         # Валидация email
         if not email:
@@ -1415,6 +1450,19 @@ def register():
         if not re.match(r'^[a-zA-Z0-9_-]+$', login):
             return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -")
         
+        # Валидация имени и фамилии
+        if first_name and len(first_name) > 50:
+            return render_template('register.html', error="Имя слишком длинное (максимум 50 символов)")
+        if last_name and len(last_name) > 50:
+            return render_template('register.html', error="Фамилия слишком длинная (максимум 50 символов)")
+        
+        # Проверка на запрещенные символы в имени и фамилии
+        forbidden_chars = ['<', '>', '"', "'", '&', '{', '}', '[', ']', '(', ')', ';', '=', '+']
+        if first_name and any(char in first_name for char in forbidden_chars):
+            return render_template('register.html', error="Имя содержит запрещенные символы")
+        if last_name and any(char in last_name for char in forbidden_chars):
+            return render_template('register.html', error="Фамилия содержит запрещенные символы")
+        
         # Создание пользователя
         logger.info(f"REGISTER: попытка создания пользователя login={login}, role={role}, email={email}")
         success, result = db.create_user_with_login(login, password, first_name, last_name, role, email)
@@ -1434,6 +1482,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@security_check
 def login():
     """Вход в систему"""
     if request.method == 'POST':
@@ -1458,6 +1507,7 @@ def login():
     return render_template('login.html')
 
 @app.route('/logout')
+@security_check
 def logout():
     """Выход из системы"""
     logger.info(f"LOGOUT: пользователь выходит из системы")
@@ -1478,6 +1528,7 @@ def logout():
     return response
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
+@security_check
 def forgot_password():
     """Страница восстановления пароля - запрос кода"""
     if request.method == 'POST':
@@ -1499,6 +1550,7 @@ def forgot_password():
     return render_template('forgot_password.html')
 
 @app.route('/reset_password', methods=['GET', 'POST'])
+@security_check
 def reset_password():
     """Страница сброса пароля с кодом"""
     reset_login = session.get('reset_login')
@@ -1541,11 +1593,13 @@ def reset_password():
     return render_template('reset_password.html')
 
 @app.route('/admin')
+@security_check
 def admin_redirect():
     """Редирект с /admin на /admin/users"""
     return redirect('/admin/users')
 
 @app.route('/admin/users')
+@security_check
 def admin_users():
     """Администрирование пользователей"""
     # Проверяем авторизацию и права администратора
@@ -1573,6 +1627,7 @@ def admin_users():
     return render_template('admin_users.html', users=users, invitations=invitations)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+@security_check
 def admin_delete_user(user_id):
     """Удаление пользователя администратором"""
     # Проверяем авторизацию и права администратора
@@ -1602,6 +1657,7 @@ def admin_delete_user(user_id):
     return redirect('/admin/users')
 
 @app.route('/admin/invitations/delete/<int:invitation_id>', methods=['POST'])
+@security_check
 def admin_delete_invitation(invitation_id):
     """Удаление приглашения администратором"""
     logger.info(f"ADMIN_DELETE_INVITATION: попытка удаления приглашения ID {invitation_id}")
@@ -1641,6 +1697,7 @@ def admin_delete_invitation(invitation_id):
     return redirect('/admin/users')
 
 @app.route('/admin/users/unbind_telegram/<int:user_id>', methods=['POST'])
+@security_check
 def admin_unbind_telegram(user_id):
     """Отвязка Telegram аккаунта администратором"""
     logger.info(f"ADMIN_UNBIND_TELEGRAM: попытка отвязки для пользователя ID {user_id}")
@@ -1694,6 +1751,7 @@ def admin_unbind_telegram(user_id):
     return redirect('/admin/users')
 
 @app.route('/telegram_auth', methods=['POST', 'GET'])
+@security_check
 def telegram_auth():
     try:
         logger.info(f"TELEGRAM_AUTH: начало обработки запроса, метод: {request.method}")
@@ -1757,6 +1815,7 @@ def telegram_auth():
         return 'Internal Server Error', 500
 
 @app.route('/bind_telegram', methods=['POST', 'GET'])
+@security_check
 def bind_telegram():
     """Привязка Telegram к существующему аккаунту"""
     try:
@@ -1819,6 +1878,7 @@ def bind_telegram():
         return 'Internal Server Error', 500
 
 @app.route('/select_role', methods=['GET', 'POST'])
+@security_check
 def select_role():
     """Выбор роли пользователя"""
     telegram_id = session.get('telegram_id')
@@ -1850,6 +1910,7 @@ def select_role():
                          telegram_id=telegram_id)
 
 @app.route('/create_invite')
+@security_check
 def create_invite():
     """Страница для водителя/админа для создания приглашения"""
     # Проверяем авторизацию
@@ -1899,6 +1960,7 @@ def create_invite():
                          year=datetime.now().year)
 
 @app.route('/invite')
+@security_check
 def invite():
     """Страница приглашения для получателей (только для неавторизованных пользователей)"""
     invite_code = request.args.get('code')
@@ -1927,6 +1989,7 @@ def invite():
                          telegram_bot_id=telegram_bot_username)
 
 @app.route('/invite_auth', methods=['POST', 'GET'])
+@security_check
 def invite_auth():
     try:
         logger.info(f"INVITE_AUTH: начало обработки запроса, метод: {request.method}")
@@ -2014,6 +2077,7 @@ def invite_auth():
         return 'Internal Server Error', 500
 
 @app.route('/api/current_location')
+@security_check
 def current_location():
     """API для получения текущего местоположения автомобиля"""
     try:
@@ -2022,12 +2086,13 @@ def current_location():
         conn = sqlite3.connect('driver.db')
         cursor = conn.cursor()
         
-        # Получаем последние данные из новой таблицы user_locations (от любого пользователя)
+        # Получаем последние данные из новой таблицы user_locations (только от водителей и администраторов)
         cursor.execute("""
             SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at,
                    u.role, u.work_latitude, u.work_longitude, u.work_radius
             FROM user_locations ul
             JOIN users u ON ul.user_id = u.id
+            WHERE u.role IN ('driver', 'admin')
             ORDER BY ul.id DESC LIMIT 1
         """)
         user_location = cursor.fetchone()
@@ -2125,6 +2190,7 @@ def current_location():
         }), 200
 
 @app.route('/tracker')
+@security_check
 def real_time_tracker():
     """Страница отслеживания в реальном времени"""
     # Проверяем авторизацию через Telegram или логин/пароль
@@ -2176,6 +2242,7 @@ def real_time_tracker():
         return 'Ошибка загрузки страницы', 500
 
 @app.route('/bind_telegram_form', methods=['GET', 'POST'])
+@security_check
 def bind_telegram_form():
     """Форма привязки Telegram аккаунта"""
     user_login = session.get('user_login')
@@ -2295,6 +2362,7 @@ def bind_telegram_form():
                                  config=config)
 
 @app.route('/resend_telegram_code', methods=['POST'])
+@security_check
 def resend_telegram_code():
     """Повторная отправка кода подтверждения"""
     user_login = session.get('user_login')
@@ -2336,12 +2404,14 @@ def resend_telegram_code():
         return jsonify({'success': False, 'message': f'Внутренняя ошибка сервера: {str(e)}'})
 
 @app.route('/telegram_login')
+@security_check
 def telegram_login():
     """Страница входа через Telegram"""
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME
     return render_template('telegram_login.html', telegram_bot_username=telegram_bot_username)
 
 @app.route('/unbind_telegram', methods=['POST'])
+@security_check
 def unbind_telegram():
     """Отвязка Telegram аккаунта"""
     user_login = session.get('user_login')
@@ -2362,6 +2432,7 @@ def unbind_telegram():
     return redirect('/settings')
 
 @app.route('/logs')
+@security_check
 def view_logs():
     """Просмотр логов"""
     try:
@@ -2374,6 +2445,7 @@ def view_logs():
         return f"Ошибка чтения логов: {e}"
 
 @app.route('/notification_logs')
+@security_check
 def view_notification_logs():
     """Просмотр логов уведомлений"""
     try:
@@ -2395,6 +2467,7 @@ def view_notification_logs():
         return "Ошибка загрузки логов уведомлений", 500
 
 @app.route('/notification_details/<int:notification_id>')
+@security_check
 def view_notification_details(notification_id):
     """Просмотр деталей уведомления"""
     try:
@@ -2421,6 +2494,7 @@ def view_notification_details(notification_id):
         return "Ошибка загрузки деталей", 500
 
 @app.route('/user_location/<int:telegram_id>')
+@security_check
 def view_user_location(telegram_id):
     """Просмотр местоположения конкретного пользователя"""
     try:
@@ -2450,6 +2524,7 @@ def view_user_location(telegram_id):
         return "Ошибка загрузки местоположения", 500
 
 @app.route('/recipient_locations')
+@security_check
 def view_recipient_locations():
     """Просмотр местоположений всех получателей уведомлений"""
     try:
@@ -2473,6 +2548,7 @@ def view_recipient_locations():
         return "Ошибка загрузки местоположений", 500
 
 @app.route('/api/user_location/<int:telegram_id>')
+@security_check
 def api_user_location(telegram_id):
     """API для получения местоположения пользователя"""
     try:
@@ -2503,6 +2579,7 @@ def api_user_location(telegram_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/start_tracking/<int:telegram_id>')
+@security_check
 def api_start_tracking(telegram_id):
     """API для запуска отслеживания местоположения получателя"""
     try:
@@ -2542,6 +2619,7 @@ def api_start_tracking(telegram_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/stop_tracking/<int:telegram_id>')
+@security_check
 def api_stop_tracking(telegram_id):
     """API для остановки отслеживания местоположения получателя"""
     try:
@@ -2566,6 +2644,7 @@ def api_stop_tracking(telegram_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/tracking_status')
+@security_check
 def api_tracking_status():
     """API для получения статуса отслеживания"""
     try:
@@ -2593,6 +2672,7 @@ def api_tracking_status():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/web_tracking')
+@security_check
 def view_web_tracking():
     """Страница управления веб-отслеживанием"""
     try:
@@ -2626,6 +2706,14 @@ def view_web_tracking():
     except Exception as e:
         logger.error(f"Ошибка загрузки страницы веб-отслеживания: {e}")
         return "Ошибка загрузки страницы", 500
+
+@app.route('/test_security')
+@security_check
+def test_security():
+    """Тестовая страница безопасности"""
+    return render_template('test_security.html')
+
+
 
 
 

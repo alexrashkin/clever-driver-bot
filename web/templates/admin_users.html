@@ -573,7 +573,7 @@
                         <td><strong>#{{ user.id }}</strong></td>
                         <td>
                             {% if user.first_name or user.last_name %}
-                                {{ user.first_name or '' }} {{ user.last_name or '' }}
+                                {{ (user.first_name or '') | e }} {{ (user.last_name or '') | e }}
                                 {% if user.login %}<br><small>@{{ user.login }}</small>{% endif %}
                             {% elif user.login %}
                                 <strong>{{ user.login }}</strong>
@@ -631,12 +631,12 @@
                         <td>
                             {% if user.telegram_id %}
                             <form method="post" action="/admin/users/unbind_telegram/{{ user.id }}" style="display: inline; margin-right: 5px;" 
-                                  onsubmit="return confirm('Отвязать Telegram аккаунт от пользователя {{ user.first_name or user.login or user.id }}?')">
+                                  onsubmit="return confirm('Отвязать Telegram аккаунт от пользователя {{ (user.first_name or user.login or user.id) | e }}?')">
                                 <button type="submit" class="unbind-btn">🔗 Отвязать</button>
                             </form>
                             {% endif %}
                             <form method="post" action="/admin/users/delete/{{ user.id }}" style="display: inline;" 
-                                  onsubmit="return confirm('Удалить пользователя {{ user.first_name or user.login or user.id }}?')">
+                                  onsubmit="return confirm('Удалить пользователя {{ (user.first_name or user.login or user.id) | e }}?')">
                                 <button type="submit" class="delete-btn">🗑️ Удалить</button>
                             </form>
                         </td>
