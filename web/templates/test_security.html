@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест безопасности</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>Тест безопасности</h1>
+    <p>Эта страница используется для проверки безопасности сайта.</p>
+    <p>Время: <span id="time"></span></p>
+    <p>User-Agent: <span id="useragent"></span></p>
+    <p>IP: <span id="ip">{{ request.remote_addr }}</span></p>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        document.getElementById('useragent').textContent = navigator.userAgent;
+        
+        // Проверяем, не был ли добавлен вредоносный код
+        if (typeof JSTAG !== 'undefined') {
+            document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Обнаружен JSTAG!</p>';
+        }
+        
+        // Проверяем внешние скрипты
+        const scripts = document.getElementsByTagName('script');
+        for (let script of scripts) {
+            if (script.src && (script.src.includes('JSTAG') || script.src.includes('eval'))) {
+                document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Подозрительный скрипт: ' + script.src + '</p>';
+            }
+        }
+        
+        // Проверяем весь HTML на вредоносный код
+        const htmlContent = document.documentElement.outerHTML;
+        if (htmlContent.includes('JSTAG') || htmlContent.includes('eval(') || htmlContent.includes('document.write')) {
+            document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Обнаружен вредоносный код в HTML!</p>';
+        }
+        
+        // Проверяем заголовки
+        fetch('/test_security')
+            .then(response => {
+                const headers = response.headers;
+                for (let [key, value] of headers.entries()) {
+                    if (value.includes('JSTAG') || value.includes('eval')) {
+                        document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Подозрительный заголовок ' + key + ': ' + value + '</p>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.log('Ошибка проверки заголовков:', error);
+            });
+    </script>
+</body>
+</html> 
