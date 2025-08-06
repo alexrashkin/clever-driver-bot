@@ -1,0 +1,17 @@
+[Unit]
+Description=Driver Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/clever-driver-bot
+Environment=PATH=/root/clever-driver-bot/venv/bin
+ExecStart=/root/clever-driver-bot/venv/bin/python /root/clever-driver-bot/run_web.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target 
