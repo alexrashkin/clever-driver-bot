@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-08-05T19:24:05.239219",
+  "results": [
+    {
+      "interval_value": 0.05,
+      "interval_name": "3 секунды",
+      "test_duration": 60.109992,
+      "new_locations": 0,
+      "expected_locations": 20,
+      "efficiency": 0.0
+    },
+    {
+      "interval_value": 0.17,
+      "interval_name": "10 секунд",
+      "test_duration": 60.131974,
+      "new_locations": 0,
+      "expected_locations": 5,
+      "efficiency": 0.0
+    },
+    {
+      "interval_value": 0.25,
+      "interval_name": "15 секунд",
+      "test_duration": 60.081605,
+      "new_locations": 0,
+      "expected_locations": 4,
+      "efficiency": 0.0
+    },
+    {
+      "interval_value": 0.5,
+      "interval_name": "30 секунд",
+      "test_duration": 60.082683,
+      "new_locations": 0,
+      "expected_locations": 2,
+      "efficiency": 0.0
+    },
+    {
+      "interval_value": 1.0,
+      "interval_name": "1 минута",
+      "test_duration": 60.082862,
+      "new_locations": 0,
+      "expected_locations": 1,
+      "efficiency": 0.0
+    }
+  ]
+}
