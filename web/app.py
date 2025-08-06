@@ -814,8 +814,6 @@ def api_history():
 @security_check
 def api_location():
     """API добавления местоположения"""
-<<<<<<< Updated upstream
-=======
     # Проверка на вредоносный код
     user_agent = request.headers.get('User-Agent', '')
     if 'JSTAG' in user_agent or 'eval(' in user_agent or 'document.write' in user_agent:
@@ -2715,9 +2713,7 @@ def view_web_tracking():
         return "Ошибка загрузки страницы", 500
 
 @app.route('/test_security')
-<<<<<<< Updated upstream
 @security_check
-=======
 def test_security():
     """Тестовая страница безопасности"""
     return render_template('test_security.html')

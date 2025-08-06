@@ -7,10 +7,13 @@
 import sys
 import os
 import asyncio
-import nest_asyncio
 
-# Применяем nest_asyncio для решения проблем с event loop
-nest_asyncio.apply()
+# Пытаемся импортировать nest_asyncio, если не установлен - пропускаем
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+except ImportError:
+    print("⚠️ nest_asyncio не установлен, пропускаем...")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
