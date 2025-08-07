@@ -81,3 +81,8 @@ class Config:
     EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Умный водитель")
 
 config = Config()
+
+# Отладочная информация
+print(f"🔧 CONFIG_DEBUG: EMAIL_ENABLED = {config.EMAIL_ENABLED}")
+print(f"🔧 CONFIG_DEBUG: os.environ.get('EMAIL_ENABLED') = {os.environ.get('EMAIL_ENABLED')}")
+print(f"🔧 CONFIG_DEBUG: type(config.EMAIL_ENABLED) = {type(config.EMAIL_ENABLED)}")
