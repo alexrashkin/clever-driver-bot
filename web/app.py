@@ -29,6 +29,7 @@ import requests
 import asyncio
 import threading
 import traceback
+import math
 
 # Настройка логирования
 logging.basicConfig(
@@ -2182,7 +2183,23 @@ def current_location():
             lat, lon, is_at_work, timestamp, role, work_lat, work_lon, work_radius = user_location
             
             # Вычисляем расстояние до работы
-            from bot.utils import calculate_distance
+            try:
+                from bot.utils import calculate_distance
+            except ImportError:
+                # Fallback: простая функция расчета расстояния
+                import math
+                def calculate_distance(lat1, lon1, lat2, lon2):
+                    R = 6371000  # Радиус Земли в метрах
+                    lat1_rad = math.radians(lat1)
+                    lat2_rad = math.radians(lat2)
+                    delta_lat = math.radians(lat2 - lat1)
+                    delta_lon = math.radians(lon2 - lon1)
+                    a = (math.sin(delta_lat / 2) ** 2 + 
+                         math.cos(lat1_rad) * math.cos(lat2_rad) * 
+                         math.sin(delta_lon / 2) ** 2)
+                    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+                    return R * c
+            
             if work_lat and work_lon:
                 distance = calculate_distance(lat, lon, work_lat, work_lon)
             else:
@@ -2262,21 +2279,29 @@ def current_location():
                 'longitude': work_lon,
                 'radius': work_radius
             },
-            'status': 'В пути' if distance and distance > work_radius else 'Водитель ожидает'
+            'status': 'Данные получены'
         })
-            
+        
     except Exception as e:
-        logger.error(f"Ошибка получения текущего местоположения: {e}")
+        logger.error(f"Ошибка в API current_location: {e}")
         return jsonify({
             'success': False,
-            'error': 'Ошибка сервера',
+            'error': str(e),
             'location': {
                 'latitude': None,
                 'longitude': None,
+                'distance_to_work': None,
+                'is_at_work': False,
+                'timestamp': None,
                 'formatted_time': '--:--:--'
             },
-            'status': 'Ошибка загрузки'
-        }), 200
+            'work_zone': {
+                'latitude': None,
+                'longitude': None,
+                'radius': None
+            },
+            'status': 'Ошибка загрузки данных'
+        }), 500
 
 @app.route('/tracker')
 @security_check

@@ -404,32 +404,48 @@
         let updateInterval;
 
         // Конфигурация
-        const WORK_LAT = {{ work_lat }};
-        const WORK_LON = {{ work_lon }};
-        const WORK_RADIUS = {{ work_radius }};
+        const WORK_LAT = {{ work_lat if work_lat is not none else 55.7558 }};
+        const WORK_LON = {{ work_lon if work_lon is not none else 37.6176 }};
+        const WORK_RADIUS = {{ work_radius if work_radius is not none else 100 }};
         const UPDATE_INTERVAL = 3000; // 3 секунды
 
         // Инициализация карты
-        ymaps.ready(init);
+        ymaps.ready(function() {
+            try {
+                console.log('Yandex Maps готов, инициализируем карту...');
+                init();
+            } catch (error) {
+                console.error('Ошибка инициализации карты:', error);
+                showError('Ошибка загрузки карты: ' + error.message);
+            }
+        });
 
         function init() {
-            map = new ymaps.Map('map', {
-                center: [WORK_LAT, WORK_LON],
-                zoom: 15,
-                controls: ['zoomControl', 'typeSelector']
-            });
+            try {
+                console.log('Создаем карту с центром:', [WORK_LAT, WORK_LON]);
+                map = new ymaps.Map('map', {
+                    center: [WORK_LAT, WORK_LON],
+                    zoom: 15,
+                    controls: ['zoomControl', 'typeSelector']
+                });
 
-            // Создаем объекты на карте
-            createWorkZone();
-            
-            // Первоначальная загрузка данных
-            updateLocation();
-            
-            // Запускаем автообновление
-            startAutoUpdate();
-            
-            // Пытаемся получить местоположение пользователя
-            requestUserLocation();
+                // Создаем объекты на карте
+                createWorkZone();
+                
+                // Первоначальная загрузка данных
+                updateLocation();
+                
+                // Запускаем автообновление
+                startAutoUpdate();
+                
+                // Пытаемся получить местоположение пользователя
+                requestUserLocation();
+                
+                console.log('Карта успешно инициализирована');
+            } catch (error) {
+                console.error('Ошибка в функции init:', error);
+                showError('Ошибка инициализации: ' + error.message);
+            }
         }
 
         function createWorkZone() {
