@@ -559,8 +559,15 @@
 
         function requestUserLocation() {
             if (navigator.geolocation) {
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+                
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
+                        console.log('Геолокация пользователя получена:', position.coords);
                         userLocation = {
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude
@@ -591,9 +598,29 @@
                         updateLocation();
                     },
                     function(error) {
-                        console.log('Не удалось получить местоположение пользователя:', error);
-                    }
+                        console.error('Ошибка получения геолокации пользователя:', error);
+                        let errorMessage = 'Неизвестная ошибка';
+                        
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'Доступ к геолокации запрещен. Разрешите доступ в настройках браузера.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Информация о местоположении недоступна.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'Превышено время ожидания получения геолокации.';
+                                break;
+                            default:
+                                errorMessage = error.message || 'Ошибка получения геолокации';
+                        }
+                        
+                        showError(errorMessage);
+                    },
+                    options
                 );
+            } else {
+                showError('Геолокация не поддерживается в этом браузере');
             }
         }
 
@@ -651,30 +678,56 @@
 
         // Автоматическое сохранение местоположения получателя
         {% if session_token and user_info and user_info.role == 'recipient' %}
-        navigator.geolocation.watchPosition(
-            async function(position) {
-                try {
-                    await fetch(`/api/tracking/{{ session_token }}/location`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
-                            accuracy: position.coords.accuracy,
-                            altitude: position.coords.altitude,
-                            speed: position.coords.speed,
-                            heading: position.coords.heading
-                        })
-                    });
-                } catch (error) {
-                    console.error('Ошибка сохранения местоположения:', error);
-                }
-            },
-            function(error) {
-                console.error('Ошибка получения местоположения:', error);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
-        );
+        (function() {
+            const watchOptions = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 30000
+            };
+            
+            navigator.geolocation.watchPosition(
+                async function(position) {
+                    try {
+                        console.log('Отправка местоположения получателя:', position.coords);
+                        await fetch(`/api/tracking/{{ session_token }}/location`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                altitude: position.coords.altitude,
+                                speed: position.coords.speed,
+                                heading: position.coords.heading
+                            })
+                        });
+                    } catch (error) {
+                        console.error('Ошибка сохранения местоположения:', error);
+                    }
+                },
+                function(error) {
+                    console.error('Ошибка получения местоположения получателя:', error);
+                    let errorMessage = 'Неизвестная ошибка';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Доступ к геолокации запрещен. Разрешите доступ в настройках браузера.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Информация о местоположении недоступна.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Превышено время ожидания получения геолокации.';
+                            break;
+                        default:
+                            errorMessage = error.message || 'Ошибка получения геолокации';
+                    }
+                    
+                    showError(errorMessage);
+                },
+                watchOptions
+            );
+        })();
         {% endif %}
         
         // Очистка при закрытии страницы
