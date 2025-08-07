@@ -1595,26 +1595,33 @@ def forgot_password():
     """Страница восстановления пароля - запрос кода"""
     if request.method == 'POST':
         login = request.form.get('login')
+        logger.info(f"FORGOT_PASSWORD: получен запрос на восстановление пароля для логина: {login}")
         
         # Проверяем CSRF токен
         if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
             logger.error(f"FORGOT_PASSWORD: CSRF token validation failed for IP: {request.remote_addr}")
-            return render_template('forgot_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
+            return render_template('forgot_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.", csrf_token=security_manager.generate_csrf_token())
         
         if not login:
-            return render_template('forgot_password.html', error="Введите логин")
+            logger.warning("FORGOT_PASSWORD: не указан логин")
+            return render_template('forgot_password.html', error="Введите логин", csrf_token=security_manager.generate_csrf_token())
         
         # Проверяем, существует ли пользователь
         user = db.get_user_by_login(login)
         if not user:
-            return render_template('forgot_password.html', error="Пользователь с таким логином не найден")
+            logger.warning(f"FORGOT_PASSWORD: пользователь с логином {login} не найден")
+            return render_template('forgot_password.html', error="Пользователь с таким логином не найден", csrf_token=security_manager.generate_csrf_token())
+        
+        logger.info(f"FORGOT_PASSWORD: пользователь найден, email: {user.get('email')}")
         
         # Создаем код восстановления
         success, message = db.create_password_reset_code(login)
         if success:
-            return render_template('forgot_password.html', success="Код восстановления отправлен на ваш email")
+            logger.info(f"FORGOT_PASSWORD: код восстановления успешно создан для {login}")
+            return render_template('forgot_password.html', success="Код восстановления отправлен на ваш email", csrf_token=security_manager.generate_csrf_token())
         else:
-            return render_template('forgot_password.html', error=f"Ошибка отправки кода: {message}")
+            logger.error(f"FORGOT_PASSWORD: ошибка создания кода восстановления для {login}: {message}")
+            return render_template('forgot_password.html', error=f"Ошибка отправки кода: {message}", csrf_token=security_manager.generate_csrf_token())
     
     # Генерируем CSRF токен для формы
     csrf_token = security_manager.generate_csrf_token()
