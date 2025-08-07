@@ -68,12 +68,14 @@ def add_security_headers(response):
         "upgrade-insecure-requests;"
     )
     
-    response.headers['Content-Security-Policy'] = csp_policy
+    # Добавляем заголовки для разрешения геолокации
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    response.headers['Feature-Policy'] = 'geolocation *; microphone *; camera *'
+    
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     
     # Заголовки для улучшения репутации
