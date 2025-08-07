@@ -862,24 +862,24 @@ def api_location():
                     except ValueError:
                         logger.warning(f"OwnTracks: неверный user_id={user_id_param}")
                 
-                # Если user_id не указан или не найден, используем fallback
+                # Если user_id не указан, используем fallback для админа
                 if not user:
-                    # Fallback: ищем любого активного водителя
+                    # Fallback: используем админа
                     users = db.get_all_users()
                     for u in users:
-                        if u.get('role') in ['driver', 'admin']:
+                        if u.get('role') == 'admin':
                             telegram_id = u.get('telegram_id')
                             user = u
-                            logger.info(f"OwnTracks: используем fallback пользователя ID={u.get('id')}, telegram_id={telegram_id}")
+                            logger.info(f"OwnTracks: используем админа ID={u.get('id')}, telegram_id={telegram_id}")
                             break
                     
-                    # Если не нашли пользователя с telegram_id, используем первого водителя
+                    # Если админа нет, используем любого водителя
                     if not user:
                         for u in users:
                             if u.get('role') in ['driver', 'admin']:
+                                telegram_id = u.get('telegram_id')
                                 user = u
-                                telegram_id = u.get('telegram_id')  # может быть None
-                                logger.info(f"OwnTracks: используем водителя без telegram_id ID={u.get('id')}")
+                                logger.info(f"OwnTracks: используем fallback пользователя ID={u.get('id')}, telegram_id={telegram_id}")
                                 break
             
             # Сохраняем в базу, если координаты валидны
