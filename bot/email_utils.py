@@ -45,6 +45,11 @@ def send_email(to_email, subject, html_content, text_content=None):
     Returns:
         bool: True если отправка успешна, False в противном случае
     """
+    # Отладочная информация
+    logger.info(f"EMAIL_DEBUG: config.EMAIL_ENABLED = {config.EMAIL_ENABLED}")
+    logger.info(f"EMAIL_DEBUG: os.environ.get('EMAIL_ENABLED') = {os.environ.get('EMAIL_ENABLED')}")
+    logger.info(f"EMAIL_DEBUG: type(config.EMAIL_ENABLED) = {type(config.EMAIL_ENABLED)}")
+    
     if not config.EMAIL_ENABLED:
         logger.warning("Email отправка отключена в настройках")
         return False
