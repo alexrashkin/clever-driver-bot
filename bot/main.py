@@ -18,7 +18,12 @@ from bot.handlers import (
 )
 from bot.database import db
 from bot.utils import create_work_notification
-from bot.state import load_last_checked_id, save_last_checked_id, load_last_checked_time, save_last_checked_time, load_last_notification_type, save_last_notification_type
+from bot.state import (
+    load_last_checked_id, save_last_checked_id, 
+    load_last_checked_time, save_last_checked_time, 
+    load_last_notification_type, save_last_notification_type,
+    can_send_notification, save_last_arrival_time, save_last_departure_time
+)
 from bot.notification_system import notification_system
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -79,49 +84,54 @@ async def monitor_database(application: Application):
                     curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 0→1, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
                     if curr_ts - last_checked_time >= 10:
-                        last_checked_id = curr_id
-                        last_checked_time = curr_ts
-                        last_notification_type = 'arrival'
-                        save_last_checked_id(last_checked_id)
-                        save_last_checked_time(curr_ts)
-                        save_last_notification_type(last_notification_type)
-                        
-                        # Проверяем статус отслеживания
-                        conn = sqlite3.connect('driver.db')
-                        cursor = conn.cursor()
-                        cursor.execute('SELECT is_active FROM tracking_status WHERE id = 1')
-                        result = cursor.fetchone()
-                        tracking_active = result[0] if result else False
-                        conn.close()
-                        logger.info(f"📡 Отслеживание активно: {tracking_active}")
-                        if tracking_active:
-                            # Получаем получателей
+                        # Проверяем временные ограничения для уведомлений о прибытии
+                        if can_send_notification('arrival', max_interval_minutes=30):
+                            last_checked_id = curr_id
+                            last_checked_time = curr_ts
+                            last_notification_type = 'arrival'
+                            save_last_checked_id(last_checked_id)
+                            save_last_checked_time(curr_ts)
+                            save_last_notification_type(last_notification_type)
+                            save_last_arrival_time(curr_ts)  # Сохраняем время уведомления о прибытии
+                            
+                            # Проверяем статус отслеживания
                             conn = sqlite3.connect('driver.db')
                             cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient'")
-                            recipients = cursor.fetchall()
+                            cursor.execute('SELECT is_active FROM tracking_status WHERE id = 1')
+                            result = cursor.fetchone()
+                            tracking_active = result[0] if result else False
                             conn.close()
-                            logger.info(f"👥 Получателей: {len(recipients)}")
-                            if recipients:
-                                logger.info(f"Пробую отправить уведомление! recipients: {recipients}")
-                                # Отправляем уведомление через Telegram
-                                from bot.utils import create_work_notification
-                                system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
-                                result = await notification_system.send_notification_with_confirmation(
-                                    notification_type='automatic',
-                                    sender_info=system_info,
-                                    recipients=[r[0] for r in recipients],
-                                    notification_text=create_work_notification(),
-                                    custom_confirmation=True
-                                )
-                                if result['success']:
-                                    logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
+                            logger.info(f"📡 Отслеживание активно: {tracking_active}")
+                            if tracking_active:
+                                # Получаем получателей
+                                conn = sqlite3.connect('driver.db')
+                                cursor = conn.cursor()
+                                cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient'")
+                                recipients = cursor.fetchall()
+                                conn.close()
+                                logger.info(f"👥 Получателей: {len(recipients)}")
+                                if recipients:
+                                    logger.info(f"Пробую отправить уведомление! recipients: {recipients}")
+                                    # Отправляем уведомление через Telegram
+                                    from bot.utils import create_work_notification
+                                    system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
+                                    result = await notification_system.send_notification_with_confirmation(
+                                        notification_type='automatic',
+                                        sender_info=system_info,
+                                        recipients=[r[0] for r in recipients],
+                                        notification_text=create_work_notification(),
+                                        custom_confirmation=True
+                                    )
+                                    if result['success']:
+                                        logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
+                                    else:
+                                        logger.warning("❌ Не удалось отправить автоматические уведомления")
                                 else:
-                                    logger.warning("❌ Не удалось отправить автоматические уведомления")
+                                    logger.warning("❌ Нет получателей для отправки уведомлений")
                             else:
-                                logger.warning("❌ Нет получателей для отправки уведомлений")
+                                logger.info("Отслеживание выключено, уведомление не отправлено")
                         else:
-                            logger.info("Отслеживание выключено, уведомление не отправлено")
+                            logger.info("⏰ Уведомление о прибытии заблокировано временными ограничениями")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
                 elif not status_stable:
@@ -136,37 +146,42 @@ async def monitor_database(application: Application):
                     curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 1→0, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
                     if curr_ts - last_checked_time >= 10:
-                        last_checked_id = curr_id
-                        last_checked_time = curr_ts
-                        last_notification_type = 'departure'
-                        save_last_checked_id(last_checked_id)
-                        save_last_checked_time(curr_ts)
-                        save_last_notification_type(last_notification_type)
-                        
-                        # Получаем всех пользователей
-                        conn = sqlite3.connect('driver.db')
-                        cursor = conn.cursor()
-                        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
-                        users = cursor.fetchall()
-                        conn.close()
-                        logger.info(f"👥 Пользователей для уведомления о выезде: {len(users)}")
-                        if users:
-                            # Отправляем уведомление через систему уведомлений с подтверждениями
-                            from bot.utils import create_work_notification
-                            system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
-                            result = await notification_system.send_notification_with_confirmation(
-                                notification_type='automatic',
-                                sender_info=system_info,
-                                recipients=[u[0] for u in users],
-                                notification_text="Выехали",
-                                custom_confirmation=True
-                            )
-                            if result['success']:
-                                logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ О ВЫЕЗДЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
+                        # Проверяем временные ограничения для уведомлений о выезде
+                        if can_send_notification('departure', max_interval_minutes=30):
+                            last_checked_id = curr_id
+                            last_checked_time = curr_ts
+                            last_notification_type = 'departure'
+                            save_last_checked_id(last_checked_id)
+                            save_last_checked_time(curr_ts)
+                            save_last_notification_type(last_notification_type)
+                            save_last_departure_time(curr_ts)  # Сохраняем время уведомления о выезде
+                            
+                            # Получаем всех пользователей
+                            conn = sqlite3.connect('driver.db')
+                            cursor = conn.cursor()
+                            cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+                            users = cursor.fetchall()
+                            conn.close()
+                            logger.info(f"👥 Пользователей для уведомления о выезде: {len(users)}")
+                            if users:
+                                # Отправляем уведомление через систему уведомлений с подтверждениями
+                                from bot.utils import create_work_notification
+                                system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
+                                result = await notification_system.send_notification_with_confirmation(
+                                    notification_type='automatic',
+                                    sender_info=system_info,
+                                    recipients=[u[0] for u in users],
+                                    notification_text="Выехали",
+                                    custom_confirmation=True
+                                )
+                                if result['success']:
+                                    logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ О ВЫЕЗДЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
+                                else:
+                                    logger.warning("❌ Не удалось отправить автоматические уведомления о выезде")
                             else:
-                                logger.warning("❌ Не удалось отправить автоматические уведомления о выезде")
+                                logger.warning("❌ Нет пользователей для отправки уведомлений о выезде")
                         else:
-                            logger.warning("❌ Нет пользователей для отправки уведомлений о выезде")
+                            logger.info("⏰ Уведомление о выезде заблокировано временными ограничениями")
                     else:
                         logger.info(f"Переход из радиуса, но уведомление не отправлено: прошло меньше 10 секунд")
             await asyncio.sleep(2)
