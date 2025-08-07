@@ -1,22 +1,28 @@
 import os
 import secrets
 
+# Функция для логирования в файл
+def log_to_file(message):
+    with open('/tmp/config_debug.log', 'a', encoding='utf-8') as f:
+        f.write(f"{message}\n")
+    print(message)
+
 # Загружаем переменные окружения из .env файла
 def load_env_file():
     env_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-    print(f"🔍 CONFIG: Проверяем .env файл: {env_file}")
+    log_to_file(f"🔍 CONFIG: Проверяем .env файл: {env_file}")
     if os.path.exists(env_file):
-        print("✅ CONFIG: .env файл найден, загружаем переменные...")
+        log_to_file("✅ CONFIG: .env файл найден, загружаем переменные...")
         with open(env_file, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
                     key, value = line.split('=', 1)
                     os.environ[key] = value
-                    print(f"📝 CONFIG: Загружена переменная: {key}")
-        print(f"📧 CONFIG: EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
+                    log_to_file(f"📝 CONFIG: Загружена переменная: {key}")
+        log_to_file(f"📧 CONFIG: EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
     else:
-        print("❌ CONFIG: .env файл не найден")
+        log_to_file("❌ CONFIG: .env файл не найден")
 
 # Загружаем .env файл
 load_env_file()
