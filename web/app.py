@@ -1814,6 +1814,12 @@ def admin_unbind_telegram(user_id):
 def telegram_auth():
     try:
         logger.info(f"TELEGRAM_AUTH: начало обработки запроса, метод: {request.method}")
+        
+        # Проверяем, установлен ли токен
+        if not config.TELEGRAM_TOKEN or config.TELEGRAM_TOKEN == "your-telegram-bot-token-here":
+            logger.error("TELEGRAM_AUTH: токен Telegram не установлен")
+            return 'Ошибка конфигурации: токен Telegram не установлен', 500
+        
         # Проверка подписи Telegram
         data = request.args if request.method == 'GET' else request.form
         auth_data = dict(data)
