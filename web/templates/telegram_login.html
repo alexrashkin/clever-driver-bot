@@ -119,7 +119,8 @@
                 <strong>Отладка:</strong><br>
                 Bot: {{ telegram_bot_username }}<br>
                 URL: {{ auth_url }}<br>
-                <span id="widget-status">Статус: Загрузка...</span>
+                <span id="widget-status">Статус: Загрузка...</span><br>
+                <span id="widget-details" style="font-size: 11px; color: #888;"></span>
             </div>
             
             <!-- Telegram Widget -->
@@ -137,6 +138,12 @@
             <!-- Fallback если виджет не загрузился -->
             <div id="fallback-widget" style="display: none; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-top: 10px;">
                 <p style="color: #666; margin-bottom: 15px;">Виджет Telegram не загрузился</p>
+                <p style="color: #888; font-size: 0.9em; margin-bottom: 15px;">
+                    Возможные причины:<br>
+                    • Бот не настроен для виджета авторизации<br>
+                    • Проблемы с сетью или блокировкой<br>
+                    • Неправильные параметры виджета
+                </p>
                 <a href="https://t.me/{{ telegram_bot_username }}" 
                    target="_blank" 
                    style="display: inline-block; padding: 12px 24px; background: #0088cc; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 5px;">
@@ -146,6 +153,11 @@
                 <a href="/test_bot" 
                    style="display: inline-block; padding: 8px 16px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; margin: 5px;">
                     🔍 Проверить бота
+                </a>
+                <br>
+                <a href="/login" 
+                   style="display: inline-block; padding: 8px 16px; background: #28a745; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; margin: 5px;">
+                    🔑 Войти по логину/паролю
                 </a>
             </div>
         </div>
@@ -166,45 +178,64 @@
             const fallbackWidget = document.getElementById('fallback-widget');
             const debugInfo = document.getElementById('debug-info');
             const widgetStatus = document.getElementById('widget-status');
+            const widgetDetails = document.getElementById('widget-details');
+            
+            let checkCount = 0;
+            const maxChecks = 5;
             
             // Функция для проверки виджета
             function checkWidget() {
-                const telegramWidget = widgetContainer.querySelector('iframe, [data-telegram-login], .telegram-login-widget, .telegram-login');
-                const hasWidget = telegramWidget && telegramWidget.offsetHeight > 0 && telegramWidget.style.display !== 'none';
+                checkCount++;
                 
-                console.log('Проверка виджета:', {
+                // Ищем различные элементы виджета
+                const iframe = widgetContainer.querySelector('iframe');
+                const script = widgetContainer.querySelector('script[src*="telegram-widget"]');
+                const telegramElement = widgetContainer.querySelector('[data-telegram-login], .telegram-login-widget, .telegram-login');
+                
+                const hasIframe = iframe && iframe.offsetHeight > 0 && iframe.style.display !== 'none';
+                const hasScript = script !== null;
+                const hasTelegramElement = telegramElement && telegramElement.offsetHeight > 0;
+                
+                const hasWidget = hasIframe || hasTelegramElement;
+                
+                console.log(`Проверка виджета #${checkCount}:`, {
                     hasWidget: hasWidget,
-                    widgetElement: telegramWidget,
-                    offsetHeight: telegramWidget ? telegramWidget.offsetHeight : 0,
-                    display: telegramWidget ? telegramWidget.style.display : 'none'
+                    hasIframe: hasIframe,
+                    hasScript: hasScript,
+                    hasTelegramElement: hasTelegramElement,
+                    iframeHeight: iframe ? iframe.offsetHeight : 0,
+                    elementHeight: telegramElement ? telegramElement.offsetHeight : 0
                 });
                 
-                if (!hasWidget) {
-                    console.log('Telegram widget не загрузился, показываем fallback');
+                // Обновляем детали
+                widgetDetails.innerHTML = `
+                    Проверка #${checkCount}/${maxChecks}<br>
+                    Script: ${hasScript ? '✅' : '❌'}<br>
+                    Iframe: ${hasIframe ? '✅' : '❌'}<br>
+                    Element: ${hasTelegramElement ? '✅' : '❌'}
+                `;
+                
+                if (!hasWidget && checkCount >= maxChecks) {
+                    console.log('Telegram widget не загрузился после всех проверок, показываем fallback');
                     widgetContainer.style.display = 'none';
                     fallbackWidget.style.display = 'block';
                     debugInfo.style.display = 'block';
                     widgetStatus.textContent = 'Статус: ❌ Не загрузился';
                     widgetStatus.style.color = 'red';
-                } else {
+                    widgetDetails.innerHTML += '<br><strong>Причина: Виджет не отрендерился</strong>';
+                } else if (hasWidget) {
                     console.log('Telegram widget загрузился успешно');
                     debugInfo.style.display = 'none';
                     widgetStatus.textContent = 'Статус: ✅ Загружен';
                     widgetStatus.style.color = 'green';
+                } else {
+                    // Продолжаем проверки
+                    setTimeout(checkWidget, 2000);
                 }
             }
             
-            // Проверяем через 1 секунду
+            // Начинаем проверки через 1 секунду
             setTimeout(checkWidget, 1000);
-            
-            // Проверяем через 3 секунды
-            setTimeout(checkWidget, 3000);
-            
-            // Проверяем через 5 секунд
-            setTimeout(checkWidget, 5000);
-            
-            // Проверяем через 10 секунд
-            setTimeout(checkWidget, 10000);
         });
     </script>
 </body>
