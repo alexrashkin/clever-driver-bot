@@ -3,10 +3,32 @@
 
 import smtplib
 import ssl
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from config.settings import config
 import logging
+
+# Загружаем переменные окружения из .env файла
+def load_env_file():
+    env_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    print(f"🔍 EMAIL_UTILS: Проверяем .env файл: {env_file}")
+    if os.path.exists(env_file):
+        print("✅ EMAIL_UTILS: .env файл найден, загружаем переменные...")
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+                    print(f"📝 EMAIL_UTILS: Загружена переменная: {key}")
+        print(f"📧 EMAIL_UTILS: EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
+    else:
+        print("❌ EMAIL_UTILS: .env файл не найден")
+
+# Загружаем .env файл
+load_env_file()
+
+from config.settings import config
 
 logger = logging.getLogger(__name__)
 
