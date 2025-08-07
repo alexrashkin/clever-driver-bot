@@ -8,7 +8,7 @@ from config.settings import config
 from bot.database import Database  # Импортируем класс, а не экземпляр
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
 from web.location_web_tracker import location_web_tracker, web_tracker
-from web.security import security_check, security_manager, log_security_event, login_rate_limit, csrf_protect
+from web.security import security_check, auth_security_check, security_manager, log_security_event, login_rate_limit, csrf_protect
 import logging
 import requests
 from datetime import datetime, timedelta
@@ -1455,7 +1455,7 @@ def static_files(filename):
     return response
 
 @app.route('/register', methods=['GET', 'POST'])
-@security_check
+@auth_security_check
 @login_rate_limit
 def register():
     """Страница регистрации"""
@@ -1529,7 +1529,7 @@ def register():
     return render_template('register.html', csrf_token=csrf_token)
 
 @app.route('/login', methods=['GET', 'POST'])
-@security_check
+@auth_security_check
 @login_rate_limit
 def login():
     """Страница входа в систему"""
@@ -1582,7 +1582,7 @@ def logout():
     return response
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
-@security_check
+@auth_security_check
 @login_rate_limit
 def forgot_password():
     """Страница восстановления пароля - запрос кода"""
@@ -1595,28 +1595,31 @@ def forgot_password():
             return render_template('forgot_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
         
         if not login:
-            session['flash_message'] = 'Введите логин'
-            return redirect('/forgot_password')
+            return render_template('forgot_password.html', error="Введите логин")
+        
+        # Проверяем, существует ли пользователь
+        user = db.get_user_by_login(login)
+        if not user:
+            return render_template('forgot_password.html', error="Пользователь с таким логином не найден")
         
         # Создаем код восстановления
-        success, result = db.create_password_reset_code(login)
+        success, message = db.create_password_reset_code(login)
         if success:
-            session['flash_message'] = f'Код восстановления отправлен на email, привязанный к логину {login}'
+            return render_template('forgot_password.html', success="Код восстановления отправлен на ваш email")
         else:
-            session['flash_message'] = f'Ошибка: {result}'
-        
-        return redirect('/forgot_password')
+            return render_template('forgot_password.html', error=f"Ошибка отправки кода: {message}")
     
     # Генерируем CSRF токен для формы
     csrf_token = security_manager.generate_csrf_token()
     return render_template('forgot_password.html', csrf_token=csrf_token)
 
 @app.route('/reset_password', methods=['GET', 'POST'])
-@security_check
+@auth_security_check
 @login_rate_limit
 def reset_password():
-    """Страница сброса пароля по коду"""
+    """Страница восстановления пароля - ввод нового пароля"""
     if request.method == 'POST':
+        login = request.form.get('login')
         code = request.form.get('code')
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
@@ -1626,7 +1629,7 @@ def reset_password():
             logger.error(f"RESET_PASSWORD: CSRF token validation failed for IP: {request.remote_addr}")
             return render_template('reset_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
         
-        if not code or not new_password or not confirm_password:
+        if not all([login, code, new_password, confirm_password]):
             return render_template('reset_password.html', error="Заполните все поля")
         
         if new_password != confirm_password:
@@ -1637,18 +1640,17 @@ def reset_password():
         if not password_valid:
             return render_template('reset_password.html', error=password_message)
         
-        # Проверяем код и сбрасываем пароль
-        success, result = db.verify_password_reset_code(code)
+        # Проверяем код восстановления
+        success, message = db.verify_password_reset_code(login, code)
+        if not success:
+            return render_template('reset_password.html', error=message)
+        
+        # Сбрасываем пароль
+        success, message = db.reset_user_password(login, new_password)
         if success:
-            login = result
-            success, message = db.reset_user_password(login, new_password)
-            if success:
-                session['flash_message'] = 'Пароль успешно изменен. Теперь вы можете войти в систему.'
-                return redirect('/login')
-            else:
-                return render_template('reset_password.html', error=f"Ошибка сброса пароля: {message}")
+            return render_template('reset_password.html', success="Пароль успешно изменен. Теперь вы можете войти в систему.")
         else:
-            return render_template('reset_password.html', error=f"Неверный код: {result}")
+            return render_template('reset_password.html', error=f"Ошибка сброса пароля: {message}")
     
     # Генерируем CSRF токен для формы
     csrf_token = security_manager.generate_csrf_token()

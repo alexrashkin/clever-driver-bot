@@ -441,6 +441,43 @@ def security_check(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def auth_security_check(f):
+    """Декоратор для проверки безопасности маршрутов аутентификации (менее строгий)"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        ip_address = request.remote_addr
+        
+        # Проверяем блокировку IP
+        if security_manager.ip_blocker.is_blocked(ip_address):
+            logger.warning(f"SECURITY: Заблокированный IP пытается получить доступ: {ip_address}")
+            return "Access denied - IP blocked", 403
+        
+        # Проверяем rate limiting
+        if not security_manager.rate_limiter.is_allowed(ip_address):
+            logger.warning(f"SECURITY: Rate limit exceeded for IP: {ip_address}")
+            return "Rate limit exceeded", 429
+        
+        # Проверяем User-Agent (менее строго для аутентификации)
+        user_agent = request.headers.get('User-Agent', '')
+        if security_manager.check_user_agent(user_agent):
+            logger.warning(f"SECURITY: Подозрительный User-Agent для аутентификации: {user_agent}")
+            # Не блокируем, но логируем
+        
+        # Проверяем GET параметры
+        if request.args:
+            for key, value in request.args.items():
+                if (security_manager.check_xss(value) or 
+                    security_manager.check_sql_injection(value) or
+                    security_manager.check_command_injection(value)):
+                    logger.error(f"SECURITY: Блокированы подозрительные GET параметры: {key}={value}")
+                    security_manager.ip_blocker.record_failed_attempt(ip_address)
+                    return "Access denied", 403
+        
+        # НЕ проверяем POST данные для аутентификации (они могут содержать легитимные символы)
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
 def login_rate_limit(f):
     """Декоратор для ограничения скорости входа в систему"""
     @wraps(f)
