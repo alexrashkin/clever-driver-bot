@@ -2829,7 +2829,7 @@ def change_password():
                     # Для пользователей с Telegram нужно проверить, есть ли у них логин
                     user = db.get_user_by_telegram_id(telegram_id)
                     if not user or not user.get('login'):
-                        message = "Для изменения пароля необходимо иметь логин"
+                        message = "Для изменения пароля необходимо иметь логин. Обратитесь к администратору для создания логина."
                         error = True
                     elif not db.verify_password(user['login'], current_password):
                         message = "Неверный текущий пароль"
