@@ -2460,6 +2460,17 @@ def resend_telegram_code():
 def telegram_login():
     """Страница входа через Telegram"""
     telegram_bot_username = config.TELEGRAM_BOT_USERNAME
+    logger.info(f"TELEGRAM_LOGIN: bot_username={telegram_bot_username}")
+    
+    # Проверяем, что username не содержит лишних символов
+    if telegram_bot_username.startswith('@'):
+        telegram_bot_username = telegram_bot_username[1:]
+    
+    # Убираем подчеркивания и приводим к нижнему регистру
+    telegram_bot_username = telegram_bot_username.replace('_', '').lower()
+    
+    logger.info(f"TELEGRAM_LOGIN: cleaned_bot_username={telegram_bot_username}")
+    
     return render_template('telegram_login.html', telegram_bot_username=telegram_bot_username)
 
 @app.route('/unbind_telegram', methods=['POST'])
