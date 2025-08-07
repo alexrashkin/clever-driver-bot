@@ -299,6 +299,11 @@
                 </div>
                 <input type="hidden" name="buttons" id="buttons-json">
                 <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user.email or '' }}" placeholder="your@email.com">
+                    <small style="color: #666; font-size: 0.9em;">💡 Обязательно для восстановления пароля</small>
+                </div>
+                <div class="form-group">
                     <label for="work_latitude">Широта работы</label>
                     <input type="text" id="work_latitude" name="work_latitude" value="{{ '%.6f' % user.work_latitude if user.work_latitude is not none else '' }}" placeholder="55.7539" required>
                     <small style="color: #666; font-size: 0.9em;">💡 Можно вставить координаты из Google Maps или Яндекс Карты - они автоматически разделятся</small>

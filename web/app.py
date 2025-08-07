@@ -1334,30 +1334,39 @@ def settings():
             work_latitude = request.form.get('work_latitude')
             work_longitude = request.form.get('work_longitude')
             work_radius = request.form.get('work_radius')
-            try:
-                # Для пользователей с логином/паролем обновляем настройки через логин
-                if user.get('telegram_id'):
-                    db.update_user_settings(
-                        user['telegram_id'],
-                        buttons=buttons,
-                        work_latitude=work_latitude,
-                        work_longitude=work_longitude,
-                        work_radius=work_radius
-                    )
-                    message = 'Настройки успешно сохранены'
-                else:
-                    # Пользователи без Telegram могут сохранять настройки по логину
-                    db.update_user_settings_by_login(
-                        user_login,
-                        buttons=buttons,
-                        work_latitude=work_latitude,
-                        work_longitude=work_longitude,
-                        work_radius=work_radius
-                    )
-                    message = 'Настройки успешно сохранены'
-            except Exception as e:
-                message = f'Ошибка сохранения: {e}'
+            email = request.form.get('email', '').strip()
+            
+            # Валидация email
+            if email and not security_manager.validate_email(email):
+                message = "Введите корректный email адрес"
                 error = True
+            else:
+                try:
+                    # Для пользователей с логином/паролем обновляем настройки через логин
+                    if user.get('telegram_id'):
+                        db.update_user_settings(
+                            user['telegram_id'],
+                            buttons=buttons,
+                            work_latitude=work_latitude,
+                            work_longitude=work_longitude,
+                            work_radius=work_radius,
+                            email=email
+                        )
+                        message = 'Настройки успешно сохранены'
+                    else:
+                        # Пользователи без Telegram могут сохранять настройки по логину
+                        db.update_user_settings_by_login(
+                            user_login,
+                            buttons=buttons,
+                            work_latitude=work_latitude,
+                            work_longitude=work_longitude,
+                            work_radius=work_radius,
+                            email=email
+                        )
+                        message = 'Настройки успешно сохранены'
+                except Exception as e:
+                    message = f'Ошибка сохранения: {e}'
+                    error = True
             user = db.get_user_by_login(user_login)  # Обновить данные
         
         # Получаем приглашения пользователя (если он водитель или админ)
@@ -1397,18 +1406,26 @@ def settings():
             work_latitude = request.form.get('work_latitude')
             work_longitude = request.form.get('work_longitude')
             work_radius = request.form.get('work_radius')
-            try:
-                db.update_user_settings(
-                    telegram_id,
-                    buttons=buttons,
-                    work_latitude=work_latitude,
-                    work_longitude=work_longitude,
-                    work_radius=work_radius
-                )
-                message = 'Настройки успешно сохранены'
-            except Exception as e:
-                message = f'Ошибка сохранения: {e}'
+            email = request.form.get('email', '').strip()
+            
+            # Валидация email
+            if email and not security_manager.validate_email(email):
+                message = "Введите корректный email адрес"
                 error = True
+            else:
+                try:
+                    db.update_user_settings(
+                        telegram_id,
+                        buttons=buttons,
+                        work_latitude=work_latitude,
+                        work_longitude=work_longitude,
+                        work_radius=work_radius,
+                        email=email
+                    )
+                    message = 'Настройки успешно сохранены'
+                except Exception as e:
+                    message = f'Ошибка сохранения: {e}'
+                    error = True
             user = db.get_user_by_telegram_id(telegram_id)  # Обновить данные
         
         # Получаем приглашения пользователя (если он водитель или админ)
@@ -1612,7 +1629,14 @@ def forgot_password():
             logger.warning(f"FORGOT_PASSWORD: пользователь с логином {login} не найден")
             return render_template('forgot_password.html', error="Пользователь с таким логином не найден", csrf_token=security_manager.generate_csrf_token())
         
-        logger.info(f"FORGOT_PASSWORD: пользователь найден, email: {user.get('email')}")
+        logger.info(f"FORGOT_PASSWORD: пользователь найден, email в БД: {user.get('email')}")
+        
+        # Проверяем, есть ли email у пользователя
+        if not user.get('email'):
+            logger.warning(f"FORGOT_PASSWORD: у пользователя {login} не указан email")
+            return render_template('forgot_password.html', 
+                                 error="Для восстановления пароля необходим email, указанный при регистрации. Обратитесь к администратору или обновите email в настройках профиля.", 
+                                 csrf_token=security_manager.generate_csrf_token())
         
         # Создаем код восстановления
         success, message = db.create_password_reset_code(login)
