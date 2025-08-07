@@ -903,7 +903,7 @@ def api_location():
         elif 'latitude' in data and 'longitude' in data:
             latitude = data['latitude']
             longitude = data['longitude']
-            tst = pytime.time()
+            tst = time.time()
         
         if latitude is not None and longitude is not None:
             # Получаем информацию о пользователе
