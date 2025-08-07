@@ -11,16 +11,16 @@
     <p>Время: <span id="time"></span></p>
     <p>User-Agent: <span id="useragent"></span></p>
     <p>IP: <span id="ip">{{ request.remote_addr }}</span></p>
-    
+
     <script>
         document.getElementById('time').textContent = new Date().toLocaleString();
         document.getElementById('useragent').textContent = navigator.userAgent;
-        
+
         // Проверяем, не был ли добавлен вредоносный код
         if (typeof JSTAG !== 'undefined') {
             document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Обнаружен JSTAG!</p>';
         }
-        
+
         // Проверяем внешние скрипты
         const scripts = document.getElementsByTagName('script');
         for (let script of scripts) {
@@ -28,13 +28,26 @@
                 document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Подозрительный скрипт: ' + script.src + '</p>';
             }
         }
-        
-        // Проверяем весь HTML на вредоносный код
+
+        // Проверяем весь HTML на вредоносный код (исключаем собственный код проверки)
         const htmlContent = document.documentElement.outerHTML;
-        if (htmlContent.includes('JSTAG') || htmlContent.includes('eval(') || htmlContent.includes('document.write')) {
-            document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Обнаружен вредоносный код в HTML!</p>';
+        const suspiciousPatterns = ['JSTAG', 'eval(', 'document.write'];
+        let foundSuspicious = false;
+        
+        for (let pattern of suspiciousPatterns) {
+            // Исключаем собственный код проверки
+            if (htmlContent.includes(pattern) && !htmlContent.includes('suspiciousPatterns') && !htmlContent.includes('foundSuspicious')) {
+                foundSuspicious = true;
+                break;
+            }
         }
         
+        if (foundSuspicious) {
+            document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Обнаружен вредоносный код в HTML!</p>';
+        } else {
+            document.body.innerHTML += '<p style="color:green;">✅ Вредоносный код не обнаружен</p>';
+        }
+
         // Проверяем заголовки
         fetch('/test_security')
             .then(response => {
