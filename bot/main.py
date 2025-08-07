@@ -18,7 +18,7 @@ from bot.handlers import (
 )
 from bot.database import db
 from bot.utils import create_work_notification
-from bot.state import load_last_checked_id, save_last_checked_id, load_last_checked_time, save_last_checked_time
+from bot.state import load_last_checked_id, save_last_checked_id, load_last_checked_time, save_last_checked_time, load_last_notification_type, save_last_notification_type
 from bot.notification_system import notification_system
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +40,8 @@ logger = logging.getLogger(__name__)
 async def monitor_database(application: Application):
     last_checked_id = load_last_checked_id()
     last_checked_time = load_last_checked_time()
-    logger.info(f"🚀 Мониторинг базы данных запущен. last_checked_id: {last_checked_id}, last_checked_time: {last_checked_time}")
+    last_notification_type = load_last_notification_type()  # Новое: тип последнего уведомления
+    logger.info(f"🚀 Мониторинг базы данных запущен. last_checked_id: {last_checked_id}, last_checked_time: {last_checked_time}, last_notification_type: {last_notification_type}")
 
     while True:
         try:
@@ -64,14 +65,20 @@ async def monitor_database(application: Application):
                 logger.info(f"📍 Предыдущая: ID {prev_id}, is_at_work: {prev_is_at_work}, время: {prev_time}")
 
                 # Переход 0→1 (въезд в зону)
-                if prev_is_at_work == 0 and curr_is_at_work == 1 and curr_id != last_checked_id:
+                if (prev_is_at_work == 0 and curr_is_at_work == 1 and 
+                    curr_id != last_checked_id and 
+                    last_notification_type != 'arrival'):
                     import time as t
                     curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 0→1, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
                     if curr_ts - last_checked_time >= 10:
                         last_checked_id = curr_id
+                        last_checked_time = curr_ts
+                        last_notification_type = 'arrival'
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
+                        save_last_notification_type(last_notification_type)
+                        
                         # Проверяем статус отслеживания
                         conn = sqlite3.connect('driver.db')
                         cursor = conn.cursor()
@@ -110,15 +117,22 @@ async def monitor_database(application: Application):
                             logger.info("Отслеживание выключено, уведомление не отправлено")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
+                
                 # Переход 1→0 (выезд из зоны)
-                if prev_is_at_work == 1 and curr_is_at_work == 0 and curr_id != last_checked_id:
+                if (prev_is_at_work == 1 and curr_is_at_work == 0 and 
+                    curr_id != last_checked_id and 
+                    last_notification_type != 'departure'):
                     import time as t
                     curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 1→0, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
                     if curr_ts - last_checked_time >= 10:
                         last_checked_id = curr_id
+                        last_checked_time = curr_ts
+                        last_notification_type = 'departure'
                         save_last_checked_id(last_checked_id)
                         save_last_checked_time(curr_ts)
+                        save_last_notification_type(last_notification_type)
+                        
                         # Получаем всех пользователей
                         conn = sqlite3.connect('driver.db')
                         cursor = conn.cursor()
