@@ -98,41 +98,7 @@
             opacity: 0.9;
         }
         
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            color: #6b7280;
-            transition: all 0.3s;
-        }
-        
-        .tab.active {
-            color: #667eea;
-            border-bottom: 2px solid #667eea;
-        }
-        
-        .tab:hover {
-            color: #667eea;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .users-table, .invitations-table {
+        .users-table {
             width: 100%;
             border-collapse: collapse;
             background: white;
@@ -142,23 +108,19 @@
         }
         
         .users-table th,
-        .users-table td,
-        .invitations-table th,
-        .invitations-table td {
+        .users-table td {
             padding: 15px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
         }
         
-        .users-table th,
-        .invitations-table th {
+        .users-table th {
             background: #f8f9fa;
             font-weight: 600;
             color: #374151;
         }
         
-        .users-table tr:hover,
-        .invitations-table tr:hover {
+        .users-table tr:hover {
             background: #f8f9fa;
         }
         
@@ -183,28 +145,6 @@
         .role-recipient {
             background: #dcfce7;
             color: #16a34a;
-        }
-        
-        .invitation-status {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-        
-        .status-active {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-        
-        .status-used {
-            background: #fef3c7;
-            color: #d97706;
-        }
-        
-        .status-expired {
-            background: #fee2e2;
-            color: #dc2626;
         }
         
         .btn {
@@ -245,15 +185,6 @@
         
         .btn-info:hover {
             background: #0e7490;
-        }
-        
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #15803d;
         }
         
         .search-box {
@@ -307,40 +238,6 @@
             color: #5a67d8;
         }
         
-        .create-invite-form {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #374151;
-        }
-        
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
         /* Темная тема */
         body.dark {
             background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
@@ -365,48 +262,32 @@
             color: #1a202c;
         }
         
-        body.dark .users-table,
-        body.dark .invitations-table {
+        body.dark .users-table {
             background: #4a5568;
             color: #e2e8f0;
         }
         
-        body.dark .users-table th,
-        body.dark .invitations-table th {
+        body.dark .users-table th {
             background: #2d3748;
             color: #e2e8f0;
         }
         
-        body.dark .users-table tr:hover,
-        body.dark .invitations-table tr:hover {
+        body.dark .users-table tr:hover {
             background: #4a5568;
         }
         
-        body.dark .users-table td,
-        body.dark .invitations-table td {
+        body.dark .users-table td {
             border-bottom-color: #718096;
         }
         
-        body.dark .search-input,
-        body.dark .form-group input,
-        body.dark .form-group select {
+        body.dark .search-input {
             background: #4a5568;
             border-color: #718096;
             color: #e2e8f0;
         }
         
-        body.dark .search-input:focus,
-        body.dark .form-group input:focus,
-        body.dark .form-group select:focus {
+        body.dark .search-input:focus {
             border-color: #90cdf4;
-        }
-        
-        body.dark .create-invite-form {
-            background: #4a5568;
-        }
-        
-        body.dark .form-group label {
-            color: #e2e8f0;
         }
     </style>
 </head>
@@ -445,168 +326,58 @@
                     <div class="stat-number">{{ users|selectattr('role', 'equalto', 'recipient')|list|length }}</div>
                     <div class="stat-label">Получателей</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ invitations|length }}</div>
-                    <div class="stat-label">Приглашений</div>
-                </div>
             </div>
             
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('users')">Пользователи</button>
-                <button class="tab" onclick="showTab('invitations')">Приглашения</button>
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск пользователей..." onkeyup="filterUsers()">
             </div>
             
-            <!-- Вкладка пользователей -->
-            <div id="users-tab" class="tab-content active">
-                <div class="search-box">
-                    <input type="text" id="userSearchInput" class="search-input" placeholder="Поиск пользователей..." onkeyup="filterUsers()">
-                </div>
-                
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Имя</th>
-                            <th>Фамилия</th>
-                            <th>Логин</th>
-                            <th>Telegram ID</th>
-                            <th>Роль</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr class="user-row">
-                            <td>{{ user.id }}</td>
-                            <td>{{ user.first_name or 'Не указано' }}</td>
-                            <td>{{ user.last_name or 'Не указано' }}</td>
-                            <td>{{ user.username or 'Не указано' }}</td>
-                            <td>{{ user.telegram_id or 'Не привязан' }}</td>
-                            <td>
-                                {% if user.role %}
-                                    <span class="user-role role-{{ user.role }}">{{ user.role }}</span>
-                                {% else %}
-                                    <span class="user-role">Не назначена</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <button class="btn btn-danger" onclick="deleteUser({{ user.id }})">Удалить</button>
-                                {% if user.telegram_id %}
-                                    <button class="btn btn-warning" onclick="unbindTelegram({{ user.id }})">Отвязать Telegram</button>
-                                {% endif %}
-                                <button class="btn btn-info" onclick="viewUserDetails({{ user.id }})">Детали</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Вкладка приглашений -->
-            <div id="invitations-tab" class="tab-content">
-                <div class="create-invite-form">
-                    <h3>Создать новое приглашение</h3>
-                    <form onsubmit="createInvitation(event)">
-                        <div class="form-group">
-                            <label for="inviteEmail">Email:</label>
-                            <input type="email" id="inviteEmail" name="email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="inviteRole">Роль:</label>
-                            <select id="inviteRole" name="role" required>
-                                <option value="">Выберите роль</option>
-                                <option value="driver">Водитель</option>
-                                <option value="recipient">Получатель</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-success">Создать приглашение</button>
-                    </form>
-                </div>
-                
-                <div class="search-box">
-                    <input type="text" id="inviteSearchInput" class="search-input" placeholder="Поиск приглашений..." onkeyup="filterInvitations()">
-                </div>
-                
-                <table class="invitations-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Email</th>
-                            <th>Роль</th>
-                            <th>Код</th>
-                            <th>Статус</th>
-                            <th>Создано</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for invitation in invitations %}
-                        <tr class="invitation-row">
-                            <td>{{ invitation.id }}</td>
-                            <td>{{ invitation.email }}</td>
-                            <td>
-                                <span class="user-role role-{{ invitation.role }}">{{ invitation.role }}</span>
-                            </td>
-                            <td>{{ invitation.code }}</td>
-                            <td>
-                                {% if invitation.used %}
-                                    <span class="invitation-status status-used">Использовано</span>
-                                {% elif invitation.expired %}
-                                    <span class="invitation-status status-expired">Истекло</span>
-                                {% else %}
-                                    <span class="invitation-status status-active">Активно</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ invitation.created_at if invitation.created_at else 'Не указано' }}</td>
-                            <td>
-                                <button class="btn btn-danger" onclick="deleteInvitation({{ invitation.id }})">Удалить</button>
-                                <button class="btn btn-info" onclick="copyInviteLink({{ invitation.id }})">Копировать ссылку</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя</th>
+                        <th>Фамилия</th>
+                        <th>Логин</th>
+                        <th>Telegram ID</th>
+                        <th>Роль</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="user-row">
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.first_name or 'Не указано' }}</td>
+                        <td>{{ user.last_name or 'Не указано' }}</td>
+                        <td>{{ user.username or 'Не указано' }}</td>
+                        <td>{{ user.telegram_id or 'Не привязан' }}</td>
+                        <td>
+                            {% if user.role %}
+                                <span class="user-role role-{{ user.role }}">{{ user.role }}</span>
+                            {% else %}
+                                <span class="user-role">Не назначена</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteUser({{ user.id }})">Удалить</button>
+                            {% if user.telegram_id %}
+                                <button class="btn btn-warning" onclick="unbindTelegram({{ user.id }})">Отвязать Telegram</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script src="/static/theme-manager.js"></script>
     <script>
-        function showTab(tabName) {
-            // Скрываем все вкладки
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Убираем активный класс у всех кнопок
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            
-            // Показываем нужную вкладку
-            document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Добавляем активный класс к кнопке
-            event.target.classList.add('active');
-        }
-        
         function filterUsers() {
-            const input = document.getElementById('userSearchInput');
+            const input = document.getElementById('searchInput');
             const filter = input.value.toLowerCase();
             const rows = document.querySelectorAll('.user-row');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(filter)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-        
-        function filterInvitations() {
-            const input = document.getElementById('inviteSearchInput');
-            const filter = input.value.toLowerCase();
-            const rows = document.querySelectorAll('.invitation-row');
             
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
@@ -666,79 +437,6 @@
                     showMessage('Ошибка при отвязке Telegram', 'error');
                 });
             }
-        }
-        
-        function viewUserDetails(userId) {
-            // Здесь можно добавить модальное окно с деталями пользователя
-            showMessage('Функция просмотра деталей пользователя в разработке', 'info');
-        }
-        
-        function createInvitation(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('inviteEmail').value;
-            const role = document.getElementById('inviteRole').value;
-            
-            fetch('/create_invite', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email: email,
-                    role: role
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMessage(data.message, 'success');
-                    document.getElementById('inviteEmail').value = '';
-                    document.getElementById('inviteRole').value = '';
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    showMessage(data.error, 'error');
-                }
-            })
-            .catch(error => {
-                showMessage('Ошибка при создании приглашения', 'error');
-            });
-        }
-        
-        function deleteInvitation(invitationId) {
-            if (confirm('Вы уверены, что хотите удалить это приглашение?')) {
-                fetch(`/admin/invitations/delete/${invitationId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showMessage(data.message, 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        showMessage(data.error, 'error');
-                    }
-                })
-                .catch(error => {
-                    showMessage('Ошибка при удалении приглашения', 'error');
-                });
-            }
-        }
-        
-        function copyInviteLink(invitationId) {
-            const inviteUrl = `${window.location.origin}/invite?code=${invitationId}`;
-            navigator.clipboard.writeText(inviteUrl).then(() => {
-                showMessage('Ссылка скопирована в буфер обмена', 'success');
-            }).catch(() => {
-                showMessage('Не удалось скопировать ссылку', 'error');
-            });
         }
         
         function showMessage(text, type) {
