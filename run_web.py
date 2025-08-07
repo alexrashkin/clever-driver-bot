@@ -6,6 +6,27 @@
 """
 import sys
 import os
+
+# Загружаем переменные окружения из .env файла ПЕРЕД всеми импортами
+def load_env_file():
+    env_file = os.path.join(os.path.dirname(__file__), '.env')
+    print(f"🔍 RUN_WEB: Проверяем .env файл: {env_file}")
+    if os.path.exists(env_file):
+        print("✅ RUN_WEB: .env файл найден, загружаем переменные...")
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+                    print(f"📝 RUN_WEB: Загружена переменная: {key}")
+        print(f"📧 RUN_WEB: EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
+    else:
+        print("❌ RUN_WEB: .env файл не найден")
+
+# Загружаем .env файл ПЕРЕД всеми импортами
+load_env_file()
+
 import asyncio
 
 # Пытаемся импортировать nest_asyncio, если не установлен - пропускаем
@@ -14,26 +35,6 @@ try:
     nest_asyncio.apply()
 except ImportError:
     print("⚠️ nest_asyncio не установлен, пропускаем...")
-
-# Загружаем переменные окружения из .env файла
-def load_env_file():
-    env_file = os.path.join(os.path.dirname(__file__), '.env')
-    print(f"🔍 Проверяем .env файл: {env_file}")
-    if os.path.exists(env_file):
-        print("✅ .env файл найден, загружаем переменные...")
-        with open(env_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    os.environ[key] = value
-                    print(f"📝 Загружена переменная: {key}")
-        print(f"📧 EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
-    else:
-        print("❌ .env файл не найден")
-
-# Загружаем .env файл
-load_env_file()
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
