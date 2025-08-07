@@ -15,11 +15,6 @@ class Config:
     TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "clever_driver_bot")
     TELEGRAM_TOKEN = TELEGRAM_BOT_TOKEN  # Алиас для совместимости
     
-    # Рабочие координаты
-    WORK_LATITUDE = float(os.getenv("WORK_LATITUDE", "55.7558"))
-    WORK_LONGITUDE = float(os.getenv("WORK_LONGITUDE", "37.6176"))
-    WORK_RADIUS = float(os.getenv("WORK_RADIUS", "100"))
-    
     # Логирование
     LOG_LEVEL = "INFO"
     LOG_FILE = "app.log"

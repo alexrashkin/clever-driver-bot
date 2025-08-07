@@ -43,10 +43,8 @@ def is_at_work(latitude, longitude, user_role=None, user_work_lat=None, user_wor
         work_lon = user_work_lon
         work_radius = user_work_radius
     else:
-        # Используем глобальные настройки
-        work_lat = config.WORK_LATITUDE
-        work_lon = config.WORK_LONGITUDE
-        work_radius = config.WORK_RADIUS
+        # Если координаты не установлены, возвращаем False
+        return False
     
     distance = calculate_distance(
         latitude, longitude,
@@ -107,13 +105,12 @@ def create_location_message(latitude, longitude, distance=None, is_at_work=False
     Создание сообщения о местоположении
     """
     if distance is None:
-        distance = calculate_distance(
-            latitude, longitude,
-            config.WORK_LATITUDE, config.WORK_LONGITUDE
-        )
+        # Если расстояние не передано и координаты не установлены, не показываем расстояние
+        distance_text = "не установлено"
+    else:
+        distance_text = format_distance(distance)
     
     status = "📍 Водитель ожидает" if is_at_work else "🚗 В пути"
-    distance_text = format_distance(distance)
     
     message = f"{status}\n"
     message += f"Координаты: {latitude:.6f}, {longitude:.6f}\n"

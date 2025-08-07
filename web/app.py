@@ -529,9 +529,9 @@ def index():
                     is_admin = False
                     is_driver = False
                     buttons = []
-                    work_latitude = config.WORK_LATITUDE
-                    work_longitude = config.WORK_LONGITUDE
-                    work_radius = config.WORK_RADIUS
+                    work_latitude = user.get('work_latitude') if user else None
+                    work_longitude = user.get('work_longitude') if user else None
+                    work_radius = user.get('work_radius') if user else None
                     return render_template(
                         'index.html',
                         tracking_status=tracking_status,
@@ -556,27 +556,27 @@ def index():
             if user_role == 'recipient':
                 # Получатель уведомлений - упрощенный интерфейс
                 buttons = []
-                work_latitude = config.WORK_LATITUDE
-                work_longitude = config.WORK_LONGITUDE
-                work_radius = config.WORK_RADIUS
+                work_latitude = user.get('work_latitude') if user else None
+                work_longitude = user.get('work_longitude') if user else None
+                work_radius = user.get('work_radius') if user else None
                 is_recipient_only = True
                 is_admin = False
                 is_driver = False
             elif user_role == 'admin':
                 # Администратор - полный доступ ко всем функциям
                 buttons = user.get('buttons', [])
-                work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
-                work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
-                work_radius = user.get('work_radius', config.WORK_RADIUS)
+                work_latitude = user.get('work_latitude')
+                work_longitude = user.get('work_longitude')
+                work_radius = user.get('work_radius')
                 is_recipient_only = False
                 is_admin = True
                 is_driver = False
             elif user_role == 'driver':
                 # Водитель (владелец аккаунта) - стандартные функции
                 buttons = user.get('buttons', [])
-                work_latitude = user.get('work_latitude', config.WORK_LATITUDE)
-                work_longitude = user.get('work_longitude', config.WORK_LONGITUDE)
-                work_radius = user.get('work_radius', config.WORK_RADIUS)
+                work_latitude = user.get('work_latitude')
+                work_longitude = user.get('work_longitude')
+                work_radius = user.get('work_radius')
                 is_recipient_only = False
                 is_admin = False
                 is_driver = True
@@ -585,9 +585,9 @@ def index():
                 return redirect('/select_role')
         else:
             buttons = ['📍 Еду на работу', '🚗 Подъезжаю к дому', '⏰ Опаздываю на 10 минут']
-            work_latitude = config.WORK_LATITUDE
-            work_longitude = config.WORK_LONGITUDE
-            work_radius = config.WORK_RADIUS
+            work_latitude = None
+            work_longitude = None
+            work_radius = None
             is_authorized = False
             is_recipient_only = False  # Нейтральный интерфейс для неавторизованных
             is_admin = False
@@ -988,8 +988,8 @@ def api_location():
                             if user_work_lat and user_work_lon:
                                 distance = calculate_distance(latitude, longitude, user_work_lat, user_work_lon)
                             else:
-                                from config.settings import config
-                                distance = calculate_distance(latitude, longitude, config.WORK_LATITUDE, config.WORK_LONGITUDE)
+                                # Если координаты не установлены, возвращаем ошибку
+                                return jsonify({'success': False, 'error': 'Рабочие координаты не установлены. Настройте их в профиле.'}), 400
                             
                             at_work = is_at_work_status
                         except Exception as e:
@@ -999,14 +999,8 @@ def api_location():
                         finally:
                             conn.close()
                 else:
-                    # Fallback для случаев без пользователя (старая логика)
-                    work_latitude = config.WORK_LATITUDE
-                    work_longitude = config.WORK_LONGITUDE
-                    work_radius = config.WORK_RADIUS
-                    distance = calculate_distance(latitude, longitude, work_latitude, work_longitude)
-                    at_work = distance <= float(work_radius)
-                    db.add_location(latitude, longitude, distance, at_work)
-                    logger.info(f"Сохранено в старую таблицу: latitude={latitude}, longitude={longitude}, distance={distance}, is_at_work={at_work}")
+                    # Fallback для случаев без пользователя - возвращаем ошибку
+                    return jsonify({'success': False, 'error': 'Необходимо авторизоваться для отслеживания местоположения'}), 401
                 
                 # Возвращаем успешный результат в зависимости от формата запроса
                 if data.get('_type') == 'location':
@@ -2184,9 +2178,17 @@ def current_location():
             if location:
                 lat, lon, distance, is_at_work, timestamp = location
                 role = 'driver'  # Предполагаем, что это водитель
-                work_lat = config.WORK_LATITUDE
-                work_lon = config.WORK_LONGITUDE
-                work_radius = config.WORK_RADIUS
+                
+                # Получаем координаты из базы данных пользователя
+                user = get_current_user()
+                if user:
+                    work_lat = user.get('work_latitude')
+                    work_lon = user.get('work_longitude')
+                    work_radius = user.get('work_radius')
+                else:
+                    work_lat = None
+                    work_lon = None
+                    work_radius = None
             else:
                 return jsonify({
                     'success': True,
@@ -2199,9 +2201,9 @@ def current_location():
                         'formatted_time': '--:--:--'
                     },
                     'work_zone': {
-                        'latitude': config.WORK_LATITUDE,
-                        'longitude': config.WORK_LONGITUDE,
-                        'radius': config.WORK_RADIUS
+                        'latitude': None,
+                        'longitude': None,
+                        'radius': None
                     },
                     'status': 'Нет данных о местоположении'
                 })
@@ -2282,18 +2284,15 @@ def real_time_tracker():
             logger.info(f"Автоматически создана сессия отслеживания для получателя {telegram_id or user_info.get('telegram_id')}: {session_token}")
         
         # Получаем координаты рабочей зоны из настроек пользователя
-        work_lat = config.WORK_LATITUDE
-        work_lon = config.WORK_LONGITUDE
-        work_radius = config.WORK_RADIUS
+        work_lat = None
+        work_lon = None
+        work_radius = None
         
         if user_info:
             # Если у пользователя есть свои настройки, используем их
-            if user_info.get('work_latitude') is not None:
-                work_lat = user_info.get('work_latitude')
-            if user_info.get('work_longitude') is not None:
-                work_lon = user_info.get('work_longitude')
-            if user_info.get('work_radius') is not None:
-                work_radius = user_info.get('work_radius')
+            work_lat = user_info.get('work_latitude')
+            work_lon = user_info.get('work_longitude')
+            work_radius = user_info.get('work_radius')
         
         return render_template('real_time_tracker.html', 
                              year=datetime.now().year,

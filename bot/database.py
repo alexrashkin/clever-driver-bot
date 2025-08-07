@@ -158,12 +158,13 @@ class Database:
         c.execute('INSERT OR IGNORE INTO tracking_status (id, is_active) VALUES (1, 0)')
         
         # Вставляем настройки по умолчанию (если не существуют)
-        c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', 
-                 ('work_latitude', str(config.WORK_LATITUDE)))
-        c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', 
-                 ('work_longitude', str(config.WORK_LONGITUDE)))
-        c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', 
-                 ('work_radius', str(config.WORK_RADIUS)))
+        # Удаляем координаты по умолчанию - каждый пользователь должен установить свои
+        # c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', 
+        #          ('work_latitude', str(config.WORK_LATITUDE)))
+        # c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', 
+        #          ('work_longitude', str(config.WORK_LONGITUDE)))
+        # c.execute('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', 
+        #          ('work_radius', str(config.WORK_RADIUS)))
         
         # Миграция: добавляем поле buttons, если его нет
         c.execute("PRAGMA table_info(users)")
@@ -1226,11 +1227,8 @@ class Database:
                     location_data['work_latitude'], location_data['work_longitude']
                 )
             else:
-                from config.settings import config
-                distance = calculate_distance(
-                    location_data['latitude'], location_data['longitude'],
-                    config.WORK_LATITUDE, config.WORK_LONGITUDE
-                )
+                # Если координаты не установлены, возвращаем None
+                distance = None
             
             location_data['distance_to_work'] = distance
             return location_data
