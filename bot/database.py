@@ -473,6 +473,12 @@ class Database:
         import secrets
         import json
         
+        # Проверяем, что email не пустой
+        if email is not None:
+            email = email.strip()
+            if not email:
+                email = None
+        
         # Хешируем пароль с солью
         salt = secrets.token_hex(16)
         password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
@@ -487,6 +493,7 @@ class Database:
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
         try:
+            logger.info(f"CREATE_USER_WITH_LOGIN: попытка создания пользователя {login} с email: '{email}'")
             c.execute('''
                 INSERT INTO users (login, password_hash, first_name, last_name, auth_type, role, buttons, email, phone)
                 VALUES (?, ?, ?, ?, 'login', ?, ?, ?, ?)
@@ -494,7 +501,7 @@ class Database:
             conn.commit()
             user_id = c.lastrowid
             conn.close()
-            logger.info(f"Создан пользователь с логином: {login}")
+            logger.info(f"Создан пользователь с логином: {login}, email: '{email}'")
             return True, user_id
         except sqlite3.IntegrityError as e:
             conn.close()
@@ -518,6 +525,10 @@ class Database:
                 user['buttons'] = json.loads(user['buttons']) if user['buttons'] else []
             except Exception:
                 user['buttons'] = []
+            
+            # Диагностика email
+            logger.info(f"GET_USER_BY_LOGIN: пользователь {login}, email: '{user.get('email')}', тип: {type(user.get('email'))}")
+            
             return user
         return None
     
@@ -718,7 +729,9 @@ class Database:
         
         # Отправляем код через Email (обязательно для всех пользователей)
         email = user.get('email')
-        if email:
+        logger.info(f"CREATE_PASSWORD_RESET_CODE: пользователь {login}, email: '{email}', тип: {type(email)}")
+        
+        if email and email.strip():
             try:
                 from bot.email_utils import send_password_reset_email
                 

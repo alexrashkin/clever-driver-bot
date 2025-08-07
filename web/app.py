@@ -1630,12 +1630,19 @@ def forgot_password():
             return render_template('forgot_password.html', error="Пользователь с таким логином не найден", csrf_token=security_manager.generate_csrf_token())
         
         logger.info(f"FORGOT_PASSWORD: пользователь найден, email в БД: {user.get('email')}")
+        logger.info(f"FORGOT_PASSWORD: полные данные пользователя: {user}")
+        logger.info(f"FORGOT_PASSWORD: тип email: {type(user.get('email'))}")
+        logger.info(f"FORGOT_PASSWORD: email is None: {user.get('email') is None}")
+        logger.info(f"FORGOT_PASSWORD: email == '': {user.get('email') == ''}")
         
         # Проверяем, есть ли email у пользователя
-        if not user.get('email'):
-            logger.warning(f"FORGOT_PASSWORD: у пользователя {login} не указан email")
+        email = user.get('email')
+        if not email or email.strip() == '':
+            logger.error(f"FORGOT_PASSWORD: у пользователя {login} отсутствует email в базе данных (техническая ошибка)")
+            logger.error(f"FORGOT_PASSWORD: все поля пользователя: {list(user.keys())}")
+            logger.error(f"FORGOT_PASSWORD: значение email: '{email}'")
             return render_template('forgot_password.html', 
-                                 error="Для восстановления пароля необходим email, указанный при регистрации. Обратитесь к администратору или обновите email в настройках профиля.", 
+                                 error="Произошла техническая ошибка: email пользователя не найден в базе данных. Обратитесь к администратору.", 
                                  csrf_token=security_manager.generate_csrf_token())
         
         # Создаем код восстановления
