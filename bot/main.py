@@ -52,22 +52,29 @@ async def monitor_database(application: Application):
                 FROM user_locations ul
                 JOIN users u ON ul.user_id = u.id
                 WHERE u.role IN ('driver', 'admin')
-                ORDER BY ul.id DESC LIMIT 2
+                ORDER BY ul.id DESC LIMIT 5
             """)
             rows = cursor.fetchall()
             conn.close()
 
             logger.info(f"📊 Мониторинг: найдено {len(rows)} записей")
-            if len(rows) >= 2:
+            if len(rows) >= 3:  # Проверяем минимум 3 записи для стабилизации
                 curr_id, curr_is_at_work, curr_time, curr_lat, curr_lon = rows[0]
                 prev_id, prev_is_at_work, prev_time, prev_lat, prev_lon = rows[1]
+                
+                # Проверяем стабилизацию статуса - анализируем последние 3 записи
+                recent_statuses = [row[1] for row in rows[:3]]
+                status_stable = len(set(recent_statuses)) == 1  # Все статусы одинаковые
+                
                 logger.info(f"📍 Текущая: ID {curr_id}, is_at_work: {curr_is_at_work}, время: {curr_time}")
                 logger.info(f"📍 Предыдущая: ID {prev_id}, is_at_work: {prev_is_at_work}, время: {prev_time}")
+                logger.info(f"🔍 Статус стабилен: {status_stable}, последние статусы: {recent_statuses}")
 
-                # Переход 0→1 (въезд в зону)
+                # Переход 0→1 (въезд в зону) - только если статус стабилен
                 if (prev_is_at_work == 0 and curr_is_at_work == 1 and 
                     curr_id != last_checked_id and 
-                    last_notification_type != 'arrival'):
+                    last_notification_type != 'arrival' and
+                    status_stable):
                     import time as t
                     curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 0→1, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
@@ -117,11 +124,14 @@ async def monitor_database(application: Application):
                             logger.info("Отслеживание выключено, уведомление не отправлено")
                     else:
                         logger.info(f"Переход в радиус, но уведомление не отправлено: прошло меньше 10 секунд")
+                elif not status_stable:
+                    logger.info(f"⚠️ Статус нестабилен, пропускаем уведомление. Последние статусы: {recent_statuses}")
                 
-                # Переход 1→0 (выезд из зоны)
+                # Переход 1→0 (выезд из зоны) - только если статус стабилен
                 if (prev_is_at_work == 1 and curr_is_at_work == 0 and 
                     curr_id != last_checked_id and 
-                    last_notification_type != 'departure'):
+                    last_notification_type != 'departure' and
+                    status_stable):
                     import time as t
                     curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
                     logger.info(f"DEBUG: переход 1→0, curr_id={curr_id}, curr_ts={curr_ts}, last_checked_time={last_checked_time}")
