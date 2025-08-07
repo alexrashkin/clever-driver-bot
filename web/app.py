@@ -68,17 +68,16 @@ def add_security_headers(response):
         "upgrade-insecure-requests;"
     )
     
+    response.headers['Content-Security-Policy'] = csp_policy
+    
     # Добавляем заголовки для разрешения геолокации
-    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
-    response.headers['Feature-Policy'] = 'geolocation *; microphone *; camera *'
+    response.headers['Permissions-Policy'] = 'geolocation=(self), microphone=(), camera=()'
     
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    
-    # Заголовки для улучшения репутации
     response.headers['X-Robots-Tag'] = 'noindex, nofollow'
     response.headers['Server'] = 'CleverDriver/1.0'
     
@@ -637,9 +636,14 @@ def mobile_tracker():
     telegram_id = session.get('telegram_id')
     user_login = session.get('user_login')
     
+    logger.info(f"MOBILE_TRACKER: telegram_id={telegram_id}, user_login={user_login}")
+    
     if not telegram_id and not user_login:
+        logger.info("MOBILE_TRACKER: Пользователь не авторизован, перенаправление на главную")
         session['flash_message'] = "Для доступа к трекеру необходимо авторизоваться"
         return redirect('/')
+    
+    logger.info("MOBILE_TRACKER: Пользователь авторизован, показываем трекер")
     return render_template('mobile_tracker.html', year=datetime.now().year)
 
 @app.route('/debug_status')

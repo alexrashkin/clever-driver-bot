@@ -160,7 +160,14 @@
             if (navigator.geolocation) {
                 updateStatus('🔄 Получение геолокации...', 'default');
                 
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+                
                 navigator.geolocation.getCurrentPosition(function(position) {
+                    console.log('Геолокация получена:', position.coords);
                     fetch('/api/location', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -176,13 +183,31 @@
                         updateStatus(`✅ Трекер работает! Последняя отправка: ${timeStr}`, 'working');
                     })
                     .catch(error => {
+                        console.error('Ошибка отправки:', error);
                         updateStatus(`❌ Ошибка отправки: ${error.message}`, 'error');
                     });
                 }, function(error) {
-                    updateStatus(`❌ Ошибка получения геолокации: ${error.message}`, 'error');
-                });
+                    console.error('Ошибка геолокации:', error);
+                    let errorMessage = 'Неизвестная ошибка';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Доступ к геолокации запрещен. Разрешите доступ в настройках браузера.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Информация о местоположении недоступна.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Превышено время ожидания получения геолокации.';
+                            break;
+                        default:
+                            errorMessage = error.message || 'Ошибка получения геолокации';
+                    }
+                    
+                    updateStatus(`❌ ${errorMessage}`, 'error');
+                }, options);
             } else {
-                updateStatus('❌ Геолокация не поддерживается', 'error');
+                updateStatus('❌ Геолокация не поддерживается в этом браузере', 'error');
             }
         }
         
