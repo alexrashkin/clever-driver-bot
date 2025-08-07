@@ -118,7 +118,7 @@
             <div id="debug-info" style="background: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px; font-size: 12px; color: #666;">
                 <strong>Отладка:</strong><br>
                 Bot: {{ telegram_bot_username }}<br>
-                URL: {{ url_for('telegram_auth', _external=True) }}<br>
+                URL: {{ auth_url }}<br>
                 <span id="widget-status">Статус: Загрузка...</span>
             </div>
             
@@ -129,7 +129,7 @@
                         data-size="large"
                         data-userpic="false"
                         data-request-access="write"
-                        data-auth-url="{{ url_for('telegram_auth', _external=True) }}"
+                        data-auth-url="{{ auth_url }}"
                         data-lang="ru">
                 </script>
             </div>
@@ -139,8 +139,13 @@
                 <p style="color: #666; margin-bottom: 15px;">Виджет Telegram не загрузился</p>
                 <a href="https://t.me/{{ telegram_bot_username }}" 
                    target="_blank" 
-                   style="display: inline-block; padding: 12px 24px; background: #0088cc; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                   style="display: inline-block; padding: 12px 24px; background: #0088cc; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 5px;">
                     📱 Открыть в Telegram
+                </a>
+                <br>
+                <a href="/test_bot" 
+                   style="display: inline-block; padding: 8px 16px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9em; margin: 5px;">
+                    🔍 Проверить бота
                 </a>
             </div>
         </div>

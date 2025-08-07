@@ -56,11 +56,12 @@ def add_security_headers(response):
     # Content Security Policy - строгая политика безопасности
     csp_policy = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://telegram.org; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://telegram.org https://t.me; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
         "font-src 'self' https://cdn.jsdelivr.net; "
-        "img-src 'self' data: https:; "
-        "connect-src 'self' https://telegram.org; "
+        "img-src 'self' data: https: https://telegram.org https://t.me; "
+        "connect-src 'self' https://telegram.org https://t.me; "
+        "frame-src 'self' https://telegram.org https://t.me; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
         "form-action 'self'; "
@@ -2471,7 +2472,10 @@ def telegram_login():
     
     logger.info(f"TELEGRAM_LOGIN: cleaned_bot_username={telegram_bot_username}")
     
-    return render_template('telegram_login.html', telegram_bot_username=telegram_bot_username)
+    # Принудительно используем HTTPS для URL авторизации
+    auth_url = url_for('telegram_auth', _external=True, _scheme='https')
+    
+    return render_template('telegram_login.html', telegram_bot_username=telegram_bot_username, auth_url=auth_url)
 
 @app.route('/unbind_telegram', methods=['POST'])
 @security_check
