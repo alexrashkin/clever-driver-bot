@@ -7,6 +7,7 @@ Type=simple
 User=root
 WorkingDirectory=/root/clever-driver-bot
 Environment=PATH=/root/clever-driver-bot/venv/bin
+EnvironmentFile=/root/clever-driver-bot/.env
 ExecStart=/root/clever-driver-bot/venv/bin/python /root/clever-driver-bot/run_web.py
 Restart=always
 RestartSec=10
