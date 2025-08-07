@@ -1813,8 +1813,8 @@ def admin_unbind_telegram(user_id):
     return redirect('/admin/users')
 
 @app.route('/telegram_auth', methods=['POST', 'GET'])
-@security_check
 def telegram_auth():
+    """Telegram OAuth аутентификация - специальная обработка без проверок безопасности"""
     try:
         logger.info(f"TELEGRAM_AUTH: начало обработки запроса, метод: {request.method}")
         
@@ -1883,9 +1883,8 @@ def telegram_auth():
         return 'Internal Server Error', 500
 
 @app.route('/bind_telegram', methods=['POST', 'GET'])
-@security_check
 def bind_telegram():
-    """Привязка Telegram к существующему аккаунту"""
+    """Привязка Telegram к существующему аккаунту - специальная обработка без проверок безопасности"""
     try:
         logger.info(f"BIND_TELEGRAM: начало обработки запроса, метод: {request.method}")
         user_login = session.get('user_login')
