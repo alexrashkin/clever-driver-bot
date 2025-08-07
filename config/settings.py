@@ -20,15 +20,6 @@ class Config:
     WORK_LONGITUDE = float(os.getenv("WORK_LONGITUDE", "37.6176"))
     WORK_RADIUS = float(os.getenv("WORK_RADIUS", "100"))
     
-    # Email настройки
-    EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "False").lower() == "true"
-    EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
-    EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", "587"))
-    EMAIL_USERNAME = os.getenv("EMAIL_USERNAME", "")
-    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
-    EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Driver Bot")
-    EMAIL_FROM_ADDRESS = os.getenv("EMAIL_FROM_ADDRESS", "")
-    
     # Логирование
     LOG_LEVEL = "INFO"
     LOG_FILE = "app.log"
