@@ -2780,33 +2780,7 @@ def test_security():
     """Тестовая страница безопасности"""
     return render_template('test_security.html')
 
-@app.route('/test_bot')
-@security_check
-def test_bot():
-    """Тестовая страница для проверки бота"""
-    import requests
-    
-    bot_username = config.TELEGRAM_BOT_USERNAME
-    if bot_username.startswith('@'):
-        bot_username = bot_username[1:]
-    
-    # Проверяем, существует ли бот
-    try:
-        response = requests.get(f"https://t.me/{bot_username}", timeout=10)
-        bot_exists = response.status_code == 200
-    except:
-        bot_exists = False
-    
-    return render_template('test_bot.html', 
-                         bot_username=bot_username,
-                         bot_exists=bot_exists,
-                         bot_url=f"https://t.me/{bot_username}")
 
-@app.route('/test_widget')
-@security_check
-def test_widget():
-    """Тестовая страница для виджета Telegram без ограничений"""
-    return render_template('test_widget.html')
 
 
 
