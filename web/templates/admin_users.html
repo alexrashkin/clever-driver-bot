@@ -114,7 +114,7 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 0 !important;
+            margin: 0 30px !important;
             table-layout: fixed !important;
         }
         
@@ -353,94 +353,6 @@
         }
         
         @media (max-width: 480px) {
-            .admin-nav {
-                flex-direction: column;
-                align-items: stretch;
-                justify-content: flex-start;
-            }
-            
-            .nav-link {
-                text-align: center;
-                margin-bottom: 5px;
-                padding: 8px 12px;
-            }
-        }
-        
-        @media (max-width: 400px) {
-            .admin-nav {
-                padding: 8px 10px;
-            }
-            
-            .nav-link {
-                padding: 6px 10px;
-                font-size: 0.8em;
-            }
-            
-            .admin-header {
-                padding: 15px 10px;
-            }
-            
-            .admin-title {
-                font-size: 1.3em;
-            }
-        }
-            
-            .stat-label {
-                font-size: 0.8em;
-            }
-            
-            .users-table,
-            .invitations-section table {
-                font-size: 0.85em;
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-            
-            .users-table th,
-            .users-table td {
-                padding: 8px 6px;
-                min-width: 70px;
-            }
-            
-            /* Скрываем колонку пароля на мобильных устройствах */
-            .users-table th:nth-child(4),
-            .users-table td:nth-child(4) {
-                display: none;
-            }
-            
-            .role-badge,
-            .auth-badge {
-                font-size: 0.7em;
-                padding: 3px 8px;
-            }
-            
-            .delete-btn,
-            .unbind-btn,
-            .delete-invitation-btn {
-                padding: 4px 8px;
-                font-size: 0.7em;
-            }
-            
-            .invitations-section {
-                margin-top: 20px;
-            }
-            
-            .invitations-section h2 {
-                font-size: 1.3em;
-                margin-bottom: 15px;
-            }
-            
-            .theme-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 1em;
-                top: 15px;
-                right: 15px;
-            }
-        }
-        
-        @media (max-width: 480px) {
             body {
                 padding: 0;
             }
@@ -466,12 +378,17 @@
             }
             
             .admin-nav {
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
                 padding: 8px 10px;
                 gap: 8px;
             }
             
             .nav-link {
-                padding: 5px 10px;
+                text-align: center;
+                margin-bottom: 5px;
+                padding: 8px 12px;
                 font-size: 0.8em;
             }
             
@@ -499,6 +416,9 @@
             .users-table,
             .invitations-section table {
                 font-size: 0.8em;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
             }
             
             .users-table th,
@@ -550,6 +470,25 @@
                 right: 10px;
             }
         }
+        
+        @media (max-width: 400px) {
+            .admin-nav {
+                padding: 8px 10px;
+            }
+            
+            .nav-link {
+                padding: 6px 10px;
+                font-size: 0.8em;
+            }
+            
+            .admin-header {
+                padding: 15px 10px;
+            }
+            
+            .admin-title {
+                font-size: 1.3em;
+            }
+        }
         .users-table th:nth-child(1), .users-table td:nth-child(1) { width: 11.11%; }  /* ID */
         .users-table th:nth-child(2), .users-table td:nth-child(2) { width: 11.11%; } /* Имя/Логин */
         .users-table th:nth-child(3), .users-table td:nth-child(3) { width: 11.11%; } /* Email */
@@ -567,7 +506,7 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 0 !important;
+            margin: 0 30px !important;
             table-layout: fixed !important;
         }
         
@@ -630,7 +569,7 @@
                 </div>
             </div>
             
-            <table class="users-table" style="margin: 0 30px;">
+            <table class="users-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -731,7 +670,7 @@
             {% if invitations %}
             <div class="invitations-section" style="margin-top: 40px;">
                 <h2 style="color: #1d4ed8; margin-bottom: 20px; font-size: 1.5em; padding: 0 30px;">📋 Приглашения получателей</h2>
-                <table class="users-table" style="margin: 0 30px;">
+                <table class="users-table">
                     <thead>
                         <tr>
                             <th>Код</th>
