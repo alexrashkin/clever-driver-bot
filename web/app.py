@@ -1,55 +1,76 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session
-import sys
-import os
-import re
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-from config.settings import config
-from bot.database import Database  # Импортируем класс, а не экземпляр
-from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
-from web.location_web_tracker import location_web_tracker, web_tracker
-from web.security import security_check, auth_security_check, password_reset_security_check, security_manager, log_security_event, login_rate_limit, password_reset_rate_limit, csrf_protect
-import logging
-import requests
-from datetime import datetime, timedelta
-import pytz
-import hashlib
-import hmac
-import time as pytime
+import os
+import sys
+import re
 import json
 import logging
-import os
-import sys
-import time
-from datetime import datetime, timedelta
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, make_response, send_from_directory
-from werkzeug.utils import secure_filename
-import sqlite3
 import requests
+import hashlib
+import hmac
+import time
+import pytz
+import sqlite3
 import asyncio
 import threading
 import traceback
 import math
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, make_response, send_from_directory
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from werkzeug.utils import secure_filename
+
+# Добавляем путь к родительской директории
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+# Импортируем наши модули
+from config.settings import config
+from bot.database import Database
+from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
+from web.location_web_tracker import location_web_tracker, web_tracker
+from web.security import security_check, auth_security_check, password_reset_security_check, security_manager, log_security_event, login_rate_limit, password_reset_rate_limit, csrf_protect
+
+# Загружаем переменные окружения из .env файла
+def load_env_file():
+    env_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+    print(f"🔍 Проверяем .env файл: {env_file}")
+    if os.path.exists(env_file):
+        print("✅ .env файл найден, загружаем переменные...")
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key] = value
+                    print(f"📝 Загружена переменная: {key}")
+        print(f"📧 EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
+    else:
+        print("❌ .env файл не найден")
+
+# Загружаем .env файл
+load_env_file()
 
 # Настройка логирования
 logging.basicConfig(
-    level=getattr(logging, config.LOG_LEVEL),
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(config.LOG_FILE),
+        logging.FileHandler('app.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = config.WEB_SECRET_KEY
+app.secret_key = os.environ.get('WEB_SECRET_KEY', 'default_secret_key')
 
 # Настройки безопасности сессий
-app.config['SESSION_COOKIE_SECURE'] = config.SESSION_COOKIE_SECURE
-app.config['SESSION_COOKIE_HTTPONLY'] = config.SESSION_COOKIE_HTTPONLY
-app.config['SESSION_COOKIE_SAMESITE'] = config.SESSION_COOKIE_SAMESITE
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=config.SESSION_COOKIE_MAX_AGE)
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
+app.config['SESSION_COOKIE_HTTPONLY'] = os.environ.get('SESSION_COOKIE_HTTPONLY', 'True') == 'True'
+app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=int(os.environ.get('SESSION_COOKIE_MAX_AGE', 1800)))
 
 # Создаем новый экземпляр базы данных
 db = Database("driver.db")
@@ -165,7 +186,7 @@ def send_telegram_arrival(user_id):
         )
     
     # Отправляем уведомления
-    token = config.TELEGRAM_TOKEN
+    token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     
     sent_count = 0
@@ -279,7 +300,7 @@ def send_confirmation_messages(notification_log_id, sender_info, notification_te
 {chr(10).join(failed_recipients)}"""
         
         # Отправляем подтверждение водителям
-        token = config.TELEGRAM_TOKEN
+        token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         
         for (driver_telegram_id,) in drivers:
@@ -370,7 +391,7 @@ def send_telegram_code(telegram_contact, code):
             logger.info(f"Отправка кода username (без @): @{username}")
         
         # Отправляем сообщение через Telegram Bot API
-        url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{os.environ.get('TELEGRAM_TOKEN', 'default_token')}/sendMessage"
         
         # Упрощенное сообщение без Markdown для избежания ошибок форматирования
         message_text = f"""🔐 Код подтверждения для привязки аккаунта
@@ -383,7 +404,7 @@ def send_telegram_code(telegram_contact, code):
 
 💡 Если вы не получили сообщение, убедитесь что:
 • Контакт указан правильно
-• Вы начали диалог с ботом @{config.TELEGRAM_BOT_USERNAME}"""
+• Вы начали диалог с ботом @{os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')}"""
         
         # Сначала пробуем без parse_mode
         data = {
@@ -407,11 +428,11 @@ def send_telegram_code(telegram_contact, code):
                 # Обрабатываем специфические ошибки
                 if "Chat not found" in error_msg:
                     if telegram_contact.startswith('+'):
-                        return False, f"Пользователь с номером {telegram_contact} не найден. Попросите пользователя написать боту @{config.TELEGRAM_BOT_USERNAME} /start"
+                        return False, f"Пользователь с номером {telegram_contact} не найден. Попросите пользователя написать боту @{os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')} /start"
                     else:
                         return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
                 elif "Forbidden" in error_msg:
-                    return False, f"Пользователь заблокировал бота. Попросите пользователя разблокировать бота @{config.TELEGRAM_BOT_USERNAME}"
+                    return False, f"Пользователь заблокировал бота. Попросите пользователя разблокировать бота @{os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')}"
                 elif "Bad Request" in error_msg:
                     if "chat_id is empty" in error_msg:
                         return False, f"Некорректный формат контакта. Используйте @username или +7XXXXXXXXXX"
@@ -419,7 +440,7 @@ def send_telegram_code(telegram_contact, code):
                         return False, f"Некорректный запрос. Проверьте формат контакта: {telegram_contact}"
                 elif "chat not found" in error_msg.lower():
                     if telegram_contact.startswith('+'):
-                        return False, f"Пользователь с номером {telegram_contact} не найден. Попросите пользователя написать боту @{config.TELEGRAM_BOT_USERNAME} /start"
+                        return False, f"Пользователь с номером {telegram_contact} не найден. Попросите пользователя написать боту @{os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')} /start"
                     else:
                         return False, f"Пользователь @{username} не найден. Убедитесь, что username указан правильно и пользователь существует в Telegram"
                 else:
@@ -1075,7 +1096,7 @@ def api_user1():
         text = f"{greeting} {name}"
         
         # Отправляем уведомления всем пользователям с ролями
-        token = config.TELEGRAM_TOKEN
+        token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         
         conn = db.get_connection()
@@ -1127,7 +1148,7 @@ def api_user2():
         text = f"{greeting} {name}"
         
         # Отправляем уведомления всем пользователям с ролями
-        token = config.TELEGRAM_TOKEN
+        token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         
         conn = db.get_connection()
@@ -1187,7 +1208,7 @@ def api_button(idx):
         greeting = get_greeting() + '!'
         name = buttons[idx]
         text = f"{greeting} {name}"
-        token = config.TELEGRAM_TOKEN
+        token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         
         # Получаем всех пользователей с ролями и telegram_id
@@ -1299,7 +1320,7 @@ def settings():
     user = None
     message = None
     error = False
-    telegram_bot_username = config.TELEGRAM_BOT_USERNAME  # Username Telegram-бота из настроек
+    telegram_bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')  # Username Telegram-бота из настроек
     
     # Проверяем авторизацию (приоритет у логин/пароль, если есть)
     telegram_id = session.get('telegram_id')
@@ -1872,7 +1893,7 @@ def telegram_auth():
             # Не блокируем, но логируем для мониторинга
         
         # Проверяем, установлен ли токен
-        if not config.TELEGRAM_TOKEN:
+        if not os.environ.get('TELEGRAM_TOKEN', 'default_token'):
             logger.error("TELEGRAM_AUTH: токен Telegram не установлен")
             return 'Ошибка конфигурации: токен Telegram не установлен. Обратитесь к администратору.', 500
         
@@ -1885,7 +1906,7 @@ def telegram_auth():
         auth_data.pop('user_id', None)  # Удаляем user_id, если есть
         auth_data = {k: v for k, v in auth_data.items()}
         data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-        secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+        secret_key = hashlib.sha256(os.environ.get('TELEGRAM_TOKEN', 'default_token').encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"TELEGRAM_AUTH: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
@@ -1960,7 +1981,7 @@ def bind_telegram():
         auth_data.pop('user_id', None)
         auth_data = {k: v for k, v in auth_data.items()}
         data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-        secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+        secret_key = hashlib.sha256(os.environ.get('TELEGRAM_TOKEN', 'default_token').encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"BIND_TELEGRAM: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
@@ -2103,7 +2124,7 @@ def invite():
     if invitation['status'] != 'pending':
         return 'Приглашение уже использовано', 400
     
-    telegram_bot_username = config.TELEGRAM_BOT_USERNAME
+    telegram_bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')
     return render_template('invite.html', 
                          invite_code=invite_code,
                          telegram_bot_id=telegram_bot_username)
@@ -2134,7 +2155,7 @@ def invite_auth():
             f"{k}={v[0] if isinstance(v, list) else v}"
             for k, v in sorted(auth_data.items())
         )
-        secret_key = hashlib.sha256(config.TELEGRAM_TOKEN.encode()).digest()
+        secret_key = hashlib.sha256(os.environ.get('TELEGRAM_TOKEN', 'default_token').encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"INVITE_AUTH: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
@@ -2556,7 +2577,7 @@ def resend_telegram_code():
 @security_check
 def telegram_login():
     """Страница входа через Telegram"""
-    telegram_bot_username = config.TELEGRAM_BOT_USERNAME
+    telegram_bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')
     logger.info(f"TELEGRAM_LOGIN: bot_username={telegram_bot_username}")
     
     # Проверяем, что username не содержит лишних символов
