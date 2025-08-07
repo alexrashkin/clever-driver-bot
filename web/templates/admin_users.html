@@ -114,7 +114,6 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin: 0;
-            table-layout: fixed;
         }
         
         .users-table th {
@@ -549,15 +548,15 @@
                 right: 10px;
             }
         }
-        .users-table th:nth-child(1), .users-table td:nth-child(1) { width: 6%; }   /* ID */
-        .users-table th:nth-child(2), .users-table td:nth-child(2) { width: 18%; } /* Имя/Логин */
-        .users-table th:nth-child(3), .users-table td:nth-child(3) { width: 18%; } /* Email */
-        .users-table th:nth-child(4), .users-table td:nth-child(4) { width: 12%; } /* Пароль */
-        .users-table th:nth-child(5), .users-table td:nth-child(5) { width: 13%; } /* Роль */
-        .users-table th:nth-child(6), .users-table td:nth-child(6) { width: 13%; } /* Авторизация */
-        .users-table th:nth-child(7), .users-table td:nth-child(7) { width: 13%; } /* Telegram ID */
-        .users-table th:nth-child(8), .users-table td:nth-child(8) { width: 11%; } /* Регистрация */
-        .users-table th:nth-child(9), .users-table td:nth-child(9) { width: 12%; } /* Действия */
+        .users-table th:nth-child(1), .users-table td:nth-child(1) { min-width: 50px; }  /* ID */
+        .users-table th:nth-child(2), .users-table td:nth-child(2) { min-width: 150px; } /* Имя/Логин */
+        .users-table th:nth-child(3), .users-table td:nth-child(3) { min-width: 150px; } /* Email */
+        .users-table th:nth-child(4), .users-table td:nth-child(4) { min-width: 100px; } /* Пароль */
+        .users-table th:nth-child(5), .users-table td:nth-child(5) { min-width: 120px; } /* Роль */
+        .users-table th:nth-child(6), .users-table td:nth-child(6) { min-width: 120px; } /* Авторизация */
+        .users-table th:nth-child(7), .users-table td:nth-child(7) { min-width: 120px; } /* Telegram ID */
+        .users-table th:nth-child(8), .users-table td:nth-child(8) { min-width: 100px; } /* Регистрация */
+        .users-table th:nth-child(9), .users-table td:nth-child(9) { min-width: 120px; } /* Действия */
 
         .invitations-section table {
             width: 100%;
@@ -567,7 +566,6 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin: 0;
-            table-layout: fixed;
         }
         
         .invitations-section table th,
@@ -578,13 +576,13 @@
             overflow-wrap: break-word;
         }
         
-        .invitations-section table th:nth-child(1), .invitations-section table td:nth-child(1) { width: 16%; } /* Код */
-        .invitations-section table th:nth-child(2), .invitations-section table td:nth-child(2) { width: 22%; } /* Приглашающий */
-        .invitations-section table th:nth-child(3), .invitations-section table td:nth-child(3) { width: 13%; } /* Статус */
-        .invitations-section table th:nth-child(4), .invitations-section table td:nth-child(4) { width: 22%; } /* Получатель */
-        .invitations-section table th:nth-child(5), .invitations-section table td:nth-child(5) { width: 13%; } /* Создано */
-        .invitations-section table th:nth-child(6), .invitations-section table td:nth-child(6) { width: 13%; } /* Принято */
-        .invitations-section table th:nth-child(7), .invitations-section table td:nth-child(7) { width: 11%; } /* Действия */
+        .invitations-section table th:nth-child(1), .invitations-section table td:nth-child(1) { min-width: 120px; } /* Код */
+        .invitations-section table th:nth-child(2), .invitations-section table td:nth-child(2) { min-width: 180px; } /* Приглашающий */
+        .invitations-section table th:nth-child(3), .invitations-section table td:nth-child(3) { min-width: 100px; } /* Статус */
+        .invitations-section table th:nth-child(4), .invitations-section table td:nth-child(4) { min-width: 180px; } /* Получатель */
+        .invitations-section table th:nth-child(5), .invitations-section table td:nth-child(5) { min-width: 100px; } /* Создано */
+        .invitations-section table th:nth-child(6), .invitations-section table td:nth-child(6) { min-width: 100px; } /* Принято */
+        .invitations-section table th:nth-child(7), .invitations-section table td:nth-child(7) { min-width: 100px; } /* Действия */
     </style>
 </head>
 <body>
