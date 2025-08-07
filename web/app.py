@@ -1469,45 +1469,50 @@ def register():
         email = request.form.get('email', '').strip()
         
         # Проверяем CSRF токен
-        if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
+        csrf_token_from_form = request.form.get('csrf_token')
+        logger.info(f"REGISTER: CSRF token from form: {csrf_token_from_form}")
+        logger.info(f"REGISTER: CSRF token in session: {session.get('csrf_token')}")
+        
+        if not security_manager.validate_csrf_token(csrf_token_from_form):
             logger.error(f"REGISTER: CSRF token validation failed for IP: {request.remote_addr}")
-            return render_template('register.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
+            logger.error(f"REGISTER: Expected: {session.get('csrf_token')}, Got: {csrf_token_from_form}")
+            return render_template('register.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.", csrf_token=security_manager.generate_csrf_token())
         
         # Валидация email
         if email and not security_manager.validate_email(email):
-            return render_template('register.html', error="Введите корректный email адрес")
+            return render_template('register.html', error="Введите корректный email адрес", csrf_token=security_manager.generate_csrf_token())
         
         # Валидация логина
         if not login or len(login) < 3:
-            return render_template('register.html', error="Логин должен содержать минимум 3 символа")
+            return render_template('register.html', error="Логин должен содержать минимум 3 символа", csrf_token=security_manager.generate_csrf_token())
         
         # Проверка сложности пароля
         password_valid, password_message = security_manager.validate_password_strength(password)
         if not password_valid:
-            return render_template('register.html', error=password_message)
+            return render_template('register.html', error=password_message, csrf_token=security_manager.generate_csrf_token())
         
         if password != confirm_password:
-            return render_template('register.html', error="Пароли не совпадают")
+            return render_template('register.html', error="Пароли не совпадают", csrf_token=security_manager.generate_csrf_token())
         
         if role not in ['admin', 'driver', 'recipient']:
-            return render_template('register.html', error="Некорректная роль")
+            return render_template('register.html', error="Некорректная роль", csrf_token=security_manager.generate_csrf_token())
         
         # Проверка логина на допустимые символы
         if not re.match(r'^[a-zA-Z0-9_-]+$', login):
-            return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -")
+            return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -", csrf_token=security_manager.generate_csrf_token())
         
         # Валидация имени и фамилии
         if first_name and len(first_name) > 50:
-            return render_template('register.html', error="Имя слишком длинное (максимум 50 символов)")
+            return render_template('register.html', error="Имя слишком длинное (максимум 50 символов)", csrf_token=security_manager.generate_csrf_token())
         if last_name and len(last_name) > 50:
-            return render_template('register.html', error="Фамилия слишком длинная (максимум 50 символов)")
+            return render_template('register.html', error="Фамилия слишком длинная (максимум 50 символов)", csrf_token=security_manager.generate_csrf_token())
         
         # Проверка на запрещенные символы в имени и фамилии
         forbidden_chars = ['<', '>', '"', "'", '&', '{', '}', '[', ']', '(', ')', ';', '=', '+']
         if first_name and any(char in first_name for char in forbidden_chars):
-            return render_template('register.html', error="Имя содержит запрещенные символы")
+            return render_template('register.html', error="Имя содержит запрещенные символы", csrf_token=security_manager.generate_csrf_token())
         if last_name and any(char in last_name for char in forbidden_chars):
-            return render_template('register.html', error="Фамилия содержит запрещенные символы")
+            return render_template('register.html', error="Фамилия содержит запрещенные символы", csrf_token=security_manager.generate_csrf_token())
         
         # Создание пользователя
         logger.info(f"REGISTER: попытка создания пользователя login={login}, role={role}, email={email}")
@@ -1522,10 +1527,11 @@ def register():
             logger.info(f"REGISTER: успешная регистрация и вход login={login}")
             return redirect('/')
         else:
-            return render_template('register.html', error=f"Ошибка регистрации: {result}")
+            return render_template('register.html', error=f"Ошибка регистрации: {result}", csrf_token=security_manager.generate_csrf_token())
     
     # Генерируем CSRF токен для формы
     csrf_token = security_manager.generate_csrf_token()
+    logger.info(f"REGISTER: Generated CSRF token: {csrf_token}")
     return render_template('register.html', csrf_token=csrf_token)
 
 @app.route('/login', methods=['GET', 'POST'])

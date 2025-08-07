@@ -374,13 +374,28 @@ class SecurityManager:
         """Генерация CSRF токена"""
         if 'csrf_token' not in session:
             session['csrf_token'] = secrets.token_hex(32)
+            logger.info(f"CSRF: Generated new token: {session['csrf_token']}")
+        else:
+            logger.info(f"CSRF: Using existing token: {session['csrf_token']}")
         return session['csrf_token']
     
     def validate_csrf_token(self, token):
         """Проверка CSRF токена"""
-        if 'csrf_token' not in session:
+        if not token:
+            logger.error("CSRF: Token is None or empty")
             return False
-        return token == session['csrf_token']
+        
+        if 'csrf_token' not in session:
+            logger.error("CSRF: No CSRF token in session")
+            return False
+        
+        expected_token = session['csrf_token']
+        is_valid = token == expected_token
+        
+        if not is_valid:
+            logger.error(f"CSRF: Token mismatch. Expected: {expected_token}, Got: {token}")
+        
+        return is_valid
 
 # Создаем глобальный экземпляр менеджера безопасности
 security_manager = SecurityManager()
