@@ -23,10 +23,10 @@
         
         .admin-container {
             max-width: 100%;
-            margin: 0;
+            margin: 20px auto;
             background: white;
-            border-radius: 0;
-            box-shadow: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
         
@@ -76,7 +76,7 @@
         }
         
         .admin-content {
-            padding: 0;
+            padding: 30px;
         }
         
         .stats-grid {
@@ -110,9 +110,9 @@
             width: 100%;
             border-collapse: collapse;
             background: white;
-            border-radius: 0;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin: 0;
         }
         
@@ -547,7 +547,7 @@
     </style>
 </head>
 <body>
-    <div style="max-width: 100%; margin: 0; padding: 20px 30px;">
+    <div style="max-width: 100%; margin: 20px auto;">
         <a href="/" class="back-link">← Назад на главную</a>
     </div>
     <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
@@ -687,8 +687,8 @@
             {% endif %}
             
             {% if invitations %}
-            <div class="invitations-section" style="margin-top: 40px; padding: 0;">
-                <h2 style="color: #1d4ed8; margin-bottom: 20px; font-size: 1.5em; padding: 0 30px;">📋 Приглашения получателей</h2>
+            <div class="invitations-section" style="margin-top: 40px;">
+                <h2 style="color: #1d4ed8; margin-bottom: 20px; font-size: 1.5em;">📋 Приглашения получателей</h2>
                 <table class="users-table" style="margin: 0;">
                     <thead>
                         <tr>
