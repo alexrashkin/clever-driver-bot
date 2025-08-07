@@ -862,25 +862,40 @@ def api_location():
                     except ValueError:
                         logger.warning(f"OwnTracks: неверный user_id={user_id_param}")
                 
-                # Если user_id не указан, используем fallback для админа
+                # Если user_id не указан, используем fallback логику
                 if not user:
-                    # Fallback: используем админа
                     users = db.get_all_users()
+                    
+                    # Сначала ищем админа
+                    admin_user = None
+                    driver_users = []
+                    
                     for u in users:
                         if u.get('role') == 'admin':
-                            telegram_id = u.get('telegram_id')
-                            user = u
-                            logger.info(f"OwnTracks: используем админа ID={u.get('id')}, telegram_id={telegram_id}")
-                            break
+                            admin_user = u
+                        elif u.get('role') == 'driver':
+                            driver_users.append(u)
                     
-                    # Если админа нет, используем любого водителя
-                    if not user:
+                    # Приоритет: админ > водители > любой пользователь
+                    if admin_user:
+                        telegram_id = admin_user.get('telegram_id')
+                        user = admin_user
+                        logger.info(f"OwnTracks: используем админа ID={admin_user.get('id')}, telegram_id={telegram_id}")
+                    elif driver_users:
+                        # Если есть несколько водителей, используем первого
+                        telegram_id = driver_users[0].get('telegram_id')
+                        user = driver_users[0]
+                        logger.info(f"OwnTracks: используем водителя ID={driver_users[0].get('id')}, telegram_id={telegram_id}, name={driver_users[0].get('first_name', 'Unknown')}")
+                    else:
+                        # Если нет ни админа, ни водителей, используем любого пользователя
                         for u in users:
-                            if u.get('role') in ['driver', 'admin']:
+                            if u.get('telegram_id'):
                                 telegram_id = u.get('telegram_id')
                                 user = u
-                                logger.info(f"OwnTracks: используем fallback пользователя ID={u.get('id')}, telegram_id={telegram_id}")
+                                logger.info(f"OwnTracks: используем любого пользователя ID={u.get('id')}, telegram_id={telegram_id}, name={u.get('first_name', 'Unknown')}")
                                 break
+                        else:
+                            logger.warning("OwnTracks: не найден ни один пользователь для сохранения данных")
             
             # Сохраняем в базу, если координаты валидны
             if validate_coordinates(latitude, longitude):
