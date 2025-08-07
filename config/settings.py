@@ -1,4 +1,5 @@
 import os
+import secrets
 
 class Config:
     # База данных
@@ -7,12 +8,12 @@ class Config:
     # Веб-сервер
     WEB_HOST = "0.0.0.0"
     WEB_PORT = 5000
-    WEB_SECRET_KEY = "your-secret-key-change-this-in-production"
+    WEB_SECRET_KEY = os.getenv("WEB_SECRET_KEY", secrets.token_hex(32))
     
     # Telegram
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
     TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "clever_driver_bot")
-    TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")  # Алиас для совместимости
+    TELEGRAM_TOKEN = TELEGRAM_BOT_TOKEN  # Алиас для совместимости
     
     # Рабочие координаты
     WORK_LATITUDE = float(os.getenv("WORK_LATITUDE", "55.7558"))
