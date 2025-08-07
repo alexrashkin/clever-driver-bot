@@ -56,11 +56,11 @@ def add_security_headers(response):
     # Content Security Policy - строгая политика безопасности
     csp_policy = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://telegram.org; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
         "font-src 'self' https://cdn.jsdelivr.net; "
         "img-src 'self' data: https:; "
-        "connect-src 'self'; "
+        "connect-src 'self' https://telegram.org; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
         "form-action 'self'; "
