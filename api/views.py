@@ -6,8 +6,8 @@ import json
 import math
 
 # Константы для определения местоположения работы
-WORK_LATITUDE = 55.676803
-WORK_LONGITUDE = 37.52351
+WORK_LATITUDE = 55.7539  # Красная площадь
+WORK_LONGITUDE = 37.6208  # Красная площадь
 WORK_RADIUS = 100  # метров
 
 def calculate_distance(lat1, lon1, lat2, lon2):

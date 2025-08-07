@@ -42,6 +42,11 @@ class Config:
     # HTTPS
     FORCE_HTTPS = os.getenv("FORCE_HTTPS", "False").lower() == "true"
     
+    # Координаты по умолчанию (Красная площадь)
+    WORK_LATITUDE = 55.7539  # Красная площадь
+    WORK_LONGITUDE = 37.6208  # Красная площадь
+    WORK_RADIUS = 100  # метров
+    
     # Логирование безопасности
     SECURITY_LOG_FILE = "security.log"
     LOG_SECURITY_EVENTS = os.getenv("LOG_SECURITY_EVENTS", "True").lower() == "true"
