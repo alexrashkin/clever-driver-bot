@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Страница не найдена</title>
+    <title>429 - Слишком много запросов</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
         }
         .error-code {
             font-size: 72px;
-            color: #e74c3c;
+            color: #f39c12;
             margin: 0;
         }
         .error-message {
@@ -49,12 +49,12 @@
 </head>
 <body>
     <div class="error-container">
-        <h1 class="error-code">404</h1>
-        <h2 class="error-message">Страница не найдена</h2>
+        <h1 class="error-code">429</h1>
+        <h2 class="error-message">Слишком много запросов</h2>
         <p class="error-description">
-            Запрашиваемая страница не существует или была перемещена.
+            Вы превысили лимит запросов. Пожалуйста, подождите немного и попробуйте снова.
         </p>
         <a href="/" class="back-link">Вернуться на главную</a>
     </div>
 </body>
-</html> 
+</html>

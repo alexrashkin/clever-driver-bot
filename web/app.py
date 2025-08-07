@@ -1,13 +1,14 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session
 import sys
 import os
+import re
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from config.settings import config
 from bot.database import Database  # Импортируем класс, а не экземпляр
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
 from web.location_web_tracker import location_web_tracker, web_tracker
-from web.security import security_check, security_manager, log_security_event
+from web.security import security_check, security_manager, log_security_event, login_rate_limit, csrf_protect
 import logging
 import requests
 from datetime import datetime, timedelta
@@ -43,6 +44,12 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = config.WEB_SECRET_KEY
 
+# Настройки безопасности сессий
+app.config['SESSION_COOKIE_SECURE'] = config.SESSION_COOKIE_SECURE
+app.config['SESSION_COOKIE_HTTPONLY'] = config.SESSION_COOKIE_HTTPONLY
+app.config['SESSION_COOKIE_SAMESITE'] = config.SESSION_COOKIE_SAMESITE
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=config.SESSION_COOKIE_MAX_AGE)
+
 # Создаем новый экземпляр базы данных
 db = Database("driver.db")
 
@@ -59,27 +66,24 @@ def add_security_headers(response):
         "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://telegram.org https://t.me https://api-maps.yandex.ru https://yastatic.net; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
         "font-src 'self' https://cdn.jsdelivr.net; "
-        "img-src 'self' data: https: https://telegram.org https://t.me; "
-        "connect-src 'self' https://telegram.org https://t.me; "
-        "frame-src 'self' https://telegram.org https://t.me https://oauth.telegram.org; "
-        "frame-ancestors 'none'; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self' https://api.telegram.org https://api-maps.yandex.ru; "
+        "frame-src 'self' https://telegram.org https://t.me; "
+        "object-src 'none'; "
         "base-uri 'self'; "
         "form-action 'self'; "
+        "frame-ancestors 'self'; "
         "upgrade-insecure-requests;"
     )
     
+    # Добавляем заголовки безопасности
     response.headers['Content-Security-Policy'] = csp_policy
-    
-    # Добавляем заголовки для разрешения геолокации
-    response.headers['Permissions-Policy'] = 'geolocation=(self), microphone=(), camera=()'
-    
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
-    response.headers['Server'] = 'CleverDriver/1.0'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
     
     return response
 
@@ -1452,45 +1456,35 @@ def static_files(filename):
 
 @app.route('/register', methods=['GET', 'POST'])
 @security_check
+@login_rate_limit
 def register():
-    """Регистрация нового пользователя - ВРЕМЕННО ЗАБЛОКИРОВАНА"""
-    # Логируем все попытки регистрации
-    logger.warning(f"SECURITY: Попытка регистрации с IP {request.remote_addr}, User-Agent: {request.headers.get('User-Agent', 'Unknown')}")
-    
+    """Страница регистрации"""
     if request.method == 'POST':
-        logger.error(f"SECURITY: БЛОКИРОВАНА регистрация от IP {request.remote_addr}")
-        return render_template('register.html', error="Регистрация временно заблокирована из-за технических работ")
-        login = request.form.get('login', '').strip()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        first_name = request.form.get('first_name', '').strip() or None
-        last_name = request.form.get('last_name', '').strip() or None
-        email = request.form.get('email', '').strip()
+        login = request.form.get('login')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
         role = request.form.get('role', 'driver')
+        email = request.form.get('email', '').strip()
         
-        # Защита от XSS - очистка HTML тегов
-        import html
-        if first_name:
-            first_name = html.escape(first_name)
-        if last_name:
-            last_name = html.escape(last_name)
+        # Проверяем CSRF токен
+        if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
+            logger.error(f"REGISTER: CSRF token validation failed for IP: {request.remote_addr}")
+            return render_template('register.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
         
         # Валидация email
-        if not email:
-            return render_template('register.html', error="Email обязателен для регистрации")
-        
-        # Проверка формата email
-        import re
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_pattern, email):
+        if email and not security_manager.validate_email(email):
             return render_template('register.html', error="Введите корректный email адрес")
         
-        # Валидация
+        # Валидация логина
         if not login or len(login) < 3:
             return render_template('register.html', error="Логин должен содержать минимум 3 символа")
         
-        if not password or len(password) < 6:
-            return render_template('register.html', error="Пароль должен содержать минимум 6 символов")
+        # Проверка сложности пароля
+        password_valid, password_message = security_manager.validate_password_strength(password)
+        if not password_valid:
+            return render_template('register.html', error=password_message)
         
         if password != confirm_password:
             return render_template('register.html', error="Пароли не совпадают")
@@ -1499,7 +1493,6 @@ def register():
             return render_template('register.html', error="Некорректная роль")
         
         # Проверка логина на допустимые символы
-        import re
         if not re.match(r'^[a-zA-Z0-9_-]+$', login):
             return render_template('register.html', error="Логин может содержать только буквы, цифры, _ и -")
         
@@ -1526,27 +1519,33 @@ def register():
             session.clear()  # Очищаем старую сессию
             session['user_login'] = login
             session.permanent = True
-            logger.info(f"REGISTER: пользователь {login} успешно создан и авторизован")
+            logger.info(f"REGISTER: успешная регистрация и вход login={login}")
             return redirect('/')
         else:
-            logger.error(f"REGISTER: ошибка создания пользователя {login}: {result}")
-            return render_template('register.html', error=result)
+            return render_template('register.html', error=f"Ошибка регистрации: {result}")
     
-    return render_template('register.html')
+    # Генерируем CSRF токен для формы
+    csrf_token = security_manager.generate_csrf_token()
+    return render_template('register.html', csrf_token=csrf_token)
 
 @app.route('/login', methods=['GET', 'POST'])
 @security_check
+@login_rate_limit
 def login():
-    """Вход в систему"""
+    """Страница входа в систему"""
     if request.method == 'POST':
-        login = request.form.get('login', '').strip()
-        password = request.form.get('password', '')
+        login = request.form.get('login')
+        password = request.form.get('password')
+        
+        # Проверяем CSRF токен
+        if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
+            logger.error(f"LOGIN: CSRF token validation failed for IP: {request.remote_addr}")
+            return render_template('login.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
         
         if not login or not password:
             return render_template('login.html', error="Введите логин и пароль")
         
-        # Проверяем логин и пароль
-        logger.info(f"LOGIN: попытка входа login={login}")
+        # Проверяем пользователя
         if db.verify_password(login, password):
             session.clear()  # Очищаем старую сессию
             session['user_login'] = login
@@ -1557,7 +1556,9 @@ def login():
             logger.error(f"LOGIN: неверный пароль для login={login}")
             return render_template('login.html', error="Неверный логин или пароль")
     
-    return render_template('login.html')
+    # Генерируем CSRF токен для формы
+    csrf_token = security_manager.generate_csrf_token()
+    return render_template('login.html', csrf_token=csrf_token)
 
 @app.route('/logout')
 @security_check
@@ -1582,10 +1583,17 @@ def logout():
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 @security_check
+@login_rate_limit
 def forgot_password():
     """Страница восстановления пароля - запрос кода"""
     if request.method == 'POST':
         login = request.form.get('login')
+        
+        # Проверяем CSRF токен
+        if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
+            logger.error(f"FORGOT_PASSWORD: CSRF token validation failed for IP: {request.remote_addr}")
+            return render_template('forgot_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
+        
         if not login:
             session['flash_message'] = 'Введите логин'
             return redirect('/forgot_password')
@@ -1593,57 +1601,58 @@ def forgot_password():
         # Создаем код восстановления
         success, result = db.create_password_reset_code(login)
         if success:
-            session['flash_message'] = 'Код восстановления отправлен на email'
-            session['reset_login'] = login
-            return redirect('/reset_password')
+            session['flash_message'] = f'Код восстановления отправлен на email, привязанный к логину {login}'
         else:
-            session['flash_message'] = result
-            return redirect('/forgot_password')
+            session['flash_message'] = f'Ошибка: {result}'
+        
+        return redirect('/forgot_password')
     
-    return render_template('forgot_password.html')
+    # Генерируем CSRF токен для формы
+    csrf_token = security_manager.generate_csrf_token()
+    return render_template('forgot_password.html', csrf_token=csrf_token)
 
 @app.route('/reset_password', methods=['GET', 'POST'])
 @security_check
+@login_rate_limit
 def reset_password():
-    """Страница сброса пароля с кодом"""
-    reset_login = session.get('reset_login')
-    if not reset_login:
-        return redirect('/forgot_password')
-    
+    """Страница сброса пароля по коду"""
     if request.method == 'POST':
         code = request.form.get('code')
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
         
-        if not all([code, new_password, confirm_password]):
-            session['flash_message'] = 'Заполните все поля'
-            return redirect('/reset_password')
+        # Проверяем CSRF токен
+        if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
+            logger.error(f"RESET_PASSWORD: CSRF token validation failed for IP: {request.remote_addr}")
+            return render_template('reset_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
+        
+        if not code or not new_password or not confirm_password:
+            return render_template('reset_password.html', error="Заполните все поля")
         
         if new_password != confirm_password:
-            session['flash_message'] = 'Пароли не совпадают'
-            return redirect('/reset_password')
+            return render_template('reset_password.html', error="Пароли не совпадают")
         
-        if len(new_password) < 6:
-            session['flash_message'] = 'Пароль должен содержать минимум 6 символов'
-            return redirect('/reset_password')
+        # Проверка сложности пароля
+        password_valid, password_message = security_manager.validate_password_strength(new_password)
+        if not password_valid:
+            return render_template('reset_password.html', error=password_message)
         
-        # Проверяем код
-        success, result = db.verify_password_reset_code(reset_login, code)
+        # Проверяем код и сбрасываем пароль
+        success, result = db.verify_password_reset_code(code)
         if success:
-            reset_id = result
-            # Сбрасываем пароль
-            db.reset_user_password(reset_login, new_password)
-            # Отмечаем код как использованный
-            db.mark_reset_code_used(reset_id)
-            # Очищаем сессию
-            session.pop('reset_login', None)
-            session['flash_message'] = 'Пароль успешно изменен! Теперь вы можете войти в систему.'
-            return redirect('/login')
+            login = result
+            success, message = db.reset_user_password(login, new_password)
+            if success:
+                session['flash_message'] = 'Пароль успешно изменен. Теперь вы можете войти в систему.'
+                return redirect('/login')
+            else:
+                return render_template('reset_password.html', error=f"Ошибка сброса пароля: {message}")
         else:
-            session['flash_message'] = result
-            return redirect('/reset_password')
+            return render_template('reset_password.html', error=f"Неверный код: {result}")
     
-    return render_template('reset_password.html')
+    # Генерируем CSRF токен для формы
+    csrf_token = security_manager.generate_csrf_token()
+    return render_template('reset_password.html', csrf_token=csrf_token)
 
 @app.route('/admin')
 @security_check
@@ -2848,6 +2857,27 @@ def change_password():
                 error = True
     
     return render_template('change_password.html', message=message, error=error)
+
+# Обработчик ошибок
+@app.errorhandler(404)
+def not_found_error(error):
+    logger.warning(f"404 ERROR: {request.remote_addr} - {request.url}")
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"500 ERROR: {request.remote_addr} - {request.url} - {str(error)}")
+    return render_template('500.html'), 500
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    logger.warning(f"403 ERROR: {request.remote_addr} - {request.url}")
+    return render_template('403.html'), 403
+
+@app.errorhandler(429)
+def rate_limit_error(error):
+    logger.warning(f"429 ERROR: Rate limit exceeded for {request.remote_addr}")
+    return render_template('429.html'), 429
 
 
 
