@@ -1627,7 +1627,7 @@ def admin_users():
     
     # Получаем всех пользователей и приглашения
     users = db.get_all_users()
-    invitations = db.get_all_invitations() if hasattr(db, 'get_all_invitations') else []
+    invitations = db.get_all_invitations()
     
     return render_template('admin_users.html', users=users, invitations=invitations)
 
