@@ -114,6 +114,7 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin: 0;
+            table-layout: fixed;
         }
         
         .users-table th {
@@ -123,12 +124,16 @@
             font-weight: 600;
             color: #2d3748;
             border-bottom: 2px solid #e2e8f0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .users-table td {
             padding: 15px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: middle;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         .users-table tr:hover {
