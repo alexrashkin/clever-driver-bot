@@ -55,6 +55,7 @@
             flex-wrap: wrap;
             gap: 10px;
             align-items: center;
+            justify-content: center;
         }
         
         .nav-link {
@@ -300,6 +301,7 @@
             .admin-nav {
                 padding: 10px 15px;
                 gap: 8px;
+                justify-content: center;
             }
             
             .nav-link {
@@ -315,24 +317,6 @@
                 grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
                 gap: 15px;
             }
-        }
-        
-        @media (max-width: 480px) {
-            .admin-nav {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .nav-link {
-                text-align: center;
-                margin-bottom: 5px;
-            }
-        }
-            
-            .admin-container {
-                margin: 0;
-                border-radius: 0;
-            }
             
             .admin-header {
                 padding: 20px 15px;
@@ -345,37 +329,52 @@
             .admin-subtitle {
                 font-size: 1em;
             }
-            
+        }
+        
+        @media (max-width: 600px) {
             .admin-nav {
-                padding: 10px 15px;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
+                justify-content: space-around;
+                gap: 5px;
             }
             
             .nav-link {
-                margin-right: 0;
-                padding: 6px 12px;
-                font-size: 0.9em;
+                padding: 5px 10px;
+                font-size: 0.85em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .admin-nav {
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: flex-start;
             }
             
-            .admin-content {
-                padding: 15px;
+            .nav-link {
+                text-align: center;
+                margin-bottom: 5px;
+                padding: 8px 12px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .admin-nav {
+                padding: 8px 10px;
             }
             
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-                margin-bottom: 20px;
+            .nav-link {
+                padding: 6px 10px;
+                font-size: 0.8em;
             }
             
-            .stat-card {
-                padding: 15px;
+            .admin-header {
+                padding: 15px 10px;
             }
             
-            .stat-number {
-                font-size: 2em;
+            .admin-title {
+                font-size: 1.3em;
             }
+        }
             
             .stat-label {
                 font-size: 0.8em;
