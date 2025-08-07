@@ -1818,6 +1818,12 @@ def telegram_auth():
     try:
         logger.info(f"TELEGRAM_AUTH: начало обработки запроса, метод: {request.method}")
         
+        # Дополнительная проверка User-Agent для Telegram
+        user_agent = request.headers.get('User-Agent', '')
+        if not any(telegram_indicator in user_agent.lower() for telegram_indicator in ['telegram', 'tgwebapp', 'bot']):
+            logger.warning(f"TELEGRAM_AUTH: подозрительный User-Agent: {user_agent}")
+            # Не блокируем, но логируем для мониторинга
+        
         # Проверяем, установлен ли токен
         if not config.TELEGRAM_TOKEN:
             logger.error("TELEGRAM_AUTH: токен Telegram не установлен")
