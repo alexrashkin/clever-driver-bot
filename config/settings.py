@@ -50,5 +50,14 @@ class Config:
     # Логирование безопасности
     SECURITY_LOG_FILE = "security.log"
     LOG_SECURITY_EVENTS = os.getenv("LOG_SECURITY_EVENTS", "True").lower() == "true"
+    
+    # Email настройки
+    EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "False").lower() == "true"
+    EMAIL_SMTP_SERVER = os.getenv("EMAIL_SMTP_SERVER", "smtp.gmail.com")
+    EMAIL_SMTP_PORT = int(os.getenv("EMAIL_SMTP_PORT", "587"))
+    EMAIL_USERNAME = os.getenv("EMAIL_USERNAME", "")
+    EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
+    EMAIL_FROM_ADDRESS = os.getenv("EMAIL_FROM_ADDRESS", "")
+    EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Умный водитель")
 
 config = Config()

@@ -735,13 +735,19 @@ class Database:
             try:
                 from bot.email_utils import send_password_reset_email
                 
-                if send_password_reset_email(email, login, code):
+                logger.info(f"CREATE_PASSWORD_RESET_CODE: попытка отправки email на {email}")
+                send_result = send_password_reset_email(email, login, code)
+                logger.info(f"CREATE_PASSWORD_RESET_CODE: результат отправки email: {send_result}")
+                
+                if send_result:
                     logger.info(f"Код восстановления отправлен на email для пользователя {login}")
                     return True, "Код отправлен на email"
                 else:
                     logger.warning(f"Не удалось отправить код на email для {login}")
+                    return False, "Ошибка отправки email. Попробуйте позже или обратитесь к администратору."
             except Exception as e:
                 logger.error(f"Ошибка отправки кода на email для {login}: {e}")
+                return False, f"Ошибка отправки email: {e}"
         
         # Если нет email, возвращаем ошибку
         logger.warning(f"У пользователя {login} не указан email")
