@@ -557,7 +557,7 @@
                                     <span class="invitation-status status-active">Активно</span>
                                 {% endif %}
                             </td>
-                            <td>{{ invitation.created_at.strftime('%d.%m.%Y %H:%M') if invitation.created_at else 'Не указано' }}</td>
+                            <td>{{ invitation.created_at if invitation.created_at else 'Не указано' }}</td>
                             <td>
                                 <button class="btn btn-danger" onclick="deleteInvitation({{ invitation.id }})">Удалить</button>
                                 <button class="btn btn-info" onclick="copyInviteLink({{ invitation.id }})">Копировать ссылку</button>
