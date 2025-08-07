@@ -8,6 +8,13 @@ User=root
 WorkingDirectory=/root/clever-driver-bot
 Environment=PATH=/root/clever-driver-bot/venv/bin
 EnvironmentFile=/root/clever-driver-bot/.env
+Environment=EMAIL_ENABLED=true
+Environment=EMAIL_SMTP_SERVER=mail.cleverdriver.ru
+Environment=EMAIL_SMTP_PORT=587
+Environment=EMAIL_USERNAME=info@cleverdriver.ru
+Environment=EMAIL_PASSWORD=REDACTED
+Environment=EMAIL_FROM_NAME=Умный водитель
+Environment=EMAIL_FROM_ADDRESS=info@cleverdriver.ru
 ExecStart=/root/clever-driver-bot/venv/bin/python /root/clever-driver-bot/run_web.py
 Restart=always
 RestartSec=10
