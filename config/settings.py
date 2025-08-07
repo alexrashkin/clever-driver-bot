@@ -10,9 +10,9 @@ class Config:
     WEB_SECRET_KEY = "your-secret-key-change-this-in-production"
     
     # Telegram
-    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "your-telegram-bot-token-here")
+    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
     TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "clever_driver_bot")
-    TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "your-telegram-bot-token-here")  # Алиас для совместимости
+    TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")  # Алиас для совместимости
     
     # Рабочие координаты
     WORK_LATITUDE = float(os.getenv("WORK_LATITUDE", "55.7558"))

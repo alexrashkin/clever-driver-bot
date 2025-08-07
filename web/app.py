@@ -1816,9 +1816,9 @@ def telegram_auth():
         logger.info(f"TELEGRAM_AUTH: начало обработки запроса, метод: {request.method}")
         
         # Проверяем, установлен ли токен
-        if not config.TELEGRAM_TOKEN or config.TELEGRAM_TOKEN == "your-telegram-bot-token-here":
+        if not config.TELEGRAM_TOKEN:
             logger.error("TELEGRAM_AUTH: токен Telegram не установлен")
-            return 'Ошибка конфигурации: токен Telegram не установлен', 500
+            return 'Ошибка конфигурации: токен Telegram не установлен. Обратитесь к администратору.', 500
         
         # Проверка подписи Telegram
         data = request.args if request.method == 'GET' else request.form
@@ -1837,7 +1837,7 @@ def telegram_auth():
         if hmac_hash != hash_:
             logger.error("TELEGRAM_AUTH: неверная подпись Telegram")
             return 'Ошибка авторизации Telegram', 403
-            
+        
         telegram_id = int(auth_data['id'])
         username = auth_data.get('username')
         first_name = auth_data.get('first_name')
