@@ -52,18 +52,18 @@ async def monitor_database(application: Application):
                 FROM user_locations ul
                 JOIN users u ON ul.user_id = u.id
                 WHERE u.role IN ('driver', 'admin')
-                ORDER BY ul.id DESC LIMIT 5
+                ORDER BY ul.id DESC LIMIT 3
             """)
             rows = cursor.fetchall()
             conn.close()
 
             logger.info(f"📊 Мониторинг: найдено {len(rows)} записей")
-            if len(rows) >= 3:  # Проверяем минимум 3 записи для стабилизации
+            if len(rows) >= 2:  # Проверяем минимум 2 записи для стабилизации
                 curr_id, curr_is_at_work, curr_time, curr_lat, curr_lon = rows[0]
                 prev_id, prev_is_at_work, prev_time, prev_lat, prev_lon = rows[1]
                 
-                # Проверяем стабилизацию статуса - анализируем последние 3 записи
-                recent_statuses = [row[1] for row in rows[:3]]
+                # Проверяем стабилизацию статуса - анализируем последние 2 записи
+                recent_statuses = [row[1] for row in rows[:2]]
                 status_stable = len(set(recent_statuses)) == 1  # Все статусы одинаковые
                 
                 logger.info(f"📍 Текущая: ID {curr_id}, is_at_work: {curr_is_at_work}, время: {curr_time}")
