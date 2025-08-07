@@ -115,6 +115,32 @@
     <div class="container">
         <h2>Настройки профиля</h2>
         
+        <!-- Секция изменения пароля -->
+        {% if user and user.login %}
+        <div style="margin-bottom: 20px; padding: 20px; background: rgba(99, 102, 241, 0.1); border-radius: 12px; border-left: 4px solid #6366f1;">
+            <div style="font-weight: 600; color: #4338ca; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span>🔐</span> Безопасность аккаунта
+            </div>
+            <div style="color: #374151; font-size: 0.9em; line-height: 1.5; margin-bottom: 15px;">
+                <strong>Логин:</strong> {{ user.login }}<br>
+                <strong>Роль:</strong> 
+                {% if user.role == 'admin' %}
+                    Администратор
+                {% elif user.role == 'driver' %}
+                    Водитель
+                {% elif user.role == 'recipient' %}
+                    Получатель уведомлений
+                {% else %}
+                    {{ user.role }}
+                {% endif %}
+            </div>
+            <div style="text-align: center;">
+                <a href="/change_password" class="btn" style="text-decoration: none; display: block; width: calc(100% - 40px); margin: 0 auto; box-sizing: border-box;">
+                    🔐 Изменить пароль
+                </a>
+            </div>
+        </div>
+        {% endif %}
 
         {% if not user %}
             <div style="text-align:center; margin: 32px 0;">

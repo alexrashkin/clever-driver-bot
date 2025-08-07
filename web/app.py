@@ -2786,6 +2786,64 @@ def test_security():
     """Тестовая страница безопасности"""
     return render_template('test_security.html')
 
+@app.route('/change_password', methods=['GET', 'POST'])
+@security_check
+def change_password():
+    """Страница изменения пароля"""
+    telegram_id = session.get('telegram_id')
+    user_login = session.get('user_login')
+    
+    if not telegram_id and not user_login:
+        session['flash_message'] = "Необходимо авторизоваться"
+        return redirect('/login')
+    
+    message = None
+    error = False
+    
+    if request.method == 'POST':
+        current_password = request.form.get('current_password', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        if not all([current_password, new_password, confirm_password]):
+            message = "Все поля должны быть заполнены"
+            error = True
+        elif len(new_password) < 6:
+            message = "Новый пароль должен содержать минимум 6 символов"
+            error = True
+        elif new_password != confirm_password:
+            message = "Новые пароли не совпадают"
+            error = True
+        else:
+            try:
+                # Проверяем текущий пароль
+                if user_login:
+                    if not db.verify_password(user_login, current_password):
+                        message = "Неверный текущий пароль"
+                        error = True
+                    else:
+                        # Изменяем пароль
+                        db.reset_user_password(user_login, new_password)
+                        message = "Пароль успешно изменен"
+                else:
+                    # Для пользователей с Telegram нужно проверить, есть ли у них логин
+                    user = db.get_user_by_telegram_id(telegram_id)
+                    if not user or not user.get('login'):
+                        message = "Для изменения пароля необходимо иметь логин"
+                        error = True
+                    elif not db.verify_password(user['login'], current_password):
+                        message = "Неверный текущий пароль"
+                        error = True
+                    else:
+                        # Изменяем пароль
+                        db.reset_user_password(user['login'], new_password)
+                        message = "Пароль успешно изменен"
+            except Exception as e:
+                message = f"Ошибка изменения пароля: {e}"
+                error = True
+    
+    return render_template('change_password.html', message=message, error=error)
+
 
 
 
