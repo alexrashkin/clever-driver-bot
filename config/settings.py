@@ -11,7 +11,7 @@ class Config:
     
     # Telegram
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-    TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "")
+    TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "clever_driver_bot")
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")  # Алиас для совместимости
     
     # Рабочие координаты
