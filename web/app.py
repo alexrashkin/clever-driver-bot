@@ -8,7 +8,7 @@ from config.settings import config
 from bot.database import Database  # Импортируем класс, а не экземпляр
 from bot.utils import format_distance, format_timestamp, validate_coordinates, create_work_notification, calculate_distance, is_at_work, get_greeting
 from web.location_web_tracker import location_web_tracker, web_tracker
-from web.security import security_check, auth_security_check, security_manager, log_security_event, login_rate_limit, csrf_protect
+from web.security import security_check, auth_security_check, password_reset_security_check, security_manager, log_security_event, login_rate_limit, password_reset_rate_limit, csrf_protect
 import logging
 import requests
 from datetime import datetime, timedelta
@@ -1589,8 +1589,8 @@ def logout():
     return response
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
-@auth_security_check
-@login_rate_limit
+@password_reset_security_check
+@password_reset_rate_limit
 def forgot_password():
     """Страница восстановления пароля - запрос кода"""
     if request.method == 'POST':
@@ -1621,8 +1621,8 @@ def forgot_password():
     return render_template('forgot_password.html', csrf_token=csrf_token)
 
 @app.route('/reset_password', methods=['GET', 'POST'])
-@auth_security_check
-@login_rate_limit
+@password_reset_security_check
+@password_reset_rate_limit
 def reset_password():
     """Страница восстановления пароля - ввод нового пароля"""
     if request.method == 'POST':

@@ -248,6 +248,7 @@ class SecurityManager:
         # Инициализируем ограничители
         self.rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
         self.login_rate_limiter = RateLimiter(max_requests=5, window_seconds=300)  # 5 попыток за 5 минут
+        self.password_reset_rate_limiter = RateLimiter(max_requests=10, window_seconds=600)  # 10 попыток за 10 минут для восстановления пароля
         self.ip_blocker = IPBlocker(max_failed_attempts=10, block_duration_minutes=60)
     
     def check_xss(self, data):
@@ -504,6 +505,49 @@ def login_rate_limit(f):
             logger.warning(f"SECURITY: Login rate limit exceeded for IP: {ip_address}")
             security_manager.ip_blocker.record_failed_attempt(ip_address)
             return "Too many login attempts. Please try again later.", 429
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def password_reset_rate_limit(f):
+    """Декоратор для ограничения скорости восстановления пароля (более мягкий)"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        ip_address = request.remote_addr
+        
+        # Проверяем rate limiting для восстановления пароля
+        if not security_manager.password_reset_rate_limiter.is_allowed(ip_address):
+            logger.warning(f"SECURITY: Password reset rate limit exceeded for IP: {ip_address}")
+            return "Too many password reset attempts. Please try again later.", 429
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def password_reset_security_check(f):
+    """Декоратор для проверки безопасности восстановления пароля (очень мягкий)"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        ip_address = request.remote_addr
+        
+        # Проверяем только общий rate limiting (не блокируем IP)
+        if not security_manager.rate_limiter.is_allowed(ip_address):
+            logger.warning(f"SECURITY: General rate limit exceeded for password reset: {ip_address}")
+            return "Rate limit exceeded", 429
+        
+        # Проверяем User-Agent (только логируем)
+        user_agent = request.headers.get('User-Agent', '')
+        if security_manager.check_user_agent(user_agent):
+            logger.warning(f"SECURITY: Подозрительный User-Agent для восстановления пароля: {user_agent}")
+            # Не блокируем, только логируем
+        
+        # Проверяем GET параметры (только логируем)
+        if request.args:
+            for key, value in request.args.items():
+                if (security_manager.check_xss(value) or 
+                    security_manager.check_sql_injection(value) or
+                    security_manager.check_command_injection(value)):
+                    logger.warning(f"SECURITY: Подозрительные GET параметры для восстановления пароля: {key}={value}")
+                    # Не блокируем, только логируем
         
         return f(*args, **kwargs)
     return decorated_function
