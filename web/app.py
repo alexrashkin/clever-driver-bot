@@ -49,6 +49,38 @@ db = Database("driver.db")
 # Регистрируем Blueprint для веб-отслеживания
 app.register_blueprint(location_web_tracker)
 
+# Добавляем заголовки безопасности для всех ответов
+@app.after_request
+def add_security_headers(response):
+    """Добавляем заголовки безопасности для защиты от ложных срабатываний антивирусов"""
+    # Content Security Policy - строгая политика безопасности
+    csp_policy = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "font-src 'self' https://cdn.jsdelivr.net; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "upgrade-insecure-requests;"
+    )
+    
+    response.headers['Content-Security-Policy'] = csp_policy
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    
+    # Заголовки для улучшения репутации
+    response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    response.headers['Server'] = 'CleverDriver/1.0'
+    
+    return response
+
 def get_current_user():
     """Получить текущего пользователя из сессии (Telegram или логин/пароль)"""
     telegram_id = session.get('telegram_id')

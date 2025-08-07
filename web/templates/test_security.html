@@ -2,36 +2,64 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест безопасности</title>
+    <title>Тест безопасности - CleverDriver</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Тестовая страница безопасности для проверки чистоты кода CleverDriver">
+    <meta name="robots" content="noindex, nofollow">
 </head>
 <body>
-    <h1>Тест безопасности</h1>
-    <p>Эта страница используется для проверки безопасности сайта.</p>
-    <p>Время: <span id="time"></span></p>
-    <p>User-Agent: <span id="useragent"></span></p>
-    <p>IP: <span id="ip">{{ request.remote_addr }}</span></p>
+    <h1>🔒 Тест безопасности CleverDriver</h1>
+    <p>Эта страница используется для проверки безопасности сайта и демонстрации отсутствия вредоносного кода.</p>
+    
+    <div id="security-status">
+        <h2>Статус безопасности:</h2>
+        <ul>
+            <li>✅ Время: <span id="time"></span></li>
+            <li>✅ User-Agent: <span id="useragent"></span></li>
+            <li>✅ IP: <span id="ip">{{ request.remote_addr }}</span></li>
+            <li>✅ Проверка JSTAG: <span id="jstag-status">Проверяется...</span></li>
+            <li>✅ Проверка внешних скриптов: <span id="scripts-status">Проверяется...</span></li>
+            <li>✅ Проверка HTML: <span id="html-status">Проверяется...</span></li>
+        </ul>
+    </div>
+
+    <div id="security-report">
+        <h2>Отчет о безопасности:</h2>
+        <div id="report-content"></div>
+    </div>
 
     <script>
-        document.getElementById('time').textContent = new Date().toLocaleString();
+        // Обновляем время
+        document.getElementById('time').textContent = new Date().toLocaleString('ru-RU');
         document.getElementById('useragent').textContent = navigator.userAgent;
 
         // Проверяем, не был ли добавлен вредоносный код
+        let jstagFound = false;
         if (typeof JSTAG !== 'undefined') {
-            document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Обнаружен JSTAG!</p>';
+            jstagFound = true;
+            document.getElementById('jstag-status').innerHTML = '<span style="color:red;">❌ Обнаружен JSTAG!</span>';
+        } else {
+            document.getElementById('jstag-status').innerHTML = '<span style="color:green;">✅ JSTAG не обнаружен</span>';
         }
 
         // Проверяем внешние скрипты
+        let suspiciousScripts = [];
         const scripts = document.getElementsByTagName('script');
         for (let script of scripts) {
-            if (script.src && (script.src.includes('JSTAG') || script.src.includes('eval'))) {
-                document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Подозрительный скрипт: ' + script.src + '</p>';
+            if (script.src && (script.src.includes('JSTAG') || script.src.includes('eval') || script.src.includes('malicious'))) {
+                suspiciousScripts.push(script.src);
             }
+        }
+        
+        if (suspiciousScripts.length > 0) {
+            document.getElementById('scripts-status').innerHTML = '<span style="color:red;">❌ Подозрительные скрипты: ' + suspiciousScripts.join(', ') + '</span>';
+        } else {
+            document.getElementById('scripts-status').innerHTML = '<span style="color:green;">✅ Подозрительные скрипты не обнаружены</span>';
         }
 
         // Проверяем весь HTML на вредоносный код (исключаем собственный код проверки)
         const htmlContent = document.documentElement.outerHTML;
-        const suspiciousPatterns = ['JSTAG', 'eval(', 'document.write'];
+        const suspiciousPatterns = ['JSTAG', 'eval(', 'document.write', 'javascript:', 'vbscript:'];
         let foundSuspicious = false;
         
         for (let pattern of suspiciousPatterns) {
@@ -43,23 +71,61 @@
         }
         
         if (foundSuspicious) {
-            document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Обнаружен вредоносный код в HTML!</p>';
+            document.getElementById('html-status').innerHTML = '<span style="color:red;">❌ Обнаружен вредоносный код в HTML!</span>';
         } else {
-            document.body.innerHTML += '<p style="color:green;">✅ Вредоносный код не обнаружен</p>';
+            document.getElementById('html-status').innerHTML = '<span style="color:green;">✅ Вредоносный код в HTML не обнаружен</span>';
         }
 
-        // Проверяем заголовки
+        // Генерируем отчет
+        const reportContent = document.getElementById('report-content');
+        const allChecksPassed = !jstagFound && suspiciousScripts.length === 0 && !foundSuspicious;
+        
+        if (allChecksPassed) {
+            reportContent.innerHTML = `
+                <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                    <h3 style="color: #155724; margin: 0;">✅ Сайт безопасен</h3>
+                    <p style="color: #155724; margin: 5px 0 0 0;">
+                        Все проверки безопасности пройдены успешно. Сайт не содержит вредоносного кода.
+                    </p>
+                </div>
+            `;
+        } else {
+            reportContent.innerHTML = `
+                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                    <h3 style="color: #721c24; margin: 0;">⚠️ Обнаружены проблемы безопасности</h3>
+                    <p style="color: #721c24; margin: 5px 0 0 0;">
+                        Рекомендуется проверить код на наличие вредоносных элементов.
+                    </p>
+                </div>
+            `;
+        }
+
+        // Проверяем заголовки безопасности
         fetch('/test_security')
             .then(response => {
                 const headers = response.headers;
-                for (let [key, value] of headers.entries()) {
-                    if (value.includes('JSTAG') || value.includes('eval')) {
-                        document.body.innerHTML += '<p style="color:red;">ВНИМАНИЕ: Подозрительный заголовок ' + key + ': ' + value + '</p>';
+                const securityHeaders = {
+                    'Content-Security-Policy': headers.get('Content-Security-Policy'),
+                    'X-Content-Type-Options': headers.get('X-Content-Type-Options'),
+                    'X-Frame-Options': headers.get('X-Frame-Options'),
+                    'X-XSS-Protection': headers.get('X-XSS-Protection'),
+                    'Strict-Transport-Security': headers.get('Strict-Transport-Security')
+                };
+                
+                let headersReport = '<h3>Заголовки безопасности:</h3><ul>';
+                for (let [header, value] of Object.entries(securityHeaders)) {
+                    if (value) {
+                        headersReport += `<li style="color:green;">✅ ${header}: ${value}</li>`;
+                    } else {
+                        headersReport += `<li style="color:orange;">⚠️ ${header}: отсутствует</li>`;
                     }
                 }
+                headersReport += '</ul>';
+                
+                document.getElementById('report-content').innerHTML += headersReport;
             })
             .catch(error => {
-                console.log('Ошибка проверки заголовков:', error);
+                console.log('Ошибка при проверке заголовков:', error);
             });
     </script>
 </body>
