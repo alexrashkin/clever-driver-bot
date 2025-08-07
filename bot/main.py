@@ -127,20 +127,20 @@ async def monitor_database(application: Application):
                         conn.close()
                         logger.info(f"👥 Пользователей для уведомления о выезде: {len(users)}")
                         if users:
-                            notification = "Выехали"
-                            sent_count = 0
-                            for (telegram_id,) in users:
-                                try:
-                                    logger.info(f"DEBUG: Отправляю уведомление о выезде пользователю {telegram_id}: '{notification}'")
-                                    await application.bot.send_message(chat_id=telegram_id, text=notification)
-                                    sent_count += 1
-                                    logger.info(f"Автоматическое уведомление 'Выехали' отправлено пользователю {telegram_id}")
-                                except Exception as e:
-                                    logger.error(f"Ошибка отправки автоматического уведомления пользователю {telegram_id}: {e}")
-                            if sent_count > 0:
-                                logger.info(f"Автоматические уведомления о выезде отправлены {sent_count} пользователям для записи ID: {curr_id}")
+                            # Отправляем уведомление через систему уведомлений с подтверждениями
+                            from bot.utils import create_work_notification
+                            system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
+                            result = await notification_system.send_notification_with_confirmation(
+                                notification_type='automatic',
+                                sender_info=system_info,
+                                recipients=[u[0] for u in users],
+                                notification_text="Выехали",
+                                custom_confirmation=True
+                            )
+                            if result['success']:
+                                logger.info(f"📊 АВТОМАТИЧЕСКОЕ УВЕДОМЛЕНИЕ О ВЫЕЗДЕ: Отправлено {result['sent_count']} из {result['total_recipients']}")
                             else:
-                                logger.warning("Нет пользователей с ролями для отправки автоматических уведомлений о выезде")
+                                logger.warning("❌ Не удалось отправить автоматические уведомления о выезде")
                         else:
                             logger.warning("❌ Нет пользователей для отправки уведомлений о выезде")
                     else:
