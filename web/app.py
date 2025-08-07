@@ -61,7 +61,7 @@ def add_security_headers(response):
         "font-src 'self' https://cdn.jsdelivr.net; "
         "img-src 'self' data: https: https://telegram.org https://t.me; "
         "connect-src 'self' https://telegram.org https://t.me; "
-        "frame-src 'self' https://telegram.org https://t.me; "
+        "frame-src 'self' https://telegram.org https://t.me https://oauth.telegram.org; "
         "frame-ancestors 'none'; "
         "base-uri 'self'; "
         "form-action 'self'; "
