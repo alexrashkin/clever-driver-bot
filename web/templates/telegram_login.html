@@ -127,9 +127,9 @@
             <div id="telegram-widget-container" style="min-height: 50px; display: flex; justify-content: center; align-items: center; border: 1px dashed #ccc; border-radius: 8px; padding: 20px;">
                 <script async src="https://telegram.org/js/telegram-widget.js?7"
                         data-telegram-login="{{ telegram_bot_username }}"
-                        data-size="large"
-                        data-userpic="false"
-                        data-request-access="write"
+                        data-size="medium"
+                        data-userpic="true"
+                        data-request-access="read"
                         data-auth-url="{{ auth_url }}"
                         data-lang="ru">
                 </script>
@@ -183,17 +183,27 @@
             let checkCount = 0;
             const maxChecks = 5;
             
+            // Проверяем загрузку скрипта
+            const script = document.querySelector('script[src*="telegram-widget"]');
+            if (script) {
+                script.onload = function() {
+                    console.log('✅ Telegram widget script загружен успешно');
+                };
+                script.onerror = function() {
+                    console.log('❌ Ошибка загрузки Telegram widget script');
+                    widgetDetails.innerHTML += '<br><strong>Ошибка: Скрипт не загрузился</strong>';
+                };
+            }
+            
             // Функция для проверки виджета
             function checkWidget() {
                 checkCount++;
                 
                 // Ищем различные элементы виджета
                 const iframe = widgetContainer.querySelector('iframe');
-                const script = widgetContainer.querySelector('script[src*="telegram-widget"]');
-                const telegramElement = widgetContainer.querySelector('[data-telegram-login], .telegram-login-widget, .telegram-login');
+                const telegramElement = widgetContainer.querySelector('[data-telegram-login], .telegram-login-widget, .telegram-login, .telegram-login-button');
                 
                 const hasIframe = iframe && iframe.offsetHeight > 0 && iframe.style.display !== 'none';
-                const hasScript = script !== null;
                 const hasTelegramElement = telegramElement && telegramElement.offsetHeight > 0;
                 
                 const hasWidget = hasIframe || hasTelegramElement;
@@ -201,18 +211,19 @@
                 console.log(`Проверка виджета #${checkCount}:`, {
                     hasWidget: hasWidget,
                     hasIframe: hasIframe,
-                    hasScript: hasScript,
                     hasTelegramElement: hasTelegramElement,
                     iframeHeight: iframe ? iframe.offsetHeight : 0,
-                    elementHeight: telegramElement ? telegramElement.offsetHeight : 0
+                    elementHeight: telegramElement ? telegramElement.offsetHeight : 0,
+                    iframeSrc: iframe ? iframe.src.substring(0, 50) : 'none'
                 });
                 
                 // Обновляем детали
                 widgetDetails.innerHTML = `
                     Проверка #${checkCount}/${maxChecks}<br>
-                    Script: ${hasScript ? '✅' : '❌'}<br>
+                    Script: ✅ Загружен<br>
                     Iframe: ${hasIframe ? '✅' : '❌'}<br>
-                    Element: ${hasTelegramElement ? '✅' : '❌'}
+                    Element: ${hasTelegramElement ? '✅' : '❌'}<br>
+                    ${iframe ? `Iframe src: ${iframe.src.substring(0, 50)}...` : ''}
                 `;
                 
                 if (!hasWidget && checkCount >= maxChecks) {
@@ -222,7 +233,7 @@
                     debugInfo.style.display = 'block';
                     widgetStatus.textContent = 'Статус: ❌ Не загрузился';
                     widgetStatus.style.color = 'red';
-                    widgetDetails.innerHTML += '<br><strong>Причина: Виджет не отрендерился</strong>';
+                    widgetDetails.innerHTML += '<br><strong>Причина: Виджет не отрендерился</strong><br>Бот настроен, но виджет не создается';
                 } else if (hasWidget) {
                     console.log('Telegram widget загрузился успешно');
                     debugInfo.style.display = 'none';

@@ -2802,6 +2802,12 @@ def test_bot():
                          bot_exists=bot_exists,
                          bot_url=f"https://t.me/{bot_username}")
 
+@app.route('/test_widget')
+@security_check
+def test_widget():
+    """Тестовая страница для виджета Telegram без ограничений"""
+    return render_template('test_widget.html')
+
 
 
 
