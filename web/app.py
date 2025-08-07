@@ -1625,10 +1625,11 @@ def admin_users():
         session['flash_message'] = "Доступ запрещен. Требуются права администратора"
         return redirect('/')
     
-    # Получаем всех пользователей
+    # Получаем всех пользователей и приглашения
     users = db.get_all_users()
+    invitations = db.get_all_invitations() if hasattr(db, 'get_all_invitations') else []
     
-    return render_template('admin_users.html', users=users)
+    return render_template('admin_users.html', users=users, invitations=invitations)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 @security_check
