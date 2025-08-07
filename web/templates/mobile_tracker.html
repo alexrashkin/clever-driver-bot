@@ -192,7 +192,7 @@
                     
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            errorMessage = 'Доступ к геолокации запрещен. Разрешите доступ в настройках браузера.';
+                            errorMessage = 'Доступ к геолокации запрещен. Разрешите доступ в настройках браузера или проверьте, что сайт открыт по HTTPS.';
                             break;
                         case error.POSITION_UNAVAILABLE:
                             errorMessage = 'Информация о местоположении недоступна.';
