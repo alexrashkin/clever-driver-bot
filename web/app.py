@@ -1940,7 +1940,9 @@ def telegram_auth():
         auth_data.pop('user_id', None)  # Удаляем user_id, если есть
         auth_data = {k: v for k, v in auth_data.items()}
         data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-        secret_key = hashlib.sha256(telegram_token.encode()).digest()
+        from config.settings import config as _cfg
+        bot_token = _cfg.TELEGRAM_BOT_TOKEN or os.environ.get('TELEGRAM_BOT_TOKEN') or os.environ.get('TELEGRAM_TOKEN', '')
+        secret_key = hashlib.sha256(bot_token.encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"TELEGRAM_AUTH: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
@@ -2015,7 +2017,9 @@ def bind_telegram():
         auth_data.pop('user_id', None)
         auth_data = {k: v for k, v in auth_data.items()}
         data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-        secret_key = hashlib.sha256(telegram_token.encode()).digest()
+        from config.settings import config as _cfg
+        bot_token = _cfg.TELEGRAM_BOT_TOKEN or os.environ.get('TELEGRAM_BOT_TOKEN') or os.environ.get('TELEGRAM_TOKEN', '')
+        secret_key = hashlib.sha256(bot_token.encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"BIND_TELEGRAM: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
@@ -2168,28 +2172,32 @@ def invite():
 def invite_auth():
     try:
         logger.info(f"INVITE_AUTH: начало обработки запроса, метод: {request.method}")
-        auth_data = {**request.args, **request.form}
-        logger.info(f"INVITE_AUTH: полученные данные: {auth_data}")
-        
-        if 'hash' not in auth_data:
+        # Собираем данные от Telegram согласно спецификации: берем только известные поля
+        raw_params = {**request.args, **request.form}
+        logger.info(f"INVITE_AUTH: полученные данные: {raw_params}")
+
+        if 'hash' not in raw_params:
             logger.error("INVITE_AUTH: отсутствует hash")
             return 'Ошибка авторизации Telegram: отсутствует hash', 400
-        if 'auth_date' not in auth_data:
+        if 'auth_date' not in raw_params:
             logger.error("INVITE_AUTH: отсутствует auth_date")
             return 'Ошибка авторизации Telegram: отсутствует auth_date', 400
-        
-        invite_code = auth_data.get('invite_code')
+
+        invite_code = raw_params.get('invite_code')
         if not invite_code:
             logger.error("INVITE_AUTH: отсутствует invite_code")
             return 'Некорректная ссылка приглашения', 400
         
-        hash_ = auth_data.pop('hash')
-        auth_data.pop('invite_code', None)
-        data_check_string = '\n'.join(
-            f"{k}={v[0] if isinstance(v, list) else v}"
-            for k, v in sorted(auth_data.items())
-        )
-        secret_key = hashlib.sha256(os.environ.get('TELEGRAM_TOKEN', 'default_token').encode()).digest()
+        # Готовим данные для подписи — только разрешённые ключи
+        allowed_keys = {'id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date'}
+        auth_fields = {k: raw_params.get(k) for k in allowed_keys if raw_params.get(k) is not None}
+        data_check_string = '\n'.join(f"{k}={auth_fields[k]}" for k in sorted(auth_fields.keys()))
+
+        # Проверяем подпись Telegram
+        from config.settings import config as _cfg
+        bot_token = _cfg.TELEGRAM_BOT_TOKEN or os.environ.get('TELEGRAM_BOT_TOKEN') or os.environ.get('TELEGRAM_TOKEN', '')
+        secret_key = hashlib.sha256(bot_token.encode()).digest()
+        hash_ = raw_params.get('hash')
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"INVITE_AUTH: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
@@ -2199,10 +2207,10 @@ def invite_auth():
             return 'Ошибка авторизации Telegram', 403
         
         # Проверяем, существует ли пользователь
-        new_user_telegram_id = int(auth_data['id'])
-        username = auth_data.get('username')
-        first_name = auth_data.get('first_name')
-        last_name = auth_data.get('last_name')
+        new_user_telegram_id = int(raw_params['id'])
+        username = raw_params.get('username')
+        first_name = raw_params.get('first_name')
+        last_name = raw_params.get('last_name')
         
         logger.info(f"INVITE_AUTH: telegram_id={new_user_telegram_id}, username={username}, first_name={first_name}")
         
