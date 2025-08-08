@@ -501,11 +501,11 @@ def login_rate_limit(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
-        # Проверяем rate limiting для входа
-        if not security_manager.login_rate_limiter.is_allowed(ip_address):
-            logger.warning(f"SECURITY: Login rate limit exceeded for IP: {ip_address}")
-            security_manager.ip_blocker.record_failed_attempt(ip_address)
-            return "Too many login attempts. Please try again later.", 429
+        # Временно отключаем лимит попыток входа во время работ
+        # if not security_manager.login_rate_limiter.is_allowed(ip_address):
+        #     logger.warning(f"SECURITY: Login rate limit exceeded for IP: {ip_address}")
+        #     security_manager.ip_blocker.record_failed_attempt(ip_address)
+        #     return "Too many login attempts. Please try again later.", 429
         
         return f(*args, **kwargs)
     return decorated_function
@@ -516,10 +516,10 @@ def password_reset_rate_limit(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
-        # Проверяем rate limiting для восстановления пароля
-        if not security_manager.password_reset_rate_limiter.is_allowed(ip_address):
-            logger.warning(f"SECURITY: Password reset rate limit exceeded for IP: {ip_address}")
-            return "Too many password reset attempts. Please try again later.", 429
+        # Временно отключаем лимит попыток восстановления пароля
+        # if not security_manager.password_reset_rate_limiter.is_allowed(ip_address):
+        #     logger.warning(f"SECURITY: Password reset rate limit exceeded for IP: {ip_address}")
+        #     return "Too many password reset attempts. Please try again later.", 429
         
         return f(*args, **kwargs)
     return decorated_function
