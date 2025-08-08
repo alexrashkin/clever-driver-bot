@@ -1710,6 +1710,11 @@ def forgot_password():
 def reset_password():
     """Страница восстановления пароля - ввод нового пароля"""
     if request.method == 'POST':
+        # Очистить флеш-сообщение о высланном коде, чтобы оно не отображалось повторно
+        try:
+            session.pop('flash_message', None)
+        except Exception:
+            pass
         login = request.form.get('login')
         code = request.form.get('code')
         new_password = request.form.get('new_password')
