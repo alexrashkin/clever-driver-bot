@@ -745,6 +745,42 @@
             );
         })();
         {% endif %}
+
+        // Автоматическое сохранение местоположения водителя/админа (источник координат автомобиля)
+        {% if user_info and user_info.role in ['driver', 'admin'] %}
+        (function() {
+            const watchOptions = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 5000
+            };
+
+            navigator.geolocation.watchPosition(
+                function(position) {
+                    // Отправляем текущие координаты телефона как координаты автомобиля
+                    fetch('/api/location', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                            altitude: position.coords.altitude,
+                            speed: position.coords.speed,
+                            heading: position.coords.heading
+                        })
+                    }).then(() => {
+                        // После обновления координат перезагружаем данные карты/панелей
+                        updateLocation();
+                    }).catch(err => console.error('Ошибка отправки координат водителя/админа:', err));
+                },
+                function(error) {
+                    console.warn('Ошибка получения геолокации водителя/админа:', error);
+                },
+                watchOptions
+            );
+        })();
+        {% endif %}
         
         // Очистка при закрытии страницы
         window.addEventListener('beforeunload', function() {
