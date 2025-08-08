@@ -2264,103 +2264,142 @@ def invite_auth():
 def current_location():
     """API для получения текущего местоположения автомобиля"""
     try:
-        # Ограничение доступа: только один конкретный получатель может видеть местоположение
+        # Определяем текущего пользователя и его права
         user = get_current_user()
-        if user and user.get('role') == 'recipient':
-            try:
-                user_tid = int(user.get('telegram_id') or 0)
-            except Exception:
-                user_tid = 0
-            allowed_tid = 341357928  # Единственный разрешенный получатель
-            if user_tid != allowed_tid:
-                return jsonify({
-                    'success': False,
-                    'status': 'Доступ запрещен: отображение местоположения недоступно для вашего аккаунта'
-                }), 200
 
         # Получаем последнее местоположение из базы данных
         import sqlite3
         conn = sqlite3.connect('driver.db')
         cursor = conn.cursor()
-        
-        # Получаем последние данные из новой таблицы user_locations (только от водителей и администраторов)
-        cursor.execute("""
-            SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at,
-                   u.role, u.work_latitude, u.work_longitude, u.work_radius
-            FROM user_locations ul
-            JOIN users u ON ul.user_id = u.id
-            WHERE u.role IN ('driver', 'admin')
-            ORDER BY ul.id DESC LIMIT 1
-        """)
-        user_location = cursor.fetchone()
-        
-        if user_location:
-            lat, lon, is_at_work, timestamp, role, work_lat, work_lon, work_radius = user_location
-            
-            # Вычисляем расстояние до работы
-            try:
-                from bot.utils import calculate_distance
-            except ImportError:
-                # Fallback: простая функция расчета расстояния
-                import math
-                def calculate_distance(lat1, lon1, lat2, lon2):
-                    R = 6371000  # Радиус Земли в метрах
-                    lat1_rad = math.radians(lat1)
-                    lat2_rad = math.radians(lat2)
-                    delta_lat = math.radians(lat2 - lat1)
-                    delta_lon = math.radians(lon2 - lon1)
-                    a = (math.sin(delta_lat / 2) ** 2 + 
-                         math.cos(lat1_rad) * math.cos(lat2_rad) * 
-                         math.sin(delta_lon / 2) ** 2)
-                    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-                    return R * c
-            
-            if work_lat and work_lon:
-                distance = calculate_distance(lat, lon, work_lat, work_lon)
-            else:
-                distance = calculate_distance(lat, lon, config.WORK_LATITUDE, config.WORK_LONGITUDE)
-        else:
-            # Если нет данных в новой таблице, берем из старой
-            cursor.execute("""
-                SELECT latitude, longitude, distance, is_at_work, timestamp 
-                FROM locations 
-                ORDER BY id DESC LIMIT 1
-            """)
-            location = cursor.fetchone()
-            conn.close()
-            
-            if location:
-                lat, lon, distance, is_at_work, timestamp = location
-                role = 'driver'  # Предполагаем, что это водитель
-                
-                # Получаем координаты из базы данных пользователя
-                user = get_current_user()
-                if user:
-                    work_lat = user.get('work_latitude')
-                    work_lon = user.get('work_longitude')
-                    work_radius = user.get('work_radius')
+
+        user_location = None
+        work_lat = None
+        work_lon = None
+        work_radius = None
+        role = None
+        timestamp = None
+        lat = None
+        lon = None
+
+        if user:
+            # Если получатель — показываем ТОЛЬКО своего водителя/админа (пригласившего)
+            if user.get('role') == 'recipient':
+                try:
+                    cursor.execute(
+                        """
+                        SELECT inviter_id
+                        FROM invitations
+                        WHERE recipient_telegram_id = ? AND status = 'accepted'
+                        ORDER BY accepted_at DESC
+                        LIMIT 1
+                        """,
+                        (user.get('telegram_id'),)
+                    )
+                    row = cursor.fetchone()
+                    if not row:
+                        conn.close()
+                        return jsonify({'success': False, 'status': 'Для вашего аккаунта не назначен водитель'}), 200
+
+                    inviter_id = row[0]
+                    cursor.execute("SELECT id, role, work_latitude, work_longitude, work_radius FROM users WHERE id = ?", (inviter_id,))
+                    inviter = cursor.fetchone()
+                    if not inviter:
+                        conn.close()
+                        return jsonify({'success': False, 'status': 'Пригласивший пользователь не найден'}), 200
+
+                    inviter_role = inviter[1]
+                    work_lat, work_lon, work_radius = inviter[2], inviter[3], inviter[4]
+
+                    # Если пригласивший — администратор, доступ только для одного конкретного получателя
+                    try:
+                        current_tid = int(user.get('telegram_id') or 0)
+                    except Exception:
+                        current_tid = 0
+                    allowed_tid = 341357928
+                    if inviter_role == 'admin' and current_tid != allowed_tid:
+                        conn.close()
+                        return jsonify({'success': False, 'status': 'Доступ ограничен: местоположение админа недоступно'}, ), 200
+
+                    # Берём последнюю точку пригласившего
+                    cursor.execute(
+                        """
+                        SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at
+                        FROM user_locations ul
+                        WHERE ul.user_id = ?
+                        ORDER BY ul.id DESC LIMIT 1
+                        """,
+                        (inviter_id,)
+                    )
+                    loc = cursor.fetchone()
+                    if loc:
+                        lat, lon, is_at_work, timestamp = loc
+                        role = inviter_role
+                    else:
+                        conn.close()
+                        return jsonify({'success': False, 'status': 'Нет данных о местоположении водителя'}), 200
+
+                finally:
+                    pass
+
+            # Если водитель/админ — показываем их собственное местоположение
+            elif user.get('role') in ['driver', 'admin']:
+                cursor.execute("SELECT id, role, work_latitude, work_longitude, work_radius FROM users WHERE telegram_id = ?", (user.get('telegram_id'),))
+                self_row = cursor.fetchone()
+                if self_row:
+                    self_id = self_row[0]
+                    role = self_row[1]
+                    work_lat, work_lon, work_radius = self_row[2], self_row[3], self_row[4]
+                    cursor.execute(
+                        """
+                        SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at
+                        FROM user_locations ul
+                        WHERE ul.user_id = ?
+                        ORDER BY ul.id DESC LIMIT 1
+                        """,
+                        (self_id,)
+                    )
+                    loc = cursor.fetchone()
+                    if loc:
+                        lat, lon, is_at_work, timestamp = loc
+                    else:
+                        conn.close()
+                        return jsonify({'success': False, 'status': 'Нет данных о вашем местоположении'}), 200
                 else:
-                    work_lat = None
-                    work_lon = None
-                    work_radius = None
+                    conn.close()
+                    return jsonify({'success': False, 'status': 'Пользователь не найден'}), 200
+
+            # Иначе (например, неавторизованные) — запрещаем
             else:
-                return jsonify({
-                    'success': True,
-                    'location': {
-                        'latitude': None,
-                        'longitude': None,
-                        'distance_to_work': None,
-                        'is_at_work': False,
-                        'timestamp': None,
-                        'formatted_time': '--:--:--'
-                    },
-                    'work_zone': {
-                        'latitude': None,
-                        'longitude': None,
-                        'radius': None
-                    },
-                    'status': 'Нет данных о местоположении'
-                })
+                conn.close()
+                return jsonify({'success': False, 'status': 'Доступ запрещен'}), 200
+
+        else:
+            # Ранее: глобальная последняя точка любого водителя/админа — больше так не делаем
+            conn.close()
+            return jsonify({'success': False, 'status': 'Необходима авторизация'}), 200
+        
+        # Вычисляем расстояние до работы
+        try:
+            from bot.utils import calculate_distance
+        except ImportError:
+            # Fallback: простая функция расчета расстояния
+            import math
+            def calculate_distance(lat1, lon1, lat2, lon2):
+                R = 6371000  # Радиус Земли в метрах
+                lat1_rad = math.radians(lat1)
+                lat2_rad = math.radians(lat2)
+                delta_lat = math.radians(lat2 - lat1)
+                delta_lon = math.radians(lon2 - lon1)
+                a = (math.sin(delta_lat / 2) ** 2 + 
+                     math.cos(lat1_rad) * math.cos(lat2_rad) * 
+                     math.sin(delta_lon / 2) ** 2)
+                c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+                return R * c
+
+        if work_lat and work_lon:
+            distance = calculate_distance(lat, lon, work_lat, work_lon)
+        else:
+            distance = calculate_distance(lat, lon, config.WORK_LATITUDE, config.WORK_LONGITUDE)
         
         conn.close()
         
