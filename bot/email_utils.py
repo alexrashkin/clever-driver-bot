@@ -5,7 +5,8 @@ import smtplib
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.utils import formatdate, make_msgid
+from email.utils import formatdate, make_msgid, formataddr
+from email.header import Header
 from config.settings import config
 import logging
 import os
@@ -36,13 +37,17 @@ def send_email(to_email, subject, html_content, text_content=None):
     try:
         # Создаем сообщение
         message = MIMEMultipart("alternative")
-        from_address = (
-            f"{config.EMAIL_FROM_NAME} <{config.EMAIL_FROM_ADDRESS}>"
-            if getattr(config, "EMAIL_FROM_ADDRESS", None)
-            else config.EMAIL_USERNAME
-        )
-        message["Subject"] = subject
-        message["From"] = from_address
+
+        # RFC 5322 compliant From header: Sender Name <email@domain>
+        from_name = getattr(config, "EMAIL_FROM_NAME", None) or "Clever Driver"
+        from_addr = getattr(config, "EMAIL_FROM_ADDRESS", None) or config.EMAIL_USERNAME
+        # Correctly encode display-name using RFC 2047 and build addr-spec
+        from_header = formataddr((str(Header(from_name, "utf-8")), from_addr))
+
+        message["Subject"] = str(Header(subject, "utf-8"))
+        message["From"] = from_header
+        message["Reply-To"] = from_addr
+        message["Sender"] = from_addr
         message["To"] = to_email
         message["Date"] = formatdate(localtime=True)
         message["Message-ID"] = make_msgid()
