@@ -409,11 +409,13 @@
         let following = true;
         let updateInterval;
         let animationRequestId = null;
+        let userInteracting = false;
+        let interactionTimer = null;
 
-        // Конфигурация
-        const WORK_LAT = {{ work_lat if work_lat is not none else 55.7539 }};
-        const WORK_LON = {{ work_lon if work_lon is not none else 37.6208 }};
-        const WORK_RADIUS = {{ work_radius if work_radius is not none else 100 }};
+        // Конфигурация (используем tojson, чтобы избежать конфликтов шаблонизатора с JS)
+        const WORK_LAT = {{ (work_lat if work_lat is not none else 55.7539)|tojson }};
+        const WORK_LON = {{ (work_lon if work_lon is not none else 37.6208)|tojson }};
+        const WORK_RADIUS = {{ (work_radius if work_radius is not none else 100)|tojson }};
         const UPDATE_INTERVAL = 3000; // 3 секунды
 
         // Инициализация карты
@@ -435,6 +437,18 @@
                     zoom: 15,
                     controls: ['zoomControl', 'typeSelector']
                 });
+
+                // Отслеживаем взаимодействие пользователя, чтобы не мешать масштабированию/перемещению
+                const markInteracting = () => {
+                    userInteracting = true;
+                    if (interactionTimer) clearTimeout(interactionTimer);
+                    interactionTimer = setTimeout(() => { userInteracting = false; }, 2000);
+                };
+                ['wheel', 'mousedown', 'touchstart', 'multitouchstart'].forEach(evt => {
+                    map.events.add(evt, markInteracting);
+                });
+                // Начало жестов/перетаскивания
+                map.events.add('dragstart', markInteracting);
 
                 // Создаем объекты на карте
                 createWorkZone();
@@ -541,6 +555,13 @@
             // Плавная анимация позиции
             const start = carPlacemark.geometry.getCoordinates();
             startSmoothMove(start, target, UPDATE_INTERVAL);
+
+            // Аккуратное центрирование только по приходу новой точки и только если пользователь не взаимодействует
+            if (following && !userInteracting) {
+                try {
+                    map.setCenter(target, undefined, { duration: 400 });
+                } catch (e) {}
+            }
         }
 
         function startSmoothMove(from, to, duration) {
@@ -563,9 +584,6 @@
                 const pos = [lat, lon];
                 try {
                     carPlacemark.geometry.setCoordinates(pos);
-                    if (following) {
-                        map.setCenter(pos);
-                    }
                 } catch (e) {
                     // Игнорируем редкие ошибки геометрии во время перерисовки
                 }
