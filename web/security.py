@@ -409,8 +409,12 @@ def security_check(f):
         # Белый список для системных эндпоинтов телеметрии (OwnTracks и резервный трекер)
         # Для них допускаем упрощённые проверки, чтобы избежать ложных срабатываний и 403
         telemetry_paths = {'/api/location'}
-        soft_post_paths = {'/settings'}  # разрешаем безопасную отправку форм без глубокой инспекции
+        # Пути с мягкими проверками (минимальные проверки, без жёсткой инспекции UA/параметров)
+        soft_paths = {'/invite', '/invite_auth', '/telegram_login'}
+        # Пути для мягкой проверки POST форм
+        soft_post_paths = {'/settings', '/invite_auth'}
         is_telemetry = request.path in telemetry_paths
+        is_soft = request.path in soft_paths
         
         # ВРЕМЕННО отключаем блокировку IP во время работ
         # if security_manager.ip_blocker.is_blocked(ip_address):
@@ -423,7 +427,7 @@ def security_check(f):
             return "Rate limit exceeded", 429
         
         # Проверяем User-Agent (кроме телеметрии OwnTracks — у неё могут быть нетипичные UA)
-        if not is_telemetry:
+        if not is_telemetry and not is_soft:
             user_agent = request.headers.get('User-Agent', '')
             if security_manager.check_user_agent(user_agent):
                 logger.error(f"SECURITY: Блокирован подозрительный User-Agent: {user_agent}")
@@ -432,7 +436,7 @@ def security_check(f):
                 return "Access denied", 403
         
         # Проверяем GET параметры (пропускаем для телеметрии)
-        if request.args and not is_telemetry:
+        if request.args and not is_telemetry and not is_soft:
             for key, value in request.args.items():
                 if (security_manager.check_xss(value) or 
                     security_manager.check_sql_injection(value) or
@@ -442,7 +446,7 @@ def security_check(f):
                     return "Access denied", 403
         
         # Проверяем POST данные (пропускаем глубокую проверку для телеметрии)
-        if request.method == 'POST' and not is_telemetry and request.path not in soft_post_paths:
+        if request.method == 'POST' and not is_telemetry and request.path not in soft_post_paths and not is_soft:
             if request.is_json:
                 data = request.get_json()
                 if data:
