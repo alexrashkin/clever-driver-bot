@@ -2264,6 +2264,20 @@ def invite_auth():
 def current_location():
     """API для получения текущего местоположения автомобиля"""
     try:
+        # Ограничение доступа: только один конкретный получатель может видеть местоположение
+        user = get_current_user()
+        if user and user.get('role') == 'recipient':
+            try:
+                user_tid = int(user.get('telegram_id') or 0)
+            except Exception:
+                user_tid = 0
+            allowed_tid = 341357928  # Единственный разрешенный получатель
+            if user_tid != allowed_tid:
+                return jsonify({
+                    'success': False,
+                    'status': 'Доступ запрещен: отображение местоположения недоступно для вашего аккаунта'
+                }), 200
+
         # Получаем последнее местоположение из базы данных
         import sqlite3
         conn = sqlite3.connect('driver.db')

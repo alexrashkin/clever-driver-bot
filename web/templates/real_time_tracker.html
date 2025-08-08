@@ -489,7 +489,8 @@
                         updateUI(data.location);
                         calculateUserDistance(data.location);
                     } else {
-                        showError('Нет данных о местоположении');
+                        const status = data.status || 'Нет данных о местоположении';
+                        showError(status);
                     }
                 })
                 .catch(error => {
