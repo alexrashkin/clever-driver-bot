@@ -110,7 +110,7 @@ class NotificationSystem:
         # Завершаем лог
         db.complete_notification_log(notification_log_id, sent_count, failed_count)
         
-        # Отправляем подтверждения
+        # Отправляем подтверждения только водителю и администратору
         if custom_confirmation and sent_count > 0:
             await self._send_confirmation_messages(
                 notification_log_id, sender_info, successful_recipients, 
@@ -133,8 +133,8 @@ class NotificationSystem:
         """Отправить подтверждения отправителям"""
         current_time = datetime.now().strftime('%H:%M:%S')
         
-        # Формируем подтверждение для водителей
-        if sender_info.get('role') == 'driver' or notification_type in ['manual', 'automatic']:
+        # Формируем подтверждение для водителей (всегда при наличии успехов)
+        if True:
             await self._send_driver_confirmation(
                 notification_log_id, sender_info, successful_recipients, 
                 failed_recipients, notification_text, current_time

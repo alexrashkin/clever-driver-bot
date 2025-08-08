@@ -164,13 +164,13 @@ async def monitor_database(application: Application):
                             save_last_notification_type(last_notification_type)
                             save_last_departure_time(curr_ts)
 
-                            # Получатели — все пользователи с ролью
+                            # Получатели — только получатели
                             conn = sqlite3.connect('driver.db')
                             cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL")
+                            cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient'")
                             users = cursor.fetchall()
                             conn.close()
-                            logger.info(f"👥 Пользователей для уведомления о выезде: {len(users)}")
+                            logger.info(f"👥 Получателей для уведомления о выезде: {len(users)}")
                             if users:
                                 system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
                                 result = await notification_system.send_notification_with_confirmation(
