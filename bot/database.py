@@ -533,12 +533,15 @@ class Database:
         return None
 
     def get_user_by_email(self, email):
-        """Получить пользователя по email"""
+        """Получить пользователя по email (без учета регистра и с обрезкой пробелов)"""
+        normalized_email = (email or "").strip().lower()
         conn = sqlite3.connect(self.db_path)
         c = conn.cursor()
+        # Сравнение по lower() обеспечивает поиск без учета регистра
         c.execute('''
-            SELECT * FROM users WHERE email = ? AND email IS NOT NULL
-        ''', (email,))
+            SELECT * FROM users 
+            WHERE email IS NOT NULL AND lower(trim(email)) = ?
+        ''', (normalized_email,))
         row = c.fetchone()
         columns = [desc[0] for desc in c.description] if c.description else []
         conn.close()

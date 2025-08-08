@@ -1664,7 +1664,8 @@ def forgot_password():
         user = db.get_user_by_email(identifier) if is_email_identifier else db.get_user_by_login(identifier)
         if not user:
             logger.warning(f"FORGOT_PASSWORD: пользователь не найден по {'email' if is_email_identifier else 'логину'} {identifier}")
-            return render_template('forgot_password.html', error="Пользователь с таким логином/email не найден", csrf_token=security_manager.generate_csrf_token())
+            # По соображениям приватности не раскрываем, существует ли пользователь
+            return render_template('forgot_password.html', success="Если такой пользователь существует, мы отправили код на email", csrf_token=security_manager.generate_csrf_token())
         
         logger.info(f"FORGOT_PASSWORD: пользователь найден, email в БД: {user.get('email')}")
         logger.info(f"FORGOT_PASSWORD: полные данные пользователя: {user}")
