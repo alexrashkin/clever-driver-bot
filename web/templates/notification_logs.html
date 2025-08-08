@@ -51,9 +51,16 @@
             margin-top: 5px;
         }
         .notifications-table {
-            width: 100%;
+            width: calc(100% - 60px);
             border-collapse: collapse;
-            margin-top: 20px;
+            margin: 20px 30px 0 30px;
+            table-layout: fixed;
+            display: block;           /* горизонтальный скролл как на странице пользователей */
+            overflow-x: auto;
+            white-space: nowrap;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .notifications-table th,
         .notifications-table td {
