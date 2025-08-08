@@ -340,10 +340,12 @@
                 <span>🕐</span>
                 <span id="lastUpdateTime">--:--:--</span>
             </div>
+            {% if user_info and user_info.role == 'admin' %}
             <div class="status-item">
                 <span>📍</span>
                 <span id="workZoneDistance">-- м</span>
             </div>
+            {% endif %}
         </div>
     </div>
 
@@ -360,19 +362,23 @@
                 <span class="info-label">Координаты:</span>
                 <span class="info-value" id="coordinates">--</span>
             </div>
+            {% if user_info and user_info.role == 'admin' %}
             <div class="info-item">
                 <span class="info-label">До квартиры:</span>
                 <span class="info-value" id="distanceToWork">-- м</span>
             </div>
+            {% endif %}
             <div class="info-item">
                 <span class="info-label">Обновлено:</span>
                 <span class="info-value" id="lastUpdate">--</span>
             </div>
             
+            {% if user_info and user_info.role == 'admin' %}
             <div class="distance-to-user" id="distanceToUser" style="display: none;">
                 <div class="label">Расстояние до вас</div>
                 <div class="value" id="userDistance">-- км</div>
             </div>
+            {% endif %}
             
             <div class="last-update">
                 <span>Обновление каждые 3 секунды</span>
@@ -551,9 +557,12 @@
             document.getElementById('lastUpdate').textContent = location.formatted_time;
 
             // Обновляем расстояние
-            const distance = Math.round(location.distance_to_work);
-            workZoneDistance.textContent = `${distance} м`;
-            document.getElementById('distanceToWork').textContent = `${distance} м`;
+            if (workZoneDistance) {
+                const distance = Math.round(location.distance_to_work);
+                workZoneDistance.textContent = `${distance} м`;
+                const el = document.getElementById('distanceToWork');
+                if (el) el.textContent = `${distance} м`;
+            }
 
             // Обновляем координаты
             document.getElementById('coordinates').textContent = 
@@ -569,8 +578,12 @@
             const distance = ymaps.coordSystem.geo.getDistance(carPos, userPos);
             const distanceKm = (distance / 1000).toFixed(1);
             
-            document.getElementById('userDistance').textContent = `${distanceKm} км`;
-            document.getElementById('distanceToUser').style.display = 'block';
+            const userDistanceEl = document.getElementById('userDistance');
+            const distanceToUserWrap = document.getElementById('distanceToUser');
+            if (userDistanceEl && distanceToUserWrap) {
+                userDistanceEl.textContent = `${distanceKm} км`;
+                distanceToUserWrap.style.display = 'block';
+            }
         }
 
         function requestUserLocation() {
