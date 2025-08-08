@@ -408,6 +408,7 @@
         let userLocation = null;
         let following = true;
         let updateInterval;
+        let animationRequestId = null;
 
         // Конфигурация
         const WORK_LAT = {{ work_lat if work_lat is not none else 55.7539 }};
@@ -500,11 +501,7 @@
         }
 
         function updateCarPosition(location) {
-            const position = [location.latitude, location.longitude];
-            
-            if (carPlacemark) {
-                map.geoObjects.remove(carPlacemark);
-            }
+            const target = [location.latitude, location.longitude];
 
             // Кастомная иконка автомобиля (Mercedes G-серии)
             const iconOptions = {
@@ -514,27 +511,73 @@
                 iconImageOffset: [-20, -13]
             };
 
-            carPlacemark = new ymaps.Placemark(position, {
-                balloonContent: `
-                    <div style="padding: 10px;">
-                        <h4>🚗 Автомобиль</h4>
-                        <p><strong>Статус:</strong> ${location.is_at_work ? 'Водитель ожидает' : 'Не на работе'}</p>
-                        <p><strong>Расстояние до квартиры:</strong> ${Math.round(location.distance_to_work)}м</p>
-                        <p><strong>Время:</strong> ${location.formatted_time}</p>
-                        <p><strong>Координаты:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
-                    </div>
-                `,
-                hintContent: `Автомобиль (${location.formatted_time})`
-            }, iconOptions);
+            const balloonHtml = `
+                <div style="padding: 10px;">
+                    <h4>🚗 Автомобиль</h4>
+                    <p><strong>Статус:</strong> ${location.is_at_work ? 'Водитель ожидает' : 'Не на работе'}</p>
+                    <p><strong>Расстояние до квартиры:</strong> ${Math.round(location.distance_to_work)}м</p>
+                    <p><strong>Время:</strong> ${location.formatted_time}</p>
+                    <p><strong>Координаты:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
+                </div>`;
 
-            map.geoObjects.add(carPlacemark);
-
-            // Центрируем карту на машине, если включено следование
-            if (following) {
-                map.setCenter(position, undefined, {
-                    duration: 1000
-                });
+            if (!carPlacemark) {
+                carPlacemark = new ymaps.Placemark(target, {
+                    balloonContent: balloonHtml,
+                    hintContent: `Автомобиль (${location.formatted_time})`
+                }, iconOptions);
+                map.geoObjects.add(carPlacemark);
+                if (following) {
+                    map.setCenter(target, undefined, { duration: 500 });
+                }
+                return;
             }
+
+            // Обновляем содержимое балуна/подсказки
+            carPlacemark.properties.set({
+                balloonContent: balloonHtml,
+                hintContent: `Автомобиль (${location.formatted_time})`
+            });
+
+            // Плавная анимация позиции
+            const start = carPlacemark.geometry.getCoordinates();
+            startSmoothMove(start, target, UPDATE_INTERVAL);
+        }
+
+        function startSmoothMove(from, to, duration) {
+            if (animationRequestId) {
+                cancelAnimationFrame(animationRequestId);
+                animationRequestId = null;
+            }
+            const startTime = performance.now();
+
+            function lerp(a, b, t) { return a + (b - a) * t; }
+            function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+            function step(now) {
+                const elapsed = now - startTime;
+                let t = Math.min(elapsed / duration, 1);
+                t = easeInOutQuad(t);
+
+                const lat = lerp(from[0], to[0], t);
+                const lon = lerp(from[1], to[1], t);
+                const pos = [lat, lon];
+                try {
+                    carPlacemark.geometry.setCoordinates(pos);
+                    if (following) {
+                        map.setCenter(pos);
+                    }
+                } catch (e) {
+                    // Игнорируем редкие ошибки геометрии во время перерисовки
+                }
+
+                if (t < 1) {
+                    animationRequestId = requestAnimationFrame(step);
+                } else {
+                    animationRequestId = null;
+                }
+            }
+
+            animationRequestId = requestAnimationFrame(step);
         }
 
         function updateUI(location) {
