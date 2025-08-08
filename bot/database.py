@@ -531,6 +531,28 @@ class Database:
             
             return user
         return None
+
+    def get_user_by_email(self, email):
+        """Получить пользователя по email"""
+        conn = sqlite3.connect(self.db_path)
+        c = conn.cursor()
+        c.execute('''
+            SELECT * FROM users WHERE email = ? AND email IS NOT NULL
+        ''', (email,))
+        row = c.fetchone()
+        columns = [desc[0] for desc in c.description] if c.description else []
+        conn.close()
+        if row:
+            user = dict(zip(columns, row))
+            import json
+            try:
+                user['buttons'] = json.loads(user['buttons']) if user.get('buttons') else []
+            except Exception:
+                user['buttons'] = []
+            logger.info(f"GET_USER_BY_EMAIL: пользователь {email} найден")
+            return user
+        logger.info(f"GET_USER_BY_EMAIL: пользователь {email} не найден")
+        return None
     
     def verify_password(self, login, password):
         """Проверить пароль пользователя"""
