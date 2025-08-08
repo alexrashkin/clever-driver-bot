@@ -410,9 +410,9 @@ def security_check(f):
         # Для них допускаем упрощённые проверки, чтобы избежать ложных срабатываний и 403
         telemetry_paths = {'/api/location'}
         # Пути с мягкими проверками (минимальные проверки, без жёсткой инспекции UA/параметров)
-        soft_paths = {'/invite', '/invite_auth', '/telegram_login'}
+        soft_paths = {'/invite', '/invite_auth', '/telegram_login', '/bind_telegram_form'}
         # Пути для мягкой проверки POST форм
-        soft_post_paths = {'/settings', '/invite_auth'}
+        soft_post_paths = {'/settings', '/invite_auth', '/bind_telegram_form'}
         is_telemetry = request.path in telemetry_paths
         is_soft = request.path in soft_paths
         
