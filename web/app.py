@@ -2431,16 +2431,64 @@ def real_time_tracker():
             session_token = web_tracker.create_auto_session_for_user(telegram_id or user_info.get('telegram_id'), duration_minutes=60)
             logger.info(f"Автоматически создана сессия отслеживания для получателя {telegram_id or user_info.get('telegram_id')}: {session_token}")
         
-        # Получаем координаты рабочей зоны из настроек пользователя
+        # Получаем координаты рабочей зоны для карты
         work_lat = None
         work_lon = None
         work_radius = None
         
         if user_info:
-            # Если у пользователя есть свои настройки, используем их
+            # 1) Берём персональные настройки пользователя, если есть
             work_lat = user_info.get('work_latitude')
             work_lon = user_info.get('work_longitude')
             work_radius = user_info.get('work_radius')
+
+            # 2) Для получателя, если координаты не настроены, берём зону пригласившего водителя/админа
+            if user_info.get('role') == 'recipient' and (work_lat is None or work_lon is None or work_radius is None):
+                try:
+                    conn = db.get_connection()
+                    cur = conn.cursor()
+                    cur.execute(
+                        """
+                        SELECT inviter_id
+                        FROM invitations
+                        WHERE recipient_telegram_id = ?
+                        AND status = 'accepted'
+                        ORDER BY accepted_at DESC
+                        LIMIT 1
+                        """,
+                        (user_info.get('telegram_id'),)
+                    )
+                    row = cur.fetchone()
+                    if row and row[0]:
+                        inviter = db.get_user_by_id(row[0])
+                        if inviter:
+                            work_lat = inviter.get('work_latitude')
+                            work_lon = inviter.get('work_longitude')
+                            work_radius = inviter.get('work_radius')
+                    conn.close()
+                except Exception as e:
+                    logger.error(f"TRACKER: ошибка загрузки координат пригласившего: {e}")
+
+            # 3) Если всё ещё нет координат, берём любые доступные координаты водителя/админа
+            if work_lat is None or work_lon is None or work_radius is None:
+                try:
+                    conn = db.get_connection()
+                    cur = conn.cursor()
+                    cur.execute(
+                        """
+                        SELECT work_latitude, work_longitude, work_radius
+                        FROM users
+                        WHERE role IN ('driver','admin')
+                        AND work_latitude IS NOT NULL AND work_longitude IS NOT NULL
+                        ORDER BY id DESC LIMIT 1
+                        """
+                    )
+                    row = cur.fetchone()
+                    conn.close()
+                    if row:
+                        work_lat, work_lon, work_radius = row
+                except Exception as e:
+                    logger.error(f"TRACKER: ошибка загрузки координат водителя/админа по умолчанию: {e}")
         
         return render_template('real_time_tracker.html', 
                              year=datetime.now().year,
