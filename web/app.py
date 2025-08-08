@@ -1590,7 +1590,7 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 @auth_security_check
-@login_rate_limit
+# @login_rate_limit  # временно отключено во время работ
 def login():
     """Страница входа в систему"""
     if request.method == 'POST':
@@ -1600,10 +1600,10 @@ def login():
         # Проверяем CSRF токен
         if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
             logger.error(f"LOGIN: CSRF token validation failed for IP: {request.remote_addr}")
-            return render_template('login.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
+            return render_template('login.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.", csrf_token=security_manager.generate_csrf_token())
         
         if not login or not password:
-            return render_template('login.html', error="Введите логин и пароль")
+            return render_template('login.html', error="Введите логин и пароль", csrf_token=security_manager.generate_csrf_token())
         
         # Проверяем пользователя
         if db.verify_password(login, password):
@@ -1614,7 +1614,7 @@ def login():
             return redirect('/')
         else:
             logger.error(f"LOGIN: неверный пароль для login={login}")
-            return render_template('login.html', error="Неверный логин или пароль")
+            return render_template('login.html', error="Неверный логин или пароль", csrf_token=security_manager.generate_csrf_token())
     
     # Генерируем CSRF токен для формы
     csrf_token = security_manager.generate_csrf_token()
