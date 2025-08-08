@@ -505,9 +505,13 @@
                 map.geoObjects.remove(carPlacemark);
             }
 
-            // Определяем иконку в зависимости от статуса
-            const iconColor = location.is_at_work ? '#4caf50' : '#ff9800';
-            const iconPreset = location.is_at_work ? 'islands#carIcon' : 'islands#carIcon';
+            // Кастомная иконка автомобиля (Mercedes G-серии)
+            const iconOptions = {
+                iconLayout: 'default#image',
+                iconImageHref: '/static/car_g.svg',
+                iconImageSize: [40, 26],
+                iconImageOffset: [-20, -13]
+            };
 
             carPlacemark = new ymaps.Placemark(position, {
                 balloonContent: `
@@ -520,10 +524,7 @@
                     </div>
                 `,
                 hintContent: `Автомобиль (${location.formatted_time})`
-            }, {
-                preset: iconPreset,
-                iconColor: iconColor
-            });
+            }, iconOptions);
 
             map.geoObjects.add(carPlacemark);
 
