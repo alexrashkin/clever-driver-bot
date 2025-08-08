@@ -1692,7 +1692,10 @@ def forgot_password():
         success, message = db.create_password_reset_code(login_for_reset)
         if success:
             logger.info(f"FORGOT_PASSWORD: код восстановления успешно создан для {login_for_reset}")
-            return render_template('forgot_password.html', success="Код восстановления отправлен на ваш email", csrf_token=security_manager.generate_csrf_token())
+            # Сообщение и предзаполнение логина на следующей странице
+            session['flash_message'] = "Код восстановления отправлен на ваш email"
+            session['password_reset_login'] = login_for_reset
+            return redirect(url_for('reset_password'))
         else:
             logger.error(f"FORGOT_PASSWORD: ошибка создания кода восстановления для {login_for_reset}: {message}")
             return render_template('forgot_password.html', error=f"Ошибка отправки кода: {message}", csrf_token=security_manager.generate_csrf_token())
@@ -1746,9 +1749,10 @@ def reset_password():
         else:
             return render_template('reset_password.html', error="Ошибка сброса пароля", csrf_token=security_manager.generate_csrf_token())
     
-    # Генерируем CSRF токен для формы
+    # Генерируем CSRF токен для формы и подставляем логин, если есть
     csrf_token = security_manager.generate_csrf_token()
-    return render_template('reset_password.html', csrf_token=csrf_token)
+    preset_login = request.args.get('login') or session.get('password_reset_login')
+    return render_template('reset_password.html', csrf_token=csrf_token, preset_login=preset_login)
 
 @app.route('/admin')
 @security_check
