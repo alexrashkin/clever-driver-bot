@@ -42,12 +42,34 @@
             margin-bottom: 6px;
             font-weight: 500;
         }
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], input[type="email"] {
             width: 100%;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             border: 1px solid #d1d5db;
             font-size: 1em;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .input-with-icon {
+            position: relative;
+        }
+        .input-with-icon .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        .input-with-icon input {
+            padding-left: 40px;
         }
         .btn {
             display: block;
@@ -300,7 +322,10 @@
                 <input type="hidden" name="buttons" id="buttons-json">
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" value="{{ user.email or '' }}" placeholder="your@email.com">
+                    <div class="input-with-icon">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="email" name="email" value="{{ user.email or '' }}" placeholder="you@example.com" autocomplete="email">
+                    </div>
                     <small style="color: #666; font-size: 0.9em;">💡 Обязательно для восстановления пароля</small>
                 </div>
                 <div class="form-group">

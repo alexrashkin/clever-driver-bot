@@ -406,6 +406,10 @@ def security_check(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
+        # Белый список для системных эндпоинтов телеметрии (OwnTracks и резервный трекер)
+        # Для них допускаем упрощённые проверки, чтобы избежать ложных срабатываний и 403
+        telemetry_paths = {'/api/location'}
+        is_telemetry = request.path in telemetry_paths
         
         # ВРЕМЕННО отключаем блокировку IP во время работ
         # if security_manager.ip_blocker.is_blocked(ip_address):
@@ -417,16 +421,17 @@ def security_check(f):
             logger.warning(f"SECURITY: Rate limit exceeded for IP: {ip_address}")
             return "Rate limit exceeded", 429
         
-        # Проверяем User-Agent
-        user_agent = request.headers.get('User-Agent', '')
-        if security_manager.check_user_agent(user_agent):
-            logger.error(f"SECURITY: Блокирован подозрительный User-Agent: {user_agent}")
-            # Временно не учитываем неудачные попытки по IP на время работ
-            # security_manager.ip_blocker.record_failed_attempt(ip_address)
-            return "Access denied", 403
+        # Проверяем User-Agent (кроме телеметрии OwnTracks — у неё могут быть нетипичные UA)
+        if not is_telemetry:
+            user_agent = request.headers.get('User-Agent', '')
+            if security_manager.check_user_agent(user_agent):
+                logger.error(f"SECURITY: Блокирован подозрительный User-Agent: {user_agent}")
+                # Временно не учитываем неудачные попытки по IP на время работ
+                # security_manager.ip_blocker.record_failed_attempt(ip_address)
+                return "Access denied", 403
         
-        # Проверяем GET параметры
-        if request.args:
+        # Проверяем GET параметры (пропускаем для телеметрии)
+        if request.args and not is_telemetry:
             for key, value in request.args.items():
                 if (security_manager.check_xss(value) or 
                     security_manager.check_sql_injection(value) or
@@ -435,8 +440,8 @@ def security_check(f):
                     # security_manager.ip_blocker.record_failed_attempt(ip_address)
                     return "Access denied", 403
         
-        # Проверяем POST данные
-        if request.method == 'POST':
+        # Проверяем POST данные (пропускаем глубокую проверку для телеметрии)
+        if request.method == 'POST' and not is_telemetry:
             if request.is_json:
                 data = request.get_json()
                 if data:

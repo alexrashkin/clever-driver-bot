@@ -149,6 +149,7 @@
     </footer>
     <script>
         let lastUpdateTime = null;
+        let watchId = null;
         
         function updateStatus(message, type = 'default') {
             const statusEl = document.getElementById('status');
@@ -210,14 +211,53 @@
                 updateStatus('❌ Геолокация не поддерживается в этом браузере', 'error');
             }
         }
+
+        // Непрерывное отслеживание: отправляем координаты при каждом изменении
+        function startWatch() {
+            if (!('geolocation' in navigator)) return;
+            try {
+                const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+                watchId = navigator.geolocation.watchPosition(
+                    function(position) {
+                        fetch('/api/location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                altitude: position.coords.altitude,
+                                speed: position.coords.speed,
+                                heading: position.coords.heading
+                            })
+                        }).then(() => {
+                            lastUpdateTime = new Date();
+                            const timeStr = lastUpdateTime.toLocaleTimeString();
+                            updateStatus(`✅ Трекер работает! Последняя отправка: ${timeStr}`, 'working');
+                        }).catch((error) => {
+                            console.error('Ошибка отправки (watch):', error);
+                        });
+                    },
+                    function(error) {
+                        console.warn('watchPosition error:', error);
+                    },
+                    options
+                );
+            } catch (e) {
+                console.error('watchPosition не поддерживается:', e);
+            }
+        }
         
-        // Автоматическая отправка каждые 10 секунд
-        setInterval(sendLocation, 10000);
+        // Автоматическая отправка: резервный таймер (на случай троттлинга таймеров)
+        setInterval(sendLocation, 30000);
+
+        // Первая отправка и запуск непрерывного отслеживания при загрузке страницы
+        window.onload = function() {
+            sendLocation();
+            startWatch();
+        };
         
-        // Первая отправка при загрузке страницы
-        window.onload = sendLocation;
-        
-        // Проверка времени последнего обновления
+        // Проверка «давности» последнего обновления
         setInterval(() => {
             if (lastUpdateTime) {
                 const now = new Date();
