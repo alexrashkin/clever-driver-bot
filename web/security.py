@@ -409,6 +409,7 @@ def security_check(f):
         # Белый список для системных эндпоинтов телеметрии (OwnTracks и резервный трекер)
         # Для них допускаем упрощённые проверки, чтобы избежать ложных срабатываний и 403
         telemetry_paths = {'/api/location'}
+        soft_post_paths = {'/settings'}  # разрешаем безопасную отправку форм без глубокой инспекции
         is_telemetry = request.path in telemetry_paths
         
         # ВРЕМЕННО отключаем блокировку IP во время работ
@@ -441,7 +442,7 @@ def security_check(f):
                     return "Access denied", 403
         
         # Проверяем POST данные (пропускаем глубокую проверку для телеметрии)
-        if request.method == 'POST' and not is_telemetry:
+        if request.method == 'POST' and not is_telemetry and request.path not in soft_post_paths:
             if request.is_json:
                 data = request.get_json()
                 if data:
