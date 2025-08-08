@@ -1920,9 +1920,15 @@ def telegram_auth():
             logger.warning(f"TELEGRAM_AUTH: подозрительный User-Agent: {user_agent}")
             # Не блокируем, но логируем для мониторинга
         
-        # Проверяем, установлен ли токен
-        if not os.environ.get('TELEGRAM_TOKEN', 'default_token'):
-            logger.error("TELEGRAM_AUTH: токен Telegram не установлен")
+        # Проверяем, установлен ли токен (поддерживаем несколько имен переменных)
+        telegram_token = (
+            os.environ.get('TELEGRAM_TOKEN')
+            or os.environ.get('TELEGRAM_BOT_TOKEN')
+            or os.environ.get('BOT_TOKEN')
+            or getattr(config, 'TELEGRAM_BOT_TOKEN', '')
+        )
+        if not telegram_token:
+            logger.error("TELEGRAM_AUTH: токен Telegram не установлен ни в TELEGRAM_TOKEN, ни в TELEGRAM_BOT_TOKEN, ни в BOT_TOKEN")
             return 'Ошибка конфигурации: токен Telegram не установлен. Обратитесь к администратору.', 500
         
         # Проверка подписи Telegram
@@ -1934,7 +1940,7 @@ def telegram_auth():
         auth_data.pop('user_id', None)  # Удаляем user_id, если есть
         auth_data = {k: v for k, v in auth_data.items()}
         data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-        secret_key = hashlib.sha256(os.environ.get('TELEGRAM_TOKEN', 'default_token').encode()).digest()
+        secret_key = hashlib.sha256(telegram_token.encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"TELEGRAM_AUTH: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
@@ -2009,7 +2015,7 @@ def bind_telegram():
         auth_data.pop('user_id', None)
         auth_data = {k: v for k, v in auth_data.items()}
         data_check_string = '\n'.join([f"{k}={v}" for k, v in sorted(auth_data.items())])
-        secret_key = hashlib.sha256(os.environ.get('TELEGRAM_TOKEN', 'default_token').encode()).digest()
+        secret_key = hashlib.sha256(telegram_token.encode()).digest()
         hmac_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
         
         logger.info(f"BIND_TELEGRAM: проверка подписи - ожидаемый: {hash_}, полученный: {hmac_hash}")
