@@ -24,7 +24,15 @@ def load_env_file():
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
                     key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    if key.lower().startswith('export '):
+                        key = key[7:].strip()
+                    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+                        value = value[1:-1]
+                    # сохраняем как есть и в верхнем регистре (на случай, если ключ в .env в нижнем регистре)
                     os.environ[key] = value
+                    os.environ[key.upper()] = value
                     log_to_file(f"📝 RUN_WEB: Загружена переменная: {key}")
         log_to_file(f"📧 RUN_WEB: EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
     else:

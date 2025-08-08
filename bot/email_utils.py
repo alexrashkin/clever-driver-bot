@@ -3,32 +3,12 @@
 
 import smtplib
 import ssl
-import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import logging
-
-# Загружаем переменные окружения из .env файла
-def load_env_file():
-    env_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-    print(f"🔍 EMAIL_UTILS: Проверяем .env файл: {env_file}")
-    if os.path.exists(env_file):
-        print("✅ EMAIL_UTILS: .env файл найден, загружаем переменные...")
-        with open(env_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    os.environ[key] = value
-                    print(f"📝 EMAIL_UTILS: Загружена переменная: {key}")
-        print(f"📧 EMAIL_UTILS: EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
-    else:
-        print("❌ EMAIL_UTILS: .env файл не найден")
-
-# Загружаем .env файл
-load_env_file()
-
+from email.utils import formatdate, make_msgid
 from config.settings import config
+import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +25,6 @@ def send_email(to_email, subject, html_content, text_content=None):
     Returns:
         bool: True если отправка успешна, False в противном случае
     """
-    # Отладочная информация
-    logger.info(f"EMAIL_DEBUG: config.EMAIL_ENABLED = {config.EMAIL_ENABLED}")
-    logger.info(f"EMAIL_DEBUG: os.environ.get('EMAIL_ENABLED') = {os.environ.get('EMAIL_ENABLED')}")
-    logger.info(f"EMAIL_DEBUG: type(config.EMAIL_ENABLED) = {type(config.EMAIL_ENABLED)}")
-    
     if not config.EMAIL_ENABLED:
         logger.warning("Email отправка отключена в настройках")
         return False
@@ -61,35 +36,61 @@ def send_email(to_email, subject, html_content, text_content=None):
     try:
         # Создаем сообщение
         message = MIMEMultipart("alternative")
+        from_address = (
+            f"{config.EMAIL_FROM_NAME} <{config.EMAIL_FROM_ADDRESS}>"
+            if getattr(config, "EMAIL_FROM_ADDRESS", None)
+            else config.EMAIL_USERNAME
+        )
         message["Subject"] = subject
-        message["From"] = f"{config.EMAIL_FROM_NAME} <{config.EMAIL_FROM_ADDRESS}>"
+        message["From"] = from_address
         message["To"] = to_email
-        
+        message["Date"] = formatdate(localtime=True)
+        message["Message-ID"] = make_msgid()
+        message["X-Transactional"] = "true"
+
         # Добавляем содержимое
         if text_content:
             text_part = MIMEText(text_content, "plain", "utf-8")
             message.attach(text_part)
-        
+
         html_part = MIMEText(html_content, "html", "utf-8")
         message.attach(html_part)
-        
-        # Создаем безопасное соединение
+
+        # TLS/SSL контекст
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
-        
+
         # Подключаемся к серверу и отправляем email
-        with smtplib.SMTP(config.EMAIL_SMTP_SERVER, config.EMAIL_SMTP_PORT) as server:
-            server.starttls(context=context)
-            server.login(config.EMAIL_USERNAME, config.EMAIL_PASSWORD)
-            server.send_message(message)
-        
+        host = config.EMAIL_SMTP_SERVER
+        port = int(config.EMAIL_SMTP_PORT)
+        smtp_debug = os.getenv('SMTP_DEBUG', '0') == '1'
+        if port == 465:
+            with smtplib.SMTP_SSL(host=host, port=port, context=context, timeout=30) as server:
+                if smtp_debug:
+                    server.set_debuglevel(1)
+                server.login(config.EMAIL_USERNAME, config.EMAIL_PASSWORD)
+                server.send_message(message)
+        else:
+            with smtplib.SMTP(host=host, port=port, timeout=30) as server:
+                if smtp_debug:
+                    server.set_debuglevel(1)
+                server.starttls(context=context)
+                server.login(config.EMAIL_USERNAME, config.EMAIL_PASSWORD)
+                server.send_message(message)
+
         logger.info(f"Email успешно отправлен на {to_email}")
         return True
         
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"SMTP аутентификация неуспешна: code={e.smtp_code}, error={getattr(e, 'smtp_error', e)}")
+        raise
+    except smtplib.SMTPResponseException as e:
+        logger.error(f"SMTP ошибка: code={e.smtp_code}, error={e.smtp_error}")
+        raise
     except Exception as e:
         logger.error(f"Ошибка отправки email на {to_email}: {e}")
-        return False
+        raise
 
 def send_password_reset_email(to_email, login, code):
     """
@@ -103,7 +104,7 @@ def send_password_reset_email(to_email, login, code):
     Returns:
         bool: True если отправка успешна, False в противном случае
     """
-    subject = "🔐 Восстановление пароля - Умный водитель"
+    subject = "Восстановление пароля — Умный водитель"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -163,7 +164,7 @@ def send_password_reset_email(to_email, login, code):
     </head>
     <body>
         <div class="header">
-            <h1>🚗 Умный водитель</h1>
+            <h1>Умный водитель</h1>
             <p>Восстановление пароля</p>
         </div>
         
@@ -177,7 +178,7 @@ def send_password_reset_email(to_email, login, code):
             <p><strong>Этот код действителен 1 час.</strong></p>
             
             <div class="warning">
-                <strong>⚠️ Важно:</strong> Если вы не запрашивали восстановление пароля, 
+                <strong>Важно:</strong> Если вы не запрашивали восстановление пароля, 
                 проигнорируйте это письмо. Никогда не передавайте этот код третьим лицам.
             </div>
             

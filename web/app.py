@@ -18,8 +18,16 @@ import traceback
 import math
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, make_response, send_from_directory
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+# Опциональный импорт Flask-Limiter: не обязателен для работы приложения
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+except Exception:  # пакет может отсутствовать на сервере
+    Limiter = None
+    from flask import request as _flask_request
+
+    def get_remote_address():
+        return _flask_request.remote_addr
 from werkzeug.utils import secure_filename
 
 # Добавляем путь к родительской директории
@@ -43,7 +51,14 @@ def load_env_file():
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:
                     key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    if key.lower().startswith('export '):
+                        key = key[7:].strip()
+                    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+                        value = value[1:-1]
                     os.environ[key] = value
+                    os.environ[key.upper()] = value
                     print(f"📝 Загружена переменная: {key}")
         print(f"📧 EMAIL_ENABLED = {os.environ.get('EMAIL_ENABLED', 'НЕ УСТАНОВЛЕН')}")
     else:
