@@ -1729,16 +1729,22 @@ def reset_password():
             return render_template('reset_password.html', error=password_message, csrf_token=security_manager.generate_csrf_token())
         
         # Проверяем код восстановления
-        success, message = db.verify_password_reset_code(login, code)
-        if not success:
-            return render_template('reset_password.html', error=message, csrf_token=security_manager.generate_csrf_token())
+        verify_ok, verify_result = db.verify_password_reset_code(login, code)
+        if not verify_ok:
+            return render_template('reset_password.html', error=verify_result, csrf_token=security_manager.generate_csrf_token())
+        reset_id = verify_result
         
         # Сбрасываем пароль
-        success, message = db.reset_user_password(login, new_password)
-        if success:
+        reset_ok = db.reset_user_password(login, new_password)
+        if reset_ok:
+            # Отмечаем код как использованный
+            try:
+                db.mark_reset_code_used(reset_id)
+            except Exception:
+                pass
             return render_template('reset_password.html', success="Пароль успешно изменен. Теперь вы можете войти в систему.", csrf_token=security_manager.generate_csrf_token())
         else:
-            return render_template('reset_password.html', error=f"Ошибка сброса пароля: {message}", csrf_token=security_manager.generate_csrf_token())
+            return render_template('reset_password.html', error="Ошибка сброса пароля", csrf_token=security_manager.generate_csrf_token())
     
     # Генерируем CSRF токен для формы
     csrf_token = security_manager.generate_csrf_token()
