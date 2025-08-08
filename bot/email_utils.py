@@ -193,7 +193,7 @@ def send_password_reset_email(to_email, login, code):
         <div class="footer">
             <p>Это автоматическое сообщение, не отвечайте на него.</p>
             <p>© 2025 Умный водитель. Все права защищены.</p>
-            <p>Поддержка: <a href="mailto:info@cleverdriver.ru">info@cleverdriver.ru</a> | <a href="https://t.me/cleverdriver_support">@cleverdriver_support</a></p>
+            <p>Поддержка: <a href="mailto:info@cleverdriver.ru">info@cleverdriver.ru</a></p>
         </div>
     </body>
     </html>
@@ -219,7 +219,7 @@ def send_password_reset_email(to_email, login, code):
     Это автоматическое сообщение, не отвечайте на него.
     © 2025 Умный водитель. Все права защищены.
     
-    Поддержка: info@cleverdriver.ru | @cleverdriver_support
+    Поддержка: info@cleverdriver.ru
     """
     
     return send_email(to_email, subject, html_content, text_content) 
