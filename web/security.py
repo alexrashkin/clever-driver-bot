@@ -407,10 +407,10 @@ def security_check(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
-        # Проверяем блокировку IP
-        if security_manager.ip_blocker.is_blocked(ip_address):
-            logger.warning(f"SECURITY: Заблокированный IP пытается получить доступ: {ip_address}")
-            return "Access denied - IP blocked", 403
+        # ВРЕМЕННО отключаем блокировку IP во время работ
+        # if security_manager.ip_blocker.is_blocked(ip_address):
+        #     logger.warning(f"SECURITY: Заблокированный IP пытается получить доступ: {ip_address}")
+        #     return "Access denied - IP blocked", 403
         
         # Проверяем rate limiting
         if not security_manager.rate_limiter.is_allowed(ip_address):
@@ -421,7 +421,8 @@ def security_check(f):
         user_agent = request.headers.get('User-Agent', '')
         if security_manager.check_user_agent(user_agent):
             logger.error(f"SECURITY: Блокирован подозрительный User-Agent: {user_agent}")
-            security_manager.ip_blocker.record_failed_attempt(ip_address)
+            # Временно не учитываем неудачные попытки по IP на время работ
+            # security_manager.ip_blocker.record_failed_attempt(ip_address)
             return "Access denied", 403
         
         # Проверяем GET параметры
@@ -431,7 +432,7 @@ def security_check(f):
                     security_manager.check_sql_injection(value) or
                     security_manager.check_command_injection(value)):
                     logger.error(f"SECURITY: Блокированы подозрительные GET параметры: {key}={value}")
-                    security_manager.ip_blocker.record_failed_attempt(ip_address)
+                    # security_manager.ip_blocker.record_failed_attempt(ip_address)
                     return "Access denied", 403
         
         # Проверяем POST данные
@@ -443,7 +444,7 @@ def security_check(f):
                         security_manager.check_sql_injection(data) or
                         security_manager.check_command_injection(data)):
                         logger.error(f"SECURITY: Блокированы подозрительные POST данные: {data}")
-                        security_manager.ip_blocker.record_failed_attempt(ip_address)
+                        # security_manager.ip_blocker.record_failed_attempt(ip_address)
                         return jsonify({'error': 'Access denied'}), 403
             else:
                 for key, value in request.form.items():
@@ -451,7 +452,7 @@ def security_check(f):
                         security_manager.check_sql_injection(value) or
                         security_manager.check_command_injection(value)):
                         logger.error(f"SECURITY: Блокированы подозрительные POST данные: {key}={value}")
-                        security_manager.ip_blocker.record_failed_attempt(ip_address)
+                        # security_manager.ip_blocker.record_failed_attempt(ip_address)
                         return "Access denied", 403
         
         return f(*args, **kwargs)
