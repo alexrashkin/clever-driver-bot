@@ -1715,30 +1715,30 @@ def reset_password():
         # Проверяем CSRF токен
         if not security_manager.validate_csrf_token(request.form.get('csrf_token')):
             logger.error(f"RESET_PASSWORD: CSRF token validation failed for IP: {request.remote_addr}")
-            return render_template('reset_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.")
+            return render_template('reset_password.html', error="Ошибка безопасности. Обновите страницу и попробуйте снова.", csrf_token=security_manager.generate_csrf_token())
         
         if not all([login, code, new_password, confirm_password]):
-            return render_template('reset_password.html', error="Заполните все поля")
+            return render_template('reset_password.html', error="Заполните все поля", csrf_token=security_manager.generate_csrf_token())
         
         if new_password != confirm_password:
-            return render_template('reset_password.html', error="Пароли не совпадают")
+            return render_template('reset_password.html', error="Пароли не совпадают", csrf_token=security_manager.generate_csrf_token())
         
         # Проверка сложности пароля
         password_valid, password_message = security_manager.validate_password_strength(new_password)
         if not password_valid:
-            return render_template('reset_password.html', error=password_message)
+            return render_template('reset_password.html', error=password_message, csrf_token=security_manager.generate_csrf_token())
         
         # Проверяем код восстановления
         success, message = db.verify_password_reset_code(login, code)
         if not success:
-            return render_template('reset_password.html', error=message)
+            return render_template('reset_password.html', error=message, csrf_token=security_manager.generate_csrf_token())
         
         # Сбрасываем пароль
         success, message = db.reset_user_password(login, new_password)
         if success:
-            return render_template('reset_password.html', success="Пароль успешно изменен. Теперь вы можете войти в систему.")
+            return render_template('reset_password.html', success="Пароль успешно изменен. Теперь вы можете войти в систему.", csrf_token=security_manager.generate_csrf_token())
         else:
-            return render_template('reset_password.html', error=f"Ошибка сброса пароля: {message}")
+            return render_template('reset_password.html', error=f"Ошибка сброса пароля: {message}", csrf_token=security_manager.generate_csrf_token())
     
     # Генерируем CSRF токен для формы
     csrf_token = security_manager.generate_csrf_token()
