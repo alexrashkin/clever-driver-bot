@@ -71,10 +71,14 @@
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid #d1d5db;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
         }
         .alternative-links a {
-            display: inline-block;
-            margin: 8px;
+            display: block;
+            margin: 0;
             padding: 12px 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
@@ -84,7 +88,8 @@
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-            min-width: 160px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .alternative-links a:hover {
             background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
