@@ -505,12 +505,13 @@
                         calculateUserDistance(data.location);
                     } else {
                         const status = data.status || 'Нет данных о местоположении';
-                        showError(status);
+                        // При отсутствии данных не сбиваем текущий статус: мягко логируем
+                        console.warn('Нет данных:', status);
                     }
                 })
                 .catch(error => {
-                    console.error('Ошибка загрузки местоположения:', error);
-                    showError('Ошибка загрузки данных');
+                    console.warn('Ошибка загрузки местоположения:', error);
+                    // Тихий фолбэк без смены статуса
                 });
         }
 
@@ -637,20 +638,24 @@
             const lastUpdateTime = document.getElementById('lastUpdateTime');
             const workZoneDistance = document.getElementById('workZoneDistance');
 
-            // Обновляем статус
-            if (location.is_at_work) {
-                statusIndicator.className = 'status-indicator at-work';
-                statusText.textContent = 'Водитель ожидает';
-                document.getElementById('detailedStatus').textContent = '🟢 Водитель ожидает';
-            } else {
-                statusIndicator.className = 'status-indicator moving';
-                statusText.textContent = 'В пути';
-                document.getElementById('detailedStatus').textContent = '🟡 В пути';
+            // Обновляем статус (не меняем на ошибку при остановке/временной недоступности)
+            if (location && typeof location.is_at_work !== 'undefined') {
+                if (location.is_at_work) {
+                    statusIndicator.className = 'status-indicator at-work';
+                    statusText.textContent = 'Водитель ожидает';
+                    document.getElementById('detailedStatus').textContent = '🟢 Водитель ожидает';
+                } else {
+                    statusIndicator.className = 'status-indicator moving';
+                    statusText.textContent = 'В пути';
+                    document.getElementById('detailedStatus').textContent = '🟡 В пути';
+                }
             }
 
             // Обновляем время
-            lastUpdateTime.textContent = location.formatted_time;
-            document.getElementById('lastUpdate').textContent = location.formatted_time;
+            if (location && location.formatted_time) {
+                lastUpdateTime.textContent = location.formatted_time;
+                document.getElementById('lastUpdate').textContent = location.formatted_time;
+            }
 
             // Обновляем расстояние
             if (workZoneDistance) {
@@ -796,9 +801,15 @@
         }
 
         function showError(message) {
+            // Не изменяем статус при временных ошибках загрузки данных
             console.error(message);
-            document.getElementById('statusText').textContent = 'Ошибка';
-            document.getElementById('detailedStatus').textContent = '❌ ' + message;
+            const lastUpdateEl = document.getElementById('lastUpdate');
+            if (lastUpdateEl) {
+                const txt = String(lastUpdateEl.textContent || '').trim();
+                if (txt && !txt.includes('ошибка')) {
+                    lastUpdateEl.textContent = txt + ' (временная ошибка связи)';
+                }
+            }
         }
 
         // Автоматическое сохранение местоположения получателя
