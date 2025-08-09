@@ -373,17 +373,14 @@ footer {
         <a href="/about" class="top-link nav-btn">О сервисе</a>
         {% if is_authorized %}
             {% if is_recipient_only %}
-            <!-- Получатель уведомлений - показываем только основные ссылки -->
-            <span class="top-link nav-btn" style="color: #ffffff; font-weight: 600;">Получатель</span>
+            <!-- Получатель уведомлений - без нерабочей кнопки роли -->
             {% elif is_admin %}
             <!-- Администратор - показываем полные настройки -->
             <a href="/settings" class="top-link nav-btn">Настройки</a>
             <a href="/admin/users" class="top-link nav-btn">Пользователи</a>
-            <span class="top-link nav-btn" style="color: #ffffff; font-weight: 600;">Админ</span>
             {% elif is_driver %}
             <!-- Водитель - стандартные настройки -->
             <a href="/settings" class="top-link nav-btn">Настройки</a>
-            <span class="top-link nav-btn" style="color: #ffffff; font-weight: 600;">Водитель</span>
             {% endif %}
             <!-- Кнопка выхода для всех авторизованных -->
             <a href="/logout" class="top-link nav-btn">Выход</a>
