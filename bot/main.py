@@ -43,48 +43,69 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def monitor_database(application: Application):
-    last_checked_id = load_last_checked_id()
-    last_checked_time = load_last_checked_time()
-    last_notification_type = load_last_notification_type()  # Новое: тип последнего уведомления
-    logger.info(f"🚀 Мониторинг базы данных запущен. last_checked_id: {last_checked_id}, last_checked_time: {last_checked_time}, last_notification_type: {last_notification_type}")
+    # Переходим на помпо-пользовательскую детекцию переходов
+    # Используем в памяти последние проверенные ID/время/тип на пользователя
+    per_user_last_checked_id = {}
+    per_user_last_checked_time = {}
+    per_user_last_notification_type = {}
+    logger.info("🚀 Мониторинг базы данных запущен (персональная детекция по пользователям)")
+
+    import time as t
 
     while True:
         try:
             conn = sqlite3.connect('driver.db')
             cursor = conn.cursor()
-            cursor.execute("""
-                SELECT ul.id, ul.is_at_work, ul.created_at, ul.latitude, ul.longitude
+            cursor.execute(
+                """
+                SELECT ul.id, ul.telegram_id, ul.is_at_work, ul.created_at
                 FROM user_locations ul
                 JOIN users u ON ul.user_id = u.id
-                WHERE u.role IN ('driver', 'admin')
-                ORDER BY ul.id DESC LIMIT 3
-            """)
+                WHERE u.role IN ('driver', 'admin') AND ul.telegram_id IS NOT NULL
+                ORDER BY ul.id DESC
+                LIMIT 200
+                """
+            )
             rows = cursor.fetchall()
             conn.close()
 
-            logger.info(f"📊 Мониторинг: найдено {len(rows)} записей")
-            if len(rows) >= 2:  # Минимум 2 записи для детекции перехода
-                curr_id, curr_is_at_work, curr_time, curr_lat, curr_lon = rows[0]
-                prev_id, prev_is_at_work, prev_time, prev_lat, prev_lon = rows[1]
+            logger.info(f"📊 Мониторинг: получено {len(rows)} последних записей")
 
-                # Третья (более старая) запись — для подтверждения стабильности нового состояния
-                prev2_is_at_work = rows[2][1] if len(rows) >= 3 else None
+            # Группируем записи по telegram_id
+            from collections import defaultdict
+            by_user = defaultdict(list)
+            for row in rows:
+                rec_id, tg_id, is_at_work, created_at = row
+                by_user[tg_id].append((rec_id, is_at_work, created_at))
 
-                logger.info(f"📍 Текущая: ID {curr_id}, is_at_work: {curr_is_at_work}, время: {curr_time}")
-                logger.info(f"📍 Предыдущая: ID {prev_id}, is_at_work: {prev_is_at_work}, время: {prev_time}")
+            # Обрабатываем каждого пользователя с минимум двумя точками
+            for tg_id, entries in by_user.items():
+                if len(entries) < 2:
+                    continue
+                # Последние по времени уже в порядке DESC по id
+                (curr_id, curr_is_at_work, curr_time) = entries[0]
+                (prev_id, prev_is_at_work, prev_time) = entries[1]
+                prev2_is_at_work = entries[2][1] if len(entries) >= 3 else None
 
-                import time as t
-                curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
-                prev_ts = t.mktime(t.strptime(prev_time, "%Y-%m-%d %H:%M:%S"))
+                try:
+                    curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
+                    prev_ts = t.mktime(t.strptime(prev_time, "%Y-%m-%d %H:%M:%S"))
+                except Exception:
+                    # Если формат неожиданный — пропускаем пользователя
+                    continue
+
                 dt_prev_curr = curr_ts - prev_ts
 
-                # Helper: подтверждение перехода (или третьей записью, или минимальным интервалом)
                 def confirmed_transition(new_state: int) -> bool:
                     if prev2_is_at_work is not None and prev2_is_at_work == new_state:
                         return True
-                    return dt_prev_curr >= 5  # минимальный интервал между точками, чтобы избежать дрожания
+                    return dt_prev_curr >= 5
 
-                # Переход 0→1 (въезд в зону)
+                last_checked_id = per_user_last_checked_id.get(tg_id, 0)
+                last_checked_time = per_user_last_checked_time.get(tg_id, 0.0)
+                last_notification_type = per_user_last_notification_type.get(tg_id)
+
+                # Въезд 0→1
                 if (
                     prev_is_at_work == 0 and curr_is_at_work == 1 and
                     curr_id != last_checked_id and
@@ -92,16 +113,13 @@ async def monitor_database(application: Application):
                     confirmed_transition(1)
                 ):
                     logger.info(
-                        f"DEBUG: переход 0→1 подтвержден (dt={dt_prev_curr}s, prev2={prev2_is_at_work})"
+                        f"DEBUG[{tg_id}]: переход 0→1 подтвержден (dt={dt_prev_curr}s, prev2={prev2_is_at_work})"
                     )
                     if curr_ts - last_checked_time >= 10:
                         if can_send_notification('arrival', max_interval_minutes=30):
-                            last_checked_id = curr_id
-                            last_checked_time = curr_ts
-                            last_notification_type = 'arrival'
-                            save_last_checked_id(last_checked_id)
-                            save_last_checked_time(curr_ts)
-                            save_last_notification_type(last_notification_type)
+                            per_user_last_checked_id[tg_id] = curr_id
+                            per_user_last_checked_time[tg_id] = curr_ts
+                            per_user_last_notification_type[tg_id] = 'arrival'
                             save_last_arrival_time(curr_ts)
 
                             # Проверяем статус отслеживания
@@ -113,11 +131,10 @@ async def monitor_database(application: Application):
                             conn.close()
                             logger.info(f"📡 Отслеживание активно: {tracking_active}")
                             if tracking_active:
-                                # Получатели — все получатели
                                 conn = sqlite3.connect('driver.db')
                                 cursor = conn.cursor()
-                                cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient'")
-                                recipients = cursor.fetchall()
+                                cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient' AND telegram_id IS NOT NULL")
+                                recipients = [r[0] for r in cursor.fetchall()]
                                 conn.close()
                                 logger.info(f"👥 Получателей: {len(recipients)}")
                                 if recipients:
@@ -125,16 +142,16 @@ async def monitor_database(application: Application):
                                     result = await notification_system.send_notification_with_confirmation(
                                         notification_type='automatic',
                                         sender_info=system_info,
-                                        recipients=[r[0] for r in recipients],
+                                        recipients=recipients,
                                         notification_text=create_work_notification(),
                                         custom_confirmation=True
                                     )
                                     if result['success']:
                                         logger.info(
-                                            f"📊 АВТО: прибытие — отправлено {result['sent_count']} из {result['total_recipients']}"
+                                            f"📊 АВТО[{tg_id}]: прибытие — отправлено {result['sent_count']} из {result['total_recipients']}"
                                         )
                                     else:
-                                        logger.warning("❌ Прибытие: отправка не удалась")
+                                        logger.warning(f"❌ Прибытие[{tg_id}]: отправка не удалась")
                                 else:
                                     logger.warning("❌ Прибытие: нет получателей")
                             else:
@@ -144,7 +161,7 @@ async def monitor_database(application: Application):
                     else:
                         logger.info("Прибытие: слишком рано после последней проверки (<10s)")
 
-                # Переход 1→0 (выезд из зоны)
+                # Выезд 1→0
                 if (
                     prev_is_at_work == 1 and curr_is_at_work == 0 and
                     curr_id != last_checked_id and
@@ -152,23 +169,19 @@ async def monitor_database(application: Application):
                     confirmed_transition(0)
                 ):
                     logger.info(
-                        f"DEBUG: переход 1→0 подтвержден (dt={dt_prev_curr}s, prev2={prev2_is_at_work})"
+                        f"DEBUG[{tg_id}]: переход 1→0 подтвержден (dt={dt_prev_curr}s, prev2={prev2_is_at_work})"
                     )
                     if curr_ts - last_checked_time >= 10:
                         if can_send_notification('departure', max_interval_minutes=30):
-                            last_checked_id = curr_id
-                            last_checked_time = curr_ts
-                            last_notification_type = 'departure'
-                            save_last_checked_id(last_checked_id)
-                            save_last_checked_time(curr_ts)
-                            save_last_notification_type(last_notification_type)
+                            per_user_last_checked_id[tg_id] = curr_id
+                            per_user_last_checked_time[tg_id] = curr_ts
+                            per_user_last_notification_type[tg_id] = 'departure'
                             save_last_departure_time(curr_ts)
 
-                            # Получатели — только получатели
                             conn = sqlite3.connect('driver.db')
                             cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient'")
-                            users = cursor.fetchall()
+                            cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient' AND telegram_id IS NOT NULL")
+                            users = [u[0] for u in cursor.fetchall()]
                             conn.close()
                             logger.info(f"👥 Получателей для уведомления о выезде: {len(users)}")
                             if users:
@@ -176,22 +189,23 @@ async def monitor_database(application: Application):
                                 result = await notification_system.send_notification_with_confirmation(
                                     notification_type='automatic',
                                     sender_info=system_info,
-                                    recipients=[u[0] for u in users],
+                                    recipients=users,
                                     notification_text="Выехали",
                                     custom_confirmation=True
                                 )
                                 if result['success']:
                                     logger.info(
-                                        f"📊 АВТО: выезд — отправлено {result['sent_count']} из {result['total_recipients']}"
+                                        f"📊 АВТО[{tg_id}]: выезд — отправлено {result['sent_count']} из {result['total_recipients']}"
                                     )
                                 else:
-                                    logger.warning("❌ Выезд: отправка не удалась")
+                                    logger.warning(f"❌ Выезд[{tg_id}]: отправка не удалась")
                             else:
                                 logger.warning("❌ Выезд: нет пользователей")
                         else:
                             logger.info("⏰ Выезд: заблокировано временными ограничениями")
                     else:
                         logger.info("Выезд: слишком рано после последней проверки (<10s)")
+
             await asyncio.sleep(2)
         except Exception as e:
             logger.error(f"Ошибка мониторинга базы данных: {e}")

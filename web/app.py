@@ -978,7 +978,8 @@ def api_location():
                             logger.warning("OwnTracks: не найден ни один пользователь для сохранения данных")
             
             # Сохраняем в базу, если координаты валидны
-            if validate_coordinates(latitude, longitude):
+            ok, _ = validate_coordinates(latitude, longitude)
+            if ok:
                 if user:
                     # Используем новую систему с user_locations
                     if telegram_id:
