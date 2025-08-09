@@ -672,7 +672,7 @@ def index():
 @app.route('/mobile')
 @security_check
 def mobile_tracker():
-    """Мобильный трекер"""
+    """Резервная передача геоданных"""
     # Проверяем авторизацию через Telegram или логин/пароль
     telegram_id = session.get('telegram_id')
     user_login = session.get('user_login')
