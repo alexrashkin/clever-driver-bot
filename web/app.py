@@ -2333,7 +2333,7 @@ def current_location():
                     # Берём последнюю точку пригласившего
                     cursor.execute(
                         """
-                        SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at
+                        SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at, ul.heading
                         FROM user_locations ul
                         WHERE ul.user_id = ?
                         ORDER BY ul.id DESC LIMIT 1
@@ -2342,7 +2342,7 @@ def current_location():
                     )
                     loc = cursor.fetchone()
                     if loc:
-                        lat, lon, is_at_work, timestamp = loc
+                        lat, lon, is_at_work, timestamp, heading = loc
                         role = inviter_role
                     else:
                         conn.close()
@@ -2361,7 +2361,7 @@ def current_location():
                     work_lat, work_lon, work_radius = self_row[2], self_row[3], self_row[4]
                     cursor.execute(
                         """
-                        SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at
+                        SELECT ul.latitude, ul.longitude, ul.is_at_work, ul.created_at, ul.heading
                         FROM user_locations ul
                         WHERE ul.user_id = ?
                         ORDER BY ul.id DESC LIMIT 1
@@ -2370,7 +2370,7 @@ def current_location():
                     )
                     loc = cursor.fetchone()
                     if loc:
-                        lat, lon, is_at_work, timestamp = loc
+                        lat, lon, is_at_work, timestamp, heading = loc
                     else:
                         conn.close()
                         return jsonify({'success': False, 'status': 'Нет данных о вашем местоположении'}), 200
@@ -2436,6 +2436,7 @@ def current_location():
                 'is_at_work': bool(is_at_work),
                 'timestamp': timestamp,
                 'formatted_time': formatted_time,
+                'heading': locals().get('heading', None),
                 'role': role
             },
             'work_zone': {

@@ -514,6 +514,20 @@
                 });
         }
 
+        function computeBearingDeg(fromLat, fromLon, toLat, toLon) {
+            const φ1 = fromLat * Math.PI / 180;
+            const φ2 = toLat * Math.PI / 180;
+            const λ1 = fromLon * Math.PI / 180;
+            const λ2 = toLon * Math.PI / 180;
+            const y = Math.sin(λ2 - λ1) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
+            const θ = Math.atan2(y, x);
+            let brng = (θ * 180 / Math.PI + 360) % 360; // 0..360
+            return brng;
+        }
+
+        let lastCarPosition = null;
+
         function updateCarPosition(location) {
             const target = [location.latitude, location.longitude];
 
@@ -543,6 +557,7 @@
                 if (following) {
                     map.setCenter(target, undefined, { duration: 500 });
                 }
+                lastCarPosition = target;
                 return;
             }
 
@@ -552,9 +567,27 @@
                 hintContent: `Автомобиль (${location.formatted_time})`
             });
 
+            // Поворот иконки по heading или по расчётному курсу
+            try {
+                let bearing = null;
+                if (typeof location.heading === 'number' && !Number.isNaN(location.heading)) {
+                    bearing = location.heading; // уже в градусах, 0=N, по часовой
+                } else if (lastCarPosition) {
+                    bearing = computeBearingDeg(lastCarPosition[0], lastCarPosition[1], target[0], target[1]);
+                }
+                if (bearing !== null) {
+                    const normalized = ((bearing % 360) + 360) % 360;
+                    carPlacemark.options.set('iconImageRotation', normalized);
+                    carPlacemark.options.set('iconImageRotate', true);
+                }
+            } catch (e) {
+                // Игнорируем ошибки поворота на старых браузерах/АПИ
+            }
+
             // Плавная анимация позиции
             const start = carPlacemark.geometry.getCoordinates();
             startSmoothMove(start, target, UPDATE_INTERVAL);
+            lastCarPosition = target;
 
             // Аккуратное центрирование только по приходу новой точки и только если пользователь не взаимодействует
             if (following && !userInteracting) {
