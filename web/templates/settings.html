@@ -194,13 +194,13 @@
                         <strong>Имя:</strong> {{ (user.first_name or 'Не указано') | e }}
                     </div>
                     <div style="display: flex; justify-content: center; align-items: stretch; gap: 12px; flex-wrap: wrap;">
-                        <form method="post" action="/unbind_telegram" style="margin: 0;">
-                            <button type="submit" class="btn" style="background: #ef4444; font-size: 0.95em; padding: 10px 16px; flex: 1 1 240px; width: auto; box-sizing: border-box;" 
+                        <form method="post" action="/unbind_telegram" style="margin: 0; flex: 1 1 100%;">
+                            <button type="submit" class="btn" style="background: #ef4444; font-size: 0.95em; padding: 10px 16px; width: 100%; box-sizing: border-box;" 
                                     onclick="return confirm('Вы уверены, что хотите отвязать Telegram аккаунт?')">
                                 🔗 Отвязать Telegram
                             </button>
                         </form>
-                        <a href="/bind_telegram_form" class="btn" style="text-decoration: none; background: #6366f1; font-size: 0.95em; padding: 10px 16px; flex: 1 1 240px; width: auto; box-sizing: border-box;">
+                        <a href="/bind_telegram_form" class="btn" style="text-decoration: none; background: #6366f1; font-size: 0.95em; padding: 10px 16px; flex: 1 1 100%; width: 100%; box-sizing: border-box;">
                             🔄 Привязать другой
                         </a>
                     </div>
