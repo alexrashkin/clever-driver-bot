@@ -416,10 +416,10 @@ def security_check(f):
         is_telemetry = request.path in telemetry_paths
         is_soft = request.path in soft_paths
         
-        # ВРЕМЕННО отключаем блокировку IP во время работ
-        # if security_manager.ip_blocker.is_blocked(ip_address):
-        #     logger.warning(f"SECURITY: Заблокированный IP пытается получить доступ: {ip_address}")
-        #     return "Access denied - IP blocked", 403
+        # Восстанавливаем блокировку IP
+        if security_manager.ip_blocker.is_blocked(ip_address):
+            logger.warning(f"SECURITY: Заблокированный IP пытается получить доступ: {ip_address}")
+            return "Access denied - IP blocked", 403
         
         # Проверяем rate limiting
         if not security_manager.rate_limiter.is_allowed(ip_address):
@@ -431,8 +431,7 @@ def security_check(f):
             user_agent = request.headers.get('User-Agent', '')
             if security_manager.check_user_agent(user_agent):
                 logger.error(f"SECURITY: Блокирован подозрительный User-Agent: {user_agent}")
-                # Временно не учитываем неудачные попытки по IP на время работ
-                # security_manager.ip_blocker.record_failed_attempt(ip_address)
+                security_manager.ip_blocker.record_failed_attempt(ip_address)
                 return "Access denied", 403
         
         # Проверяем GET параметры (пропускаем для телеметрии)
@@ -442,7 +441,7 @@ def security_check(f):
                     security_manager.check_sql_injection(value) or
                     security_manager.check_command_injection(value)):
                     logger.error(f"SECURITY: Блокированы подозрительные GET параметры: {key}={value}")
-                    # security_manager.ip_blocker.record_failed_attempt(ip_address)
+                    security_manager.ip_blocker.record_failed_attempt(ip_address)
                     return "Access denied", 403
         
         # Проверяем POST данные (пропускаем глубокую проверку для телеметрии)
@@ -454,7 +453,7 @@ def security_check(f):
                         security_manager.check_sql_injection(data) or
                         security_manager.check_command_injection(data)):
                         logger.error(f"SECURITY: Блокированы подозрительные POST данные: {data}")
-                        # security_manager.ip_blocker.record_failed_attempt(ip_address)
+                        security_manager.ip_blocker.record_failed_attempt(ip_address)
                         return jsonify({'error': 'Access denied'}), 403
             else:
                 for key, value in request.form.items():
@@ -462,7 +461,7 @@ def security_check(f):
                         security_manager.check_sql_injection(value) or
                         security_manager.check_command_injection(value)):
                         logger.error(f"SECURITY: Блокированы подозрительные POST данные: {key}={value}")
-                        # security_manager.ip_blocker.record_failed_attempt(ip_address)
+                        security_manager.ip_blocker.record_failed_attempt(ip_address)
                         return "Access denied", 403
         
         return f(*args, **kwargs)
@@ -511,11 +510,11 @@ def login_rate_limit(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
-        # Временно отключаем лимит попыток входа во время работ
-        # if not security_manager.login_rate_limiter.is_allowed(ip_address):
-        #     logger.warning(f"SECURITY: Login rate limit exceeded for IP: {ip_address}")
-        #     security_manager.ip_blocker.record_failed_attempt(ip_address)
-        #     return "Too many login attempts. Please try again later.", 429
+        # Включаем лимит попыток входа
+        if not security_manager.login_rate_limiter.is_allowed(ip_address):
+            logger.warning(f"SECURITY: Login rate limit exceeded for IP: {ip_address}")
+            security_manager.ip_blocker.record_failed_attempt(ip_address)
+            return "Too many login attempts. Please try again later.", 429
         
         return f(*args, **kwargs)
     return decorated_function
@@ -526,10 +525,10 @@ def password_reset_rate_limit(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
-        # Временно отключаем лимит попыток восстановления пароля
-        # if not security_manager.password_reset_rate_limiter.is_allowed(ip_address):
-        #     logger.warning(f"SECURITY: Password reset rate limit exceeded for IP: {ip_address}")
-        #     return "Too many password reset attempts. Please try again later.", 429
+        # Включаем лимит попыток восстановления пароля
+        if not security_manager.password_reset_rate_limiter.is_allowed(ip_address):
+            logger.warning(f"SECURITY: Password reset rate limit exceeded for IP: {ip_address}")
+            return "Too many password reset attempts. Please try again later.", 429
         
         return f(*args, **kwargs)
     return decorated_function
