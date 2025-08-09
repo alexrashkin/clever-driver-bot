@@ -58,7 +58,7 @@ async def monitor_database(application: Application):
             cursor = conn.cursor()
             cursor.execute(
                 """
-                SELECT ul.id, ul.telegram_id, ul.is_at_work, ul.created_at
+                SELECT ul.id, ul.user_id, ul.telegram_id, ul.is_at_work, ul.created_at
                 FROM user_locations ul
                 JOIN users u ON ul.user_id = u.id
                 WHERE u.role IN ('driver', 'admin') AND ul.telegram_id IS NOT NULL
@@ -75,17 +75,17 @@ async def monitor_database(application: Application):
             from collections import defaultdict
             by_user = defaultdict(list)
             for row in rows:
-                rec_id, tg_id, is_at_work, created_at = row
-                by_user[tg_id].append((rec_id, is_at_work, created_at))
+                rec_id, user_id, tg_id, is_at_work, created_at = row
+                by_user[tg_id].append((rec_id, user_id, is_at_work, created_at))
 
             # Обрабатываем каждого пользователя с минимум двумя точками
             for tg_id, entries in by_user.items():
                 if len(entries) < 2:
                     continue
                 # Последние по времени уже в порядке DESC по id
-                (curr_id, curr_is_at_work, curr_time) = entries[0]
-                (prev_id, prev_is_at_work, prev_time) = entries[1]
-                prev2_is_at_work = entries[2][1] if len(entries) >= 3 else None
+                (curr_id, inviter_user_id, curr_is_at_work, curr_time) = entries[0]
+                (prev_id, _prev_user_id, prev_is_at_work, prev_time) = entries[1]
+                prev2_is_at_work = entries[2][2] if len(entries) >= 3 else None
 
                 try:
                     curr_ts = t.mktime(t.strptime(curr_time, "%Y-%m-%d %H:%M:%S"))
@@ -133,10 +133,18 @@ async def monitor_database(application: Application):
                             if tracking_active:
                                 conn = sqlite3.connect('driver.db')
                                 cursor = conn.cursor()
-                                cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient' AND telegram_id IS NOT NULL")
+                                cursor.execute(
+                                    """
+                                    SELECT u.telegram_id
+                                    FROM invitations i
+                                    JOIN users u ON u.telegram_id = i.recipient_telegram_id
+                                    WHERE i.inviter_id = ? AND i.status = 'accepted' AND u.telegram_id IS NOT NULL
+                                    """,
+                                    (inviter_user_id,)
+                                )
                                 recipients = [r[0] for r in cursor.fetchall()]
                                 conn.close()
-                                logger.info(f"👥 Получателей: {len(recipients)}")
+                                logger.info(f"👥 Получателей (по приглашениям {inviter_user_id}): {len(recipients)}")
                                 if recipients:
                                     system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
                                     result = await notification_system.send_notification_with_confirmation(
@@ -180,10 +188,18 @@ async def monitor_database(application: Application):
 
                             conn = sqlite3.connect('driver.db')
                             cursor = conn.cursor()
-                            cursor.execute("SELECT telegram_id FROM users WHERE role = 'recipient' AND telegram_id IS NOT NULL")
+                            cursor.execute(
+                                """
+                                SELECT u.telegram_id
+                                FROM invitations i
+                                JOIN users u ON u.telegram_id = i.recipient_telegram_id
+                                WHERE i.inviter_id = ? AND i.status = 'accepted' AND u.telegram_id IS NOT NULL
+                                """,
+                                (inviter_user_id,)
+                            )
                             users = [u[0] for u in cursor.fetchall()]
                             conn.close()
-                            logger.info(f"👥 Получателей для уведомления о выезде: {len(users)}")
+                            logger.info(f"👥 Получателей для уведомления о выезде (по приглашениям {inviter_user_id}): {len(users)}")
                             if users:
                                 system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
                                 result = await notification_system.send_notification_with_confirmation(
