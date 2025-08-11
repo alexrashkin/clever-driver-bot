@@ -389,7 +389,7 @@ footer {
         
       </div>
     </section>
-    <div id="next" class="container">
+    <div id="next" class="container" style="background: transparent; box-shadow:none;">
         {% if is_authorized and user_name %}
         <div class="user-info">
             👤 Пользователь: <b>{{ user_name }}</b>
@@ -617,11 +617,11 @@ footer {
             <div class="msg">{{ message }}</div>
         {% endif %}
         
-        <div class="info-block" style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6;">
-            <div class="info-block-title" style="color: #1d4ed8;">
+        <div class="info-block">
+            <div class="info-block-title">
                 🚀 Добро пожаловать в «Умный водитель»!
             </div>
-            <div class="info-block-text" style="color: #374151;">
+            <div class="info-block-text">
                 Выберите, как вы хотите использовать сервис:
             </div>
         </div>
@@ -650,7 +650,7 @@ footer {
         </div>
         {% endif %}
     </div>
-    <footer style="text-align:center; margin-top:32px; color:#888; font-size:14px;">
+    <footer style="text-align:center; margin-top:32px; color:#94a3b8; font-size:14px;">
         © {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин
     </footer>
     <script>

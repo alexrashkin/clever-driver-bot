@@ -119,7 +119,21 @@
 
 /* Light section after dark hero */
 body.landing {
-  background: linear-gradient(180deg, #0b1220 0%, #0b1220 50%, #f1f5f9 50%, #f8fafc 100%);
+  /* Новый единый тёмный фон для всей страницы */
+  background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%);
+  color: #e2e8f0 !important;
 }
+
+/* Карточки-инфоблоки на тёмном фоне */
+body.landing .info-block {
+  background: rgba(99, 102, 241, 0.08) !important;
+  border-left: 4px solid #6366f1 !important;
+  color: #cbd5e1 !important;
+}
+body.landing .info-block-title { color: #a5b4fc !important; }
+body.landing .info-block-text { color: #cbd5e1 !important; }
+
+/* Футер на тёмном фоне */
+body.landing footer { color: #94a3b8 !important; }
 
 
