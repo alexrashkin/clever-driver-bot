@@ -1,0 +1,96 @@
+/* Modern UI theme inspired by clean landing pages: gradients, glassmorphism, soft shadows */
+
+/* Base */
+:root {
+  --bg-gradient-start: #eef2ff; /* indigo-50 */
+  --bg-gradient-end: #f8fafc;   /* slate-50 */
+  --text-color: #0f172a;        /* slate-900 */
+  --muted-color: #475569;       /* slate-600 */
+  --accent-start: #6366f1;      /* indigo-500 */
+  --accent-end: #8b5cf6;        /* violet-500 */
+  --success-start: #10b981;     /* emerald-500 */
+  --success-end: #059669;       /* emerald-600 */
+  --danger-start: #ef4444;      /* red-500 */
+  --danger-end: #dc2626;        /* red-600 */
+}
+
+body {
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  color: var(--text-color);
+}
+
+/* Glass containers */
+.container,
+.login-container,
+.register-container,
+.settings-container,
+.about-container {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12), 0 1.5px 6px rgba(99, 102, 241, 0.2);
+}
+
+/* Header blocks */
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+}
+.header h1 { font-weight: 700; letter-spacing: 0.2px; }
+.header p { opacity: 0.95; }
+
+/* Tables (light) */
+table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+th { background: #f8fafc; color: #0f172a; }
+td { color: #0f172a; }
+tr:hover { background: #f1f5f9; }
+
+/* Buttons */
+.btn { border: none; border-radius: 10px; padding: 10px 16px; font-weight: 600; }
+.btn-primary,
+.btn,
+.nav-btn,
+.btn.btn-toggle { 
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end)); 
+  color: #fff; 
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+.btn-primary:hover,
+.btn:hover,
+.nav-btn:hover,
+.btn.btn-toggle:hover { 
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35); 
+}
+.btn-success { background: linear-gradient(90deg, var(--success-start), var(--success-end)); color: #fff; }
+.btn-danger { background: linear-gradient(90deg, var(--danger-start), var(--danger-end)); color: #fff; }
+.btn-secondary { background: #64748b; color: #fff; }
+.btn-secondary:hover { background: #475569; }
+
+/* Badges */
+.status-badge { border-radius: 12px; font-weight: 600; }
+
+/* Links */
+a { text-decoration: none; }
+a:hover { text-decoration: none; }
+
+/* Utility */
+.gradient-text {
+  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .container, .login-container, .register-container, .settings-container { border-radius: 12px; }
+}
+
+
