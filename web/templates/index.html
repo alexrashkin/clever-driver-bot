@@ -373,11 +373,11 @@ footer {
 <body>
     <section class="hero">
       <div class="hero-inner">
-        <div class="hero-words hero-stack">
-          <span id="hero-be" class="hero-be-floating">Be</span>
-          <div class="hero-word hero-target" data-hero-target>Fast</div>
-          <div class="hero-word hero-target" data-hero-target>Smart</div>
-          <div class="hero-center hero-target" data-hero-target>Clever Driver</div>
+        <div class="hero-words hero-stack" style="display:inline-grid; grid-template-columns:auto 1fr; grid-row-gap:10px; align-items:center; column-gap:12px;">
+          <span id="hero-be" class="hero-be-floating" style="grid-column:1 / 2; grid-row:1;">Be</span>
+          <div class="hero-word hero-target" data-hero-target style="grid-column:2 / 3; grid-row:1;">Fast</div>
+          <div class="hero-word hero-target" data-hero-target style="grid-column:2 / 3; grid-row:2;">Smart</div>
+          <div class="hero-center hero-target" data-hero-target style="grid-column:2 / 3; grid-row:3;">Clever Driver</div>
         </div>
         <div class="hero-cta">
           <div class="hero-cta-row">
