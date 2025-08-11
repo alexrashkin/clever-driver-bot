@@ -369,22 +369,23 @@ footer {
 </style>
 </head>
 <body class="landing">
+    <header style="max-width: 980px; margin: 12px auto 0 auto; padding: 0 16px;">
+      {% if not is_authorized %}
+      <div class="info-block" style="margin-bottom: 12px;">
+        <div class="info-block-title">🚀 Добро пожаловать в «Умный водитель»!</div>
+        <div class="info-block-text">Выберите, как вы хотите использовать сервис.</div>
+      </div>
+      <div class="hero-top-links" style="margin-bottom: 14px;">
+        <a href="/about">ℹ️ О сервисе</a>
+        <a href="/login">🔑 Вход</a>
+        <a href="/register">✍️ Регистрация</a>
+        <a href="/telegram_login">📱 Telegram</a>
+      </div>
+      {% endif %}
+    </header>
     <section class="hero">
       <div class="hero-inner">
         {% if not is_authorized %}
-        <!-- Приветствие наверху -->
-        <div style="max-width: 720px; margin: 12px auto 0 auto; padding: 0 16px;">
-          <div class="info-block" style="margin-bottom: 12px;">
-            <div class="info-block-title">🚀 Добро пожаловать в «Умный водитель»!</div>
-            <div class="info-block-text">Выберите, как вы хотите использовать сервис.</div>
-          </div>
-          <div class="hero-top-links" style="margin-bottom: 14px;">
-            <a href="/about">ℹ️ О сервисе</a>
-            <a href="/login">🔑 Вход</a>
-            <a href="/register">✍️ Регистрация</a>
-            <a href="/telegram_login">📱 Telegram</a>
-          </div>
-        </div>
         <!-- Затем слова Fast/Smart/Clever Driver с анимацией Be -->
         <div class="hero-words hero-stack" style="display:inline-grid; grid-template-columns:auto 1fr; grid-row-gap:10px; align-items:center; column-gap:12px;">
           <span id="hero-be" class="hero-be-floating" style="grid-column:1 / 2; grid-row:1;">Be</span>
@@ -484,10 +485,11 @@ footer {
         {% endif %}
         {% endif %}
 
-        <div class="hero-legal">© {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин</div>
-        
       </div>
     </section>
+    <footer style="text-align:center; margin: 24px 0 12px; color:#94a3b8; font-size:14px;">
+      © {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин
+    </footer>
     <!-- Скрипт обновления времени и статуса -->
     <script>
         function updateCurrentTimeTop() {
