@@ -263,3 +263,69 @@ body.dark .theme-btn:hover {
         color: #f1f5ff !important;
     }
 } 
+
+/* ------------------------ */
+/* Notification Logs page   */
+/* ------------------------ */
+
+/* Шапка страницы */
+body.dark .header {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+    color: #f7fafc !important;
+}
+
+/* Карточки статистики */
+body.dark .stat-card {
+    background: #2a2f3a !important;
+    color: #f1f5ff !important;
+    border-left-color: #6366f1 !important;
+}
+body.dark .stat-number {
+    color: #a5b4fc !important;
+}
+body.dark .stat-label {
+    color: #94a3b8 !important;
+}
+
+/* Таблица уведомлений */
+body.dark .notifications-table {
+    background: #23232b !important;
+    color: #e5e7eb !important;
+    box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25), 0 1.5px 6px #6366f133 !important;
+}
+body.dark .notifications-table th {
+    background: #1f2937 !important;
+    color: #f1f5ff !important;
+    border-bottom: 1px solid #374151 !important;
+}
+body.dark .notifications-table td {
+    border-bottom: 1px solid #374151 !important;
+    color: #e5e7eb !important;
+}
+body.dark .notifications-table tr:hover {
+    background: #2f3642 !important;
+}
+
+/* Бейджи статусов */
+body.dark .status-success {
+    background-color: rgba(16, 185, 129, 0.15) !important; /* emerald-500 */
+    color: #34d399 !important;
+}
+body.dark .status-error {
+    background-color: rgba(239, 68, 68, 0.15) !important; /* red-500 */
+    color: #f87171 !important;
+}
+body.dark .status-pending {
+    background-color: rgba(245, 158, 11, 0.15) !important; /* amber-500 */
+    color: #fbbf24 !important;
+}
+
+/* Кнопки */
+body.dark .btn,
+body.dark .btn-secondary {
+    background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%) !important;
+    color: #ffffff !important;
+}
+body.dark .btn-secondary:hover {
+    background: #4f46e5 !important;
+}
