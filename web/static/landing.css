@@ -1,0 +1,91 @@
+/* Landing hero inspired by modern dark, neon/glow style */
+
+:root {
+  --hero-bg-start: #020617; /* slate-950 */
+  --hero-bg-end: #001018;   /* deep cyan-black */
+  --hero-cyan: #06b6d4;     /* cyan-500 */
+  --hero-cyan-600: #0891b2; /* cyan-600 */
+  --hero-text: #e2e8f0;     /* slate-200 */
+}
+
+.hero {
+  position: relative;
+  min-height: 86vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(60% 60% at 50% 40%, rgba(6, 182, 212, 0.15) 0%, rgba(2, 6, 23, 0.4) 35%, rgba(2, 6, 23, 0.95) 100%),
+              linear-gradient(180deg, var(--hero-bg-start), var(--hero-bg-end));
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.12), transparent 45%);
+  filter: blur(60px);
+  z-index: 0;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: var(--hero-text);
+  padding: 0 16px;
+}
+
+.hero-words {
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+}
+
+.hero-word {
+  font-size: clamp(28px, 5vw, 72px);
+  opacity: 0.28;
+}
+
+.hero-center {
+  font-size: clamp(44px, 9vw, 96px);
+  opacity: 1;
+  color: #fff;
+  text-shadow: 0 2px 20px rgba(6, 182, 212, 0.35), 0 0 60px rgba(6, 182, 212, 0.18);
+}
+
+.hero-be {
+  font-size: clamp(28px, 5vw, 56px);
+  color: #cbd5e1;
+  font-weight: 800;
+}
+
+.hero-cta {
+  margin-top: 28px;
+}
+
+.hero-btn {
+  display: inline-block;
+  padding: 14px 22px;
+  border-radius: 999px;
+  color: #001018;
+  background: linear-gradient(90deg, var(--hero-cyan), var(--hero-cyan-600));
+  font-weight: 700;
+  box-shadow: 0 10px 35px rgba(6, 182, 212, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.25s ease;
+}
+
+.hero-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(6, 182, 212, 0.45); color: #001018; }
+
+.hero-scroll {
+  margin-top: 36px;
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #9ca3af;
+  background: rgba(2, 6, 23, 0.4);
+}
+
+.hero-subtle { color: #94a3b8; font-size: 14px; margin-top: 8px; }
+
+

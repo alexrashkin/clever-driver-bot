@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <link rel="stylesheet" href="/static/button-styles.css">
+    <link rel="stylesheet" href="/static/landing.css">
     <link rel="stylesheet" href="/static/modern.css">
+    <link rel="stylesheet" href="/static/button-styles.css">
     <link rel="stylesheet" href="/static/dark-theme.css">
     <style>
 body {
@@ -370,33 +371,30 @@ footer {
 </style>
 </head>
 <body>
-    <div class="top-nav">
-        <a href="/about" class="top-link nav-btn">О сервисе</a>
-        {% if is_authorized %}
-            {% if is_recipient_only %}
-            <!-- Получатель уведомлений - без нерабочей кнопки роли -->
-            {% elif is_admin %}
-            <!-- Администратор - показываем полные настройки -->
-            <a href="/settings" class="top-link nav-btn">Настройки</a>
-            <a href="/admin/users" class="top-link nav-btn">Пользователи</a>
-            {% elif is_driver %}
-            <!-- Водитель - стандартные настройки -->
-            <a href="/settings" class="top-link nav-btn">Настройки</a>
-            {% endif %}
-            <!-- Кнопка выхода для всех авторизованных -->
-            <a href="/logout" class="top-link nav-btn">Выход</a>
-        {% else %}
-        <!-- Неавторизованный пользователь -->
-        <a href="/login" class="top-link nav-btn">Вход</a>
-        <a href="/register" class="top-link nav-btn">Регистрация</a>
-        <a href="/telegram_login" class="top-link nav-btn">Telegram</a>
-        {% endif %}
-        <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
-    </div>
-    <div class="container">
-        <div class="logo-wrap">
-            <img id="logo-img" src="/static/logo_light.png" alt="Умный водитель" class="logo-img">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-words">
+          <div class="hero-word">Fast</div>
+          <div class="hero-word">Smart</div>
+          <div class="hero-be">Be</div>
+          <div class="hero-center">Clever Driver</div>
+          <div class="hero-word">Arrivals</div>
+          <div class="hero-word">Departures</div>
         </div>
+        <div class="hero-cta">
+          {% if is_authorized %}
+            <a href="/tracker" class="hero-btn">Open Tracker</a>
+          {% else %}
+            <a href="/register" class="hero-btn">Get Started</a>
+            <div class="hero-subtle">или&nbsp;<a href="/login" style="color:#67e8f9">войти</a></div>
+          {% endif %}
+        </div>
+        <div>
+          <a href="#next" class="hero-scroll"><span>⬇</span></a>
+        </div>
+      </div>
+    </section>
+    <div id="next" class="container">
         {% if is_authorized and user_name %}
         <div class="user-info">
             👤 Пользователь: <b>{{ user_name }}</b>
