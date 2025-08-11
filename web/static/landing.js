@@ -21,6 +21,10 @@
     const x = rect.left - parentRect.left - (beRect.width + gap);
     const y = rect.top - parentRect.top + Math.max(0, (rect.height - beRect.height) / 2);
     floating.style.transform = `translate(${x}px, ${y}px)`;
+
+    // Toggle active class for highlight
+    targets.forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
   }
 
   // initial position
