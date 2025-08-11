@@ -13,9 +13,10 @@
     const parent = el.offsetParent || document.body;
     const parentRect = parent.getBoundingClientRect();
 
-    // Adaptive horizontal gap: tighter on small screens
+    // Adaptive horizontal gap: больше зазор у центральной строки
     const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-    const gap = vw < 480 ? 8 : 12;
+    const baseGap = vw < 480 ? 12 : 22;
+    const gap = el.classList.contains('hero-center') ? baseGap + 10 : baseGap;
 
     const x = rect.left - parentRect.left - (beRect.width + gap);
     const y = rect.top - parentRect.top + Math.max(0, (rect.height - beRect.height) / 2);
