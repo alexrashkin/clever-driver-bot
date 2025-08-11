@@ -371,12 +371,18 @@ footer {
 <body class="landing">
     <section class="hero">
       <div class="hero-inner">
+        {% if not is_authorized %}
         <div class="hero-words hero-stack" style="display:inline-grid; grid-template-columns:auto 1fr; grid-row-gap:10px; align-items:center; column-gap:12px;">
           <span id="hero-be" class="hero-be-floating" style="grid-column:1 / 2; grid-row:1;">Be</span>
           <div class="hero-word hero-target" data-hero-target style="grid-column:2 / 3; grid-row:1;">Fast</div>
           <div class="hero-word hero-target" data-hero-target style="grid-column:2 / 3; grid-row:2;">Smart</div>
           <div class="hero-center hero-target" data-hero-target style="grid-column:2 / 3; grid-row:3;">Clever Driver</div>
         </div>
+        {% endif %}
+        <div class="hero-top-links">
+          <a href="/about">О сервисе</a>
+        </div>
+
         <div class="status-panel">
             <div class="status-item">
                 <span>🕐</span>

@@ -87,6 +87,16 @@
 
 .hero-words.hero-stack { row-gap: 18px; }
 
+/* Top links (e.g., About) */
+.hero-top-links { margin-top: 12px; }
+.hero-top-links a {
+  color: #a5b4fc; text-decoration: none; font-weight: 600;
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: 0 4px 18px rgba(99,102,241,0.2);
+}
+.hero-top-links a:hover { color: #fff; background: rgba(99,102,241,0.22); }
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .hero-cta-row .hero-btn { width: 220px; }
