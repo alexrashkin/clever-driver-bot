@@ -378,13 +378,11 @@ footer {
             <div class="info-block-title">🚀 Добро пожаловать в «Умный водитель»!</div>
             <div class="info-block-text">Выберите, как вы хотите использовать сервис.</div>
           </div>
-          <div class="hero-cta" style="margin-bottom: 14px;">
-            <div class="hero-cta-row">
-              <a href="/about" class="hero-btn">ℹ️ О сервисе</a>
-              <a href="/login" class="hero-btn" style="background:linear-gradient(90deg,#4b5563,#6b7280); color:#e2e8f0;">🔑 Вход</a>
-              <a href="/register" class="hero-btn">✍️ Регистрация</a>
-              <a href="/telegram_login" class="hero-btn" style="background:linear-gradient(90deg,#0088cc,#229ED9); color:#001018;">📱 Telegram</a>
-            </div>
+          <div class="hero-top-links" style="margin-bottom: 14px;">
+            <a href="/about">ℹ️ О сервисе</a>
+            <a href="/login">🔑 Вход</a>
+            <a href="/register">✍️ Регистрация</a>
+            <a href="/telegram_login">📱 Telegram</a>
           </div>
         </div>
         <!-- Затем слова Fast/Smart/Clever Driver с анимацией Be -->
@@ -423,13 +421,6 @@ footer {
 
         {% if not is_authorized %}
         <div style="max-width: 720px; margin: 18px auto 0 auto; padding: 0 16px;">
-          <div class="hero-cta">
-            <div class="hero-cta-row">
-              <a href="/register" class="hero-btn">✍️ Зарегистрироваться</a>
-              <a href="/login" class="hero-btn" style="background:linear-gradient(90deg,#059669,#10b981);">🚗 Войти как водитель</a>
-              <a href="/telegram_login" class="hero-btn" style="background:linear-gradient(90deg,#6366f1,#8b5cf6);">📱 Войти как получатель</a>
-            </div>
-          </div>
           <div class="info-block">
             <div class="info-block-title">💡 Как это работает?</div>
             <div class="info-block-text">
