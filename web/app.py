@@ -1251,13 +1251,14 @@ def api_button(idx):
         greeting = get_greeting() + '!'
         name = buttons[idx]
         text = f"{greeting} {name}"
-        token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
+        # Используем TELEGRAM_TOKEN или TELEGRAM_BOT_TOKEN
+        token = os.environ.get('TELEGRAM_TOKEN') or os.environ.get('TELEGRAM_BOT_TOKEN') or 'default_token'
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         
         # Получаем всех пользователей с ролями и telegram_id
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL")
+        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL AND telegram_id != 999999999")
         users = cursor.fetchall()
         conn.close()
         
