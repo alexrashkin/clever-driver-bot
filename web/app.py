@@ -1125,6 +1125,12 @@ def api_user1():
         if user_role not in ['admin', 'driver']:
             return jsonify({'success': False, 'error': 'Недостаточно прав для отправки уведомлений'}), 403
         
+        # Ранний чек токена Telegram
+        token_env = os.environ.get('TELEGRAM_TOKEN') or os.environ.get('TELEGRAM_BOT_TOKEN')
+        if not token_env or token_env == 'default_token':
+            logger.error("API_BUTTON: отсутствует TELEGRAM_TOKEN/TELEGRAM_BOT_TOKEN в окружении")
+            return jsonify({'success': False, 'error': 'TELEGRAM_TOKEN не задан на сервере'}), 200
+
         buttons = user.get('buttons', [])
         greeting = get_greeting() + '!'
         # Используем первую кнопку или дефолтное значение
@@ -1132,7 +1138,7 @@ def api_user1():
         text = f"{greeting} {name}"
         
         # Отправляем уведомления всем пользователям с ролями
-        token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
+        token = token_env
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         
         conn = db.get_connection()
@@ -1275,7 +1281,7 @@ def api_button(idx):
             else:
                 logger.warning(f"API_BUTTON: не удалось отправить уведомления")
                 # Возвращаем 200, чтобы фронт корректно показал сообщение без 500 в консоли
-                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 200
+                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления. Проверьте TELEGRAM_TOKEN и что получатели не заблокировали бота.'}), 200
     except Exception as e:
         logger.error(f"Ошибка api_button: {e}")
         # Возвращаем 200 с описанием ошибки, чтобы не засорять консоль 500-ками
