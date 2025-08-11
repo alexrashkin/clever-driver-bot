@@ -120,7 +120,7 @@
 /* Light section after dark hero */
 body.landing {
   /* Новый единый тёмный фон для всей страницы */
-  background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%);
+  background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
   color: #e2e8f0 !important;
 }
 

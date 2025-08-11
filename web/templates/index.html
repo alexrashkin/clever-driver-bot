@@ -418,7 +418,7 @@ footer {
         
       </div>
     </section>
-    <div id="next" class="container" style="background: transparent; box-shadow:none;">
+    <div id="next" class="container" style="background: transparent; box-shadow:none; min-height: 0; margin-top: 0; padding-top: 0;">
         {% if is_authorized and user_name %}
         <div class="user-info">
             👤 Пользователь: <b>{{ user_name }}</b>
@@ -634,9 +634,7 @@ footer {
         {% else %}
         {% endif %}
     </div>
-    <footer style="text-align:center; margin-top:32px; color:#94a3b8; font-size:14px;">
-        © {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин
-    </footer>
+    <!-- футер перенесен в hero-legal сверху; нижний футер не нужен -->
     <script>
         window.IS_AUTHORIZED = "{{ is_authorized }}";
     </script>
