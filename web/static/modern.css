@@ -15,8 +15,8 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-  color: var(--text-color);
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)) !important;
+  color: var(--text-color) !important;
 }
 
 /* Glass containers */
@@ -25,7 +25,7 @@ body {
 .register-container,
 .settings-container,
 .about-container {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.75) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 18px;
