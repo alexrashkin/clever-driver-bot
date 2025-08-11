@@ -393,18 +393,7 @@ footer {
           <div class="hero-center hero-target" data-hero-target style="grid-column:2 / 3; grid-row:3;">Clever Driver</div>
         </div>
         {% endif %}
-        <div class="hero-top-links" style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-          <a href="/about">О сервисе</a>
-          {% if is_authorized %}
-            <a href="/settings">Настройки</a>
-            {% if is_admin %}<a href="/admin/users">Пользователи</a>{% endif %}
-            <a href="/logout">Выход</a>
-          {% else %}
-            <a href="/login">Вход</a>
-            <a href="/register">Регистрация</a>
-            <a href="/telegram_login">Telegram</a>
-          {% endif %}
-        </div>
+        
 
         {% if is_authorized %}
         <div class="status-panel">
