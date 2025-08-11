@@ -387,6 +387,17 @@ footer {
           </div>
         </div>
 
+        <div class="status-panel">
+            <div class="status-item">
+                <span>🕐</span>
+                <span id="currentTimeTop">--:--:--</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="driverStatusIndicatorTop"></div>
+                <span id="driverStatusTextTop">Загрузка...</span>
+            </div>
+        </div>
+
         {% if not is_authorized %}
         <div style="max-width: 720px; margin: 28px auto 0 auto; padding: 0 16px;">
           <div class="info-block" style="margin-bottom: 16px;">
@@ -402,6 +413,8 @@ footer {
           </div>
         </div>
         {% endif %}
+
+        <div class="hero-legal">© {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин</div>
         
       </div>
     </section>
@@ -413,28 +426,19 @@ footer {
         {% endif %}
         
         <!-- Панель статуса и времени -->
-        <div class="status-panel">
-            <div class="status-item">
-                <span>🕐</span>
-                <span id="currentTime">--:--:--</span>
-            </div>
-            <div class="status-item">
-                <div class="status-indicator" id="driverStatusIndicator"></div>
-                <span id="driverStatusText">Загрузка...</span>
-            </div>
-        </div>
+        
         
         <!-- Скрипт обновления времени и статуса -->
         <script>
-        // Функция обновления времени
-        function updateCurrentTime() {
+        // Функция обновления времени (верхний hero)
+        function updateCurrentTimeTop() {
             try {
                 const now = new Date();
                 const timeString = now.toLocaleTimeString('ru-RU', { 
                     timeZone: 'Europe/Moscow',
                     hour12: false 
                 });
-                const timeElement = document.getElementById('currentTime');
+                const timeElement = document.getElementById('currentTimeTop');
                 if (timeElement) {
                     timeElement.textContent = timeString;
                 }
@@ -443,14 +447,14 @@ footer {
             }
         }
         
-        // Функция обновления статуса
-        function updateDriverStatus() {
+        // Функция обновления статуса (верхний hero)
+        function updateDriverStatusTop() {
             try {
                 fetch('/api/current_location')
                     .then(response => response.json())
                     .then(data => {
-                        const statusIndicator = document.getElementById('driverStatusIndicator');
-                        const statusText = document.getElementById('driverStatusText');
+                        const statusIndicator = document.getElementById('driverStatusIndicatorTop');
+                        const statusText = document.getElementById('driverStatusTextTop');
                         
                         if (statusIndicator && statusText) {
                             if (data.success && data.location) {
@@ -468,8 +472,8 @@ footer {
                         }
                     })
                     .catch(error => {
-                        const statusIndicator = document.getElementById('driverStatusIndicator');
-                        const statusText = document.getElementById('driverStatusText');
+                        const statusIndicator = document.getElementById('driverStatusIndicatorTop');
+                        const statusText = document.getElementById('driverStatusTextTop');
                         if (statusIndicator && statusText) {
                             statusIndicator.className = 'status-indicator';
                             statusText.textContent = 'Ошибка подключения';
@@ -483,12 +487,12 @@ footer {
         
         // Запускаем обновления
         setTimeout(function() {
-            updateCurrentTime();
-            updateDriverStatus();
+            updateCurrentTimeTop();
+            updateDriverStatusTop();
             
             // Периодические обновления
-            setInterval(updateCurrentTime, 1000);
-            setInterval(updateDriverStatus, 10000);
+            setInterval(updateCurrentTimeTop, 1000);
+            setInterval(updateDriverStatusTop, 10000);
         }, 100);
         </script>
         

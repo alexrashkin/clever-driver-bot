@@ -136,4 +136,19 @@ body.landing .info-block-text { color: #cbd5e1 !important; }
 /* Футер на тёмном фоне */
 body.landing footer { color: #94a3b8 !important; }
 
+/* Статус и время в hero (тёмный фон) */
+body.landing .status-panel { 
+  display: flex; gap: 15px; align-items: center; justify-content: center; 
+  flex-wrap: wrap; margin: 18px auto; 
+}
+body.landing .status-item {
+  display: flex; align-items: center; gap: 8px; 
+  padding: 8px 12px; 
+  background: rgba(148, 163, 184, 0.12) !important; 
+  border-radius: 10px; 
+  color: #e2e8f0 !important; 
+  box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+}
+.hero-legal { color: #94a3b8; font-size: 14px; margin-top: 24px; }
+
 
