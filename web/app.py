@@ -1078,6 +1078,26 @@ def api_notify():
         user_role = get_current_user_role()
         if user_role == 'recipient':
             return jsonify({'success': False, 'error': 'Получатели уведомлений не могут отправлять ручные уведомления'}), 403
+
+        # Диагностика окружения: проверяем наличие Telegram токена заранее
+        token = os.environ.get('TELEGRAM_TOKEN') or os.environ.get('TELEGRAM_BOT_TOKEN')
+        if not token or token == 'default_token':
+            logger.error("API_NOTIFY: отсутствует TELEGRAM_TOKEN/TELEGRAM_BOT_TOKEN в окружении")
+            return jsonify({'success': False, 'error': 'TELEGRAM_TOKEN не задан на сервере'}), 200
+
+        # Проверяем наличие получателей, чтобы возвращать понятное сообщение
+        try:
+            conn = db.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL")
+            recipients_count = cursor.fetchone()[0]
+            conn.close()
+        except Exception as e:
+            logger.error(f"API_NOTIFY: ошибка проверки получателей: {e}")
+            recipients_count = 0
+        
+        if recipients_count == 0:
+            return jsonify({'success': True, 'message': 'Уведомление отправлено (нет получателей)'}), 200
         
         # Используем telegram_id если есть, иначе логин
         user_id = user.get('telegram_id') or user.get('login')
