@@ -77,6 +77,22 @@
 .hero-cta-row { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:28px; }
 .hero-cta-row .hero-btn { width: 260px; text-align:center; }
 
+.hero-words.hero-stack { row-gap: 16px; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-cta-row .hero-btn { width: 220px; }
+}
+
+@media (max-width: 640px) {
+  .hero-cta-row { gap: 10px; }
+  .hero-cta-row .hero-btn { width: 100%; max-width: 420px; }
+}
+
+@media (max-width: 420px) {
+  .hero-center { font-size: clamp(32px, 7vw, 56px); }
+}
+
 .hero-btn {
   display: inline-block;
   padding: 14px 22px;

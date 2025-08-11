@@ -13,8 +13,12 @@
     const parent = el.offsetParent || document.body;
     const parentRect = parent.getBoundingClientRect();
 
-    const x = rect.left - parentRect.left - (beRect.width + 12); // place "Be" 12px left of target text
-    const y = rect.top - parentRect.top + (rect.height - beRect.height) / 2; // vertical centering
+    // Adaptive horizontal gap: tighter on small screens
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const gap = vw < 480 ? 8 : 12;
+
+    const x = rect.left - parentRect.left - (beRect.width + gap);
+    const y = rect.top - parentRect.top + Math.max(0, (rect.height - beRect.height) / 2);
     floating.style.transform = `translate(${x}px, ${y}px)`;
   }
 
