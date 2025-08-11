@@ -116,14 +116,14 @@ body.landing header .hero-top-links { margin-bottom: 8px !important; }
     right: 0;
     bottom: 0;
     width: 100%;
-    padding: 10px 8px;
-    background: transparent; /* убираем серую/тёмную подложку */
+    padding: calc(10px + env(safe-area-inset-bottom, 0px)) 8px 10px;
+    background: #0b1220 !important; /* единый тёмный фон */
     backdrop-filter: none;
     border-top: 0;
     z-index: 10;
   }
   /* Отступ снизу, чтобы контент не перекрывался фиксированным футером */
-  .hero { padding-bottom: 70px; }
+  .hero { padding-bottom: 78px; }
 }
 
 /* Responsive adjustments */
