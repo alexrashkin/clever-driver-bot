@@ -296,6 +296,69 @@ async def monitor_database(application: Application):
                     else:
                         logger.info("Выезд: слишком рано после последней проверки (<10s)")
 
+                # Дополнительное подтверждение выезда при быстром переходе:
+                # Если последние две точки уже 0, а третья с конца была 1, значит переход 1→0 произошёл слишком быстро
+                # и мог быть пропущен. В таком случае отправляем «Выехали» сейчас (однократно).
+                if (
+                    prev_is_at_work == 0 and curr_is_at_work == 0 and
+                    prev2_is_at_work == 1 and
+                    curr_id != last_checked_id and
+                    last_notification_type != 'departure'
+                ):
+                    logger.info(f"DEBUG[{tg_id}]: обнаружен шаблон 1→0 (быстрый), подтверждаем выезд по последним двум точкам 0→0")
+                    if curr_ts - last_checked_time >= 10:
+                        if can_send_notification('departure', max_interval_minutes=30):
+                            # Проверяем статус отслеживания
+                            conn = sqlite3.connect('driver.db')
+                            cursor = conn.cursor()
+                            cursor.execute('SELECT is_active FROM tracking_status WHERE id = 1')
+                            result = cursor.fetchone()
+                            tracking_active = result[0] if result else False
+                            conn.close()
+                            logger.info(f"📡 Отслеживание активно: {tracking_active}")
+                            if tracking_active:
+                                conn = sqlite3.connect('driver.db')
+                                cursor = conn.cursor()
+                                cursor.execute(
+                                    """
+                                    SELECT u.telegram_id
+                                    FROM invitations i
+                                    JOIN users u ON u.telegram_id = i.recipient_telegram_id
+                                    WHERE i.inviter_id = ? AND i.status = 'accepted' AND u.telegram_id IS NOT NULL
+                                    """,
+                                    (inviter_user_id,)
+                                )
+                                users = [u[0] for u in cursor.fetchall()]
+                                conn.close()
+                                logger.info(f"👥 Получателей для уведомления о выезде (быстрый переход, {inviter_user_id}): {len(users)}")
+                                if users:
+                                    system_info = {'id': None, 'telegram_id': None, 'login': 'system', 'role': 'system'}
+                                    result = await notification_system.send_notification_with_confirmation(
+                                        notification_type='automatic',
+                                        sender_info=system_info,
+                                        recipients=users,
+                                        notification_text="Выехали",
+                                        custom_confirmation=True
+                                    )
+                                    if result['success']:
+                                        per_user_last_checked_id[tg_id] = curr_id
+                                        per_user_last_checked_time[tg_id] = curr_ts
+                                        per_user_last_notification_type[tg_id] = 'departure'
+                                        save_last_departure_time(curr_ts)
+                                        logger.info(
+                                            f"📊 АВТО[{tg_id}]: выезд (быстрый переход) — отправлено {result['sent_count']} из {result['total_recipients']}"
+                                        )
+                                    else:
+                                        logger.warning(f"❌ Выезд[{tg_id}] (быстрый переход): отправка не удалась")
+                                else:
+                                    logger.warning("❌ Выезд (быстрый переход): нет пользователей")
+                            else:
+                                logger.info("Выезд (быстрый переход): отслеживание выключено, уведомление не отправлено")
+                        else:
+                            logger.info("⏰ Выезд (быстрый переход): заблокировано временными ограничениями")
+                    else:
+                        logger.info("Выезд (быстрый переход): слишком рано после последней проверки (<10s)")
+
             await asyncio.sleep(2)
         except Exception as e:
             logger.error(f"Ошибка мониторинга базы данных: {e}")

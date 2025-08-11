@@ -3,8 +3,15 @@ import secrets
 
 # Функция для логирования в файл
 def log_to_file(message):
-    with open('/tmp/config_debug.log', 'a', encoding='utf-8') as f:
-        f.write(f"{message}\n")
+    # Разрешаем переопределять путь через переменную окружения
+    log_path = os.environ.get('CONFIG_DEBUG_LOG', '/tmp/config_debug.log')
+    try:
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(f"{message}\n")
+    except Exception:
+        # Фолбэк на консоль при невозможности записать файл
+        pass
     print(message)
 
 # Загружаем переменные окружения из .env файла
