@@ -382,15 +382,13 @@ footer {
         <a href="/telegram_login">📱 Telegram</a>
       </div>
       {% else %}
-      <div class="top-nav">
-        <a href="/" class="nav-btn">🏠 Главная</a>
-        <a href="/tracker" class="nav-btn">🗺️ Трекер</a>
-        {% if not is_recipient_only %}
-        <a href="/settings" class="nav-btn">⚙️ Настройки</a>
-        {% endif %}
-        <a href="/about" class="nav-btn">ℹ️ О сервисе</a>
-        <a href="/logout" class="nav-btn" style="background: linear-gradient(90deg,#ef4444 0%, #f97316 100%);">↩️ Выход</a>
-        <button id="theme-toggle" class="nav-btn theme-btn" title="Переключить тему">🌙</button>
+      <div class="hero-top-links" style="margin-bottom: 14px;">
+        <a href="/">🏠 Главная</a>
+        <a href="/tracker">🗺️ Трекер</a>
+        {% if not is_recipient_only %}<a href="/settings">⚙️ Настройки</a>{% endif %}
+        {% if is_admin %}<a href="/admin/users">👤 Пользователи</a>{% endif %}
+        <a href="/about">ℹ️ О сервисе</a>
+        <a href="/logout">↩️ Выход</a>
       </div>
       {% endif %}
     </header>
