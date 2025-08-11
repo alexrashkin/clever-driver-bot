@@ -105,10 +105,25 @@ body.landing header .hero-top-links { margin-bottom: 8px !important; }
 .hero-words { margin-top: 6px; }
 
 @media (max-width: 640px) {
-  .hero { min-height: auto; padding-top: 12px; }
+  .hero { min-height: auto; padding-top: 30px; }
   body.landing header .info-block { margin-bottom: 6px !important; }
   body.landing header .hero-top-links { margin-bottom: 6px !important; }
   .hero-words { margin-top: 2px; }
+  /* Фиксируем футер снизу на мобильных и добавляем отступ, чтобы его не перекрывать */
+  body.landing footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    padding: 10px 8px;
+    background: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(148, 163, 184, 0.15);
+    z-index: 10;
+  }
+  /* Отступ снизу, чтобы контент не перекрывался фиксированным футером */
+  .hero { padding-bottom: 70px; }
 }
 
 /* Responsive adjustments */
