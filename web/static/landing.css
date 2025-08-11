@@ -48,7 +48,7 @@
 }
 
 .hero-center {
-  font-size: clamp(44px, 9vw, 96px);
+  font-size: clamp(40px, 8vw, 78px);
   opacity: 1;
   color: #fff;
   text-shadow: 0 2px 20px rgba(6, 182, 212, 0.35), 0 0 60px rgba(6, 182, 212, 0.18);
@@ -59,7 +59,7 @@
 .hero-be-floating {
   position: absolute;
   left: 0; top: 0;
-  transform: translate(0, 0);
+  transform: translate(0, 0) translateY(-6px);
   transition: transform 700ms cubic-bezier(.2,.8,.2,1), opacity 400ms ease;
   font-size: clamp(28px, 5vw, 56px);
   color: #e2e8f0;
