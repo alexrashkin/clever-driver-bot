@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Местоположения получателей - Умный водитель</title>
+    <link rel="stylesheet" href="/static/dark-theme.css">
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <style>
         body {
@@ -227,6 +228,7 @@
     </style>
 </head>
 <body>
+    <button id="theme-toggle" class="nav-btn theme-btn" style="position: fixed; top: 20px; right: 20px; z-index: 1001; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">🌙</button>
     <div class="header">
         <h1>📍 Местоположения получателей</h1>
         <p>Просмотр местоположений всех получателей уведомлений</p>
@@ -384,5 +386,6 @@
 
     </script>
     {% endif %}
+    <script src="/static/theme-manager.js"></script>
 </body>
 </html> 
