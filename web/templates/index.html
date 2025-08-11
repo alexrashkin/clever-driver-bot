@@ -380,12 +380,11 @@ footer {
           <div class="hero-center hero-target" data-hero-target>Clever Driver</div>
         </div>
         <div class="hero-cta">
-          {% if is_authorized %}
-            <a href="/tracker" class="hero-btn">Open Tracker</a>
-          {% else %}
-            <a href="/register" class="hero-btn">Get Started</a>
-            <div class="hero-subtle">или&nbsp;<a href="/login" style="color:#67e8f9">войти</a></div>
-          {% endif %}
+          <div class="hero-cta-row">
+            <a href="/register" class="hero-btn">✍️ Зарегистрироваться</a>
+            <a href="/login" class="hero-btn" style="background:linear-gradient(90deg,#059669,#10b981);">🚗 Войти как водитель</a>
+            <a href="/telegram_login" class="hero-btn" style="background:linear-gradient(90deg,#6366f1,#8b5cf6);">📱 Войти как получатель</a>
+          </div>
         </div>
         <div>
           <a href="#next" class="hero-scroll"><span>⬇</span></a>

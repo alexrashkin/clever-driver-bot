@@ -11,7 +11,7 @@
     const parent = el.offsetParent || document.body;
     const parentRect = parent.getBoundingClientRect();
     const x = rect.left - parentRect.left;
-    const y = rect.top - parentRect.top;
+    const y = rect.top - parentRect.top - 18; // lift a bit to avoid overlap
     floating.style.transform = `translate(${x}px, ${y}px)`;
   }
 
