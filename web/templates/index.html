@@ -374,9 +374,17 @@ footer {
         {% if not is_authorized %}
         <!-- Приветствие наверху -->
         <div style="max-width: 720px; margin: 12px auto 0 auto; padding: 0 16px;">
-          <div class="info-block" style="margin-bottom: 16px;">
+          <div class="info-block" style="margin-bottom: 12px;">
             <div class="info-block-title">🚀 Добро пожаловать в «Умный водитель»!</div>
             <div class="info-block-text">Выберите, как вы хотите использовать сервис.</div>
+          </div>
+          <div class="hero-cta" style="margin-bottom: 14px;">
+            <div class="hero-cta-row">
+              <a href="/about" class="hero-btn">ℹ️ О сервисе</a>
+              <a href="/login" class="hero-btn" style="background:linear-gradient(90deg,#4b5563,#6b7280); color:#e2e8f0;">🔑 Вход</a>
+              <a href="/register" class="hero-btn">✍️ Регистрация</a>
+              <a href="/telegram_login" class="hero-btn" style="background:linear-gradient(90deg,#0088cc,#229ED9); color:#001018;">📱 Telegram</a>
+            </div>
           </div>
         </div>
         <!-- Затем слова Fast/Smart/Clever Driver с анимацией Be -->
