@@ -8,9 +8,25 @@ function showMessage(text, type) {
     const msgDiv = document.createElement('div');
     msgDiv.className = 'msg' + (type === 'error' ? ' error' : '');
     msgDiv.textContent = text;
-    const container = document.querySelector('.container');
+
+    // Ищем контейнер для вставки сообщения с безопасными фолбэками
+    const container =
+        document.querySelector('.container') ||
+        document.querySelector('.hero-inner') ||
+        document.querySelector('section.hero') ||
+        document.body;
+
     const statusDiv = document.querySelector('.status');
-    container.insertBefore(msgDiv, statusDiv.nextSibling);
+    if (statusDiv && statusDiv.parentNode) {
+        statusDiv.parentNode.insertBefore(msgDiv, statusDiv.nextSibling);
+    } else if (container && container.firstChild) {
+        container.insertBefore(msgDiv, container.firstChild.nextSibling || null);
+    } else if (container) {
+        container.appendChild(msgDiv);
+    } else {
+        document.body.appendChild(msgDiv);
+    }
+
     setTimeout(() => {
         if (msgDiv.parentNode) {
             msgDiv.remove();
