@@ -373,13 +373,13 @@ footer {
 <body>
     <section class="hero">
       <div class="hero-inner">
-        <div class="hero-words">
-          <div class="hero-word">Fast</div>
-          <div class="hero-word">Smart</div>
-          <div class="hero-be">Be</div>
-          <div class="hero-center">Clever Driver</div>
-          <div class="hero-word">Arrivals</div>
-          <div class="hero-word">Departures</div>
+        <div class="hero-words hero-stack">
+          <span id="hero-be" class="hero-be-floating">Be</span>
+          <div class="hero-word hero-target" data-hero-target>Fast</div>
+          <div class="hero-word hero-target" data-hero-target>Smart</div>
+          <div class="hero-center hero-target" data-hero-target>Clever Driver</div>
+          <div class="hero-word hero-target" data-hero-target>Arrivals</div>
+          <div class="hero-word hero-target" data-hero-target>Departures</div>
         </div>
         <div class="hero-cta">
           {% if is_authorized %}
@@ -662,6 +662,7 @@ footer {
         window.IS_AUTHORIZED = "{{ is_authorized }}";
     </script>
     <script src="/static/main.js?v=2"></script>
+    <script src="/static/landing.js"></script>
     <script src="/static/theme-manager.js"></script>
 </body>
 </html> 
