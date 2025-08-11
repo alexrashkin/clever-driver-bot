@@ -410,7 +410,7 @@ footer {
         {% endif %}
 
         {% if not is_authorized %}
-        <div style="max-width: 720px; margin: 18px auto 0 auto; padding: 0 16px;">
+        <div style="max-width: 720px; margin: 18px auto 0 auto; padding: 0 16px; padding-top: 40px;">
           <div class="info-block">
             <div class="info-block-title">💡 Как это работает?</div>
             <div class="info-block-text">
@@ -422,7 +422,7 @@ footer {
         {% else %}
         <!-- Авторизованный пользователь: переносим основные блоки в hero -->
         {% if is_recipient_only %}
-        <div style="max-width: 720px; margin: 22px auto 0; padding: 0 16px;">
+        <div style="max-width: 720px; margin: 22px auto 0; padding: 0 16px; padding-top: 40px;">
           <div class="info-block">
             <div class="info-block-title">📱 Вы подключены как получатель уведомлений</div>
             <div class="info-block-text">Вы будете получать автоматические уведомления о прибытии и выезде водителя. Для отслеживания в реальном времени используйте трекер.</div>
@@ -472,7 +472,7 @@ footer {
           </div>
         </div>
         {% elif needs_telegram_binding %}
-        <div style="max-width: 720px; margin: 22px auto 0; padding: 0 16px;">
+        <div style="max-width: 720px; margin: 22px auto 0; padding: 0 16px; padding-top: 40px;">
           <div class="info-block" style="border-left-color:#ef4444;">
             <div class="info-block-title">⚠️ Требуется привязка Telegram</div>
             <div class="info-block-text">Для полного доступа необходимо привязать ваш Telegram аккаунт. Без этого доступны только просмотр статуса и трекер.</div>
@@ -487,7 +487,7 @@ footer {
 
       </div>
     </section>
-    <footer style="text-align:center; margin: 24px 0 12px; color:#94a3b8; font-size:14px;">
+    <footer style="text-align:center; margin: 24px 0 12px; color:#94a3b8;">
       © {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин
     </footer>
     <!-- Скрипт обновления времени и статуса -->
