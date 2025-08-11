@@ -483,36 +483,16 @@ footer {
         
       </div>
     </section>
-    <div id="next" class="container" style="background: transparent; box-shadow:none; min-height: 0; margin-top: 0; padding-top: 0;">
-        {% if is_authorized and user_name %}
-        <div class="user-info">
-            👤 Пользователь: <b>{{ user_name }}</b>
-        </div>
-        {% endif %}
-        
-        <!-- Панель статуса и времени -->
-        
-        
-        <!-- Скрипт обновления времени и статуса -->
-        <script>
-        // Функция обновления времени (верхний hero)
+    <!-- Скрипт обновления времени и статуса -->
+    <script>
         function updateCurrentTimeTop() {
             try {
                 const now = new Date();
-                const timeString = now.toLocaleTimeString('ru-RU', { 
-                    timeZone: 'Europe/Moscow',
-                    hour12: false 
-                });
+                const timeString = now.toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow', hour12: false });
                 const timeElement = document.getElementById('currentTimeTop');
-                if (timeElement) {
-                    timeElement.textContent = timeString;
-                }
-            } catch (error) {
-                console.error('Ошибка обновления времени:', error);
-            }
+                if (timeElement) { timeElement.textContent = timeString; }
+            } catch (error) { console.error('Ошибка обновления времени:', error); }
         }
-        
-        // Функция обновления статуса (верхний hero)
         function updateDriverStatusTop() {
             try {
                 fetch('/api/current_location')
@@ -520,186 +500,28 @@ footer {
                     .then(data => {
                         const statusIndicator = document.getElementById('driverStatusIndicatorTop');
                         const statusText = document.getElementById('driverStatusTextTop');
-                        
                         if (statusIndicator && statusText) {
                             if (data.success && data.location) {
-                                if (data.location.is_at_work) {
-                                    statusIndicator.className = 'status-indicator at-work';
-                                    statusText.textContent = 'Водитель ожидает';
-                                } else {
-                                    statusIndicator.className = 'status-indicator moving';
-                                    statusText.textContent = 'В пути';
-                                }
-                            } else {
-                                statusIndicator.className = 'status-indicator';
-                                statusText.textContent = 'Нет данных';
-                            }
+                                if (data.location.is_at_work) { statusIndicator.className = 'status-indicator at-work'; statusText.textContent = 'Водитель ожидает'; }
+                                else { statusIndicator.className = 'status-indicator moving'; statusText.textContent = 'В пути'; }
+                            } else { statusIndicator.className = 'status-indicator'; statusText.textContent = 'Нет данных'; }
                         }
                     })
                     .catch(error => {
                         const statusIndicator = document.getElementById('driverStatusIndicatorTop');
                         const statusText = document.getElementById('driverStatusTextTop');
-                        if (statusIndicator && statusText) {
-                            statusIndicator.className = 'status-indicator';
-                            statusText.textContent = 'Ошибка подключения';
-                        }
+                        if (statusIndicator && statusText) { statusIndicator.className = 'status-indicator'; statusText.textContent = 'Ошибка подключения'; }
                         console.error('Ошибка API:', error);
                     });
-            } catch (error) {
-                console.error('Ошибка обновления статуса:', error);
-            }
+            } catch (error) { console.error('Ошибка обновления статуса:', error); }
         }
-        
-        // Запускаем обновления
         setTimeout(function() {
             updateCurrentTimeTop();
             updateDriverStatusTop();
-            
-            // Периодические обновления
             setInterval(updateCurrentTimeTop, 1000);
             setInterval(updateDriverStatusTop, 10000);
         }, 100);
-        </script>
-        
-        {% if is_recipient_only %}
-        <!-- Упрощенный интерфейс для получателя уведомлений -->
-        <div class="recipient-info" style="background: rgba(34, 197, 94, 0.1); border-radius: 12px; padding: 18px; margin: 20px 0; border-left: 4px solid #22c55e; text-align: center;">
-            <div style="font-weight: 600; color: #15803d; margin-bottom: 8px;">
-                📱 Вы подключены как получатель уведомлений
-            </div>
-            <div style="color: #374151; font-size: 0.9em; line-height: 1.4;">
-                Вы будете получать автоматические уведомления о прибытии и выезде водителя. Для отслеживания в реальном времени используйте трекер.
-            </div>
-        </div>
-        
-        <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-            <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
-                🗺️ Трекер в реальном времени
-            </a>
-        </div>
-        
-        {% elif is_admin %}
-        <!-- Интерфейс администратора -->
-        <div class="admin-info" style="background: rgba(139, 92, 246, 0.1); border-radius: 12px; padding: 18px; margin: 20px 0; border-left: 4px solid #8b5cf6; text-align: center;">
-            <div style="font-weight: 600; color: #7c3aed; margin-bottom: 8px;">
-                ⚡ Администратор системы
-            </div>
-            <div style="color: #374151; font-size: 0.9em; line-height: 1.4;">
-                У вас есть полный доступ ко всем функциям системы и административной панели.
-            </div>
-        </div>
-        
-        <div class="status">
-            Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
-        </div>
-        {% if message %}
-            <div class="msg">{{ message }}</div>
-        {% endif %}
-        <form method="post" action="/toggle">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% endif %}" type="submit">
-                {% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание
-            </button>
-        </form>
-        <button class="btn btn-manual" onclick="return sendManualNotification(event);">Ожидаю у подъезда</button>
-        {% for btn in buttons %}
-        <button class="btn btn-manual" onclick="return sendDynamicButton(event, {{ loop.index0 }});">{{ btn }}</button>
-        {% endfor %}
-        
-        <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-            <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
-                🗺️ Трекер
-            </a>
-            <a href="/mobile_tracker.html" class="btn btn-toggle off">
-                📶 Резервная передача геоданных
-            </a>
-        </div>
-        
-        {% elif is_driver %}
-        <!-- Интерфейс водителя (владельца аккаунта) -->
-        <div class="driver-info" style="background: rgba(59, 130, 246, 0.1); border-radius: 12px; padding: 18px; margin: 20px 0; border-left: 4px solid #3b82f6; text-align: center;">
-            <div style="font-weight: 600; color: #1d4ed8; margin-bottom: 8px;">
-                🚗 Водитель (Владелец аккаунта)
-            </div>
-            <div style="color: #374151; font-size: 0.9em; line-height: 1.4;">
-                Управляйте отслеживанием, настройте кнопки уведомлений и приглашайте получателей.
-            </div>
-        </div>
-        
-        <div class="status">
-            Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
-        </div>
-        {% if message %}
-            <div class="msg">{{ message }}</div>
-        {% endif %}
-        <form method="post" action="/toggle">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% endif %}" type="submit">
-                {% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание
-            </button>
-        </form>
-        <button class="btn btn-manual {% if not has_recipients %}btn-disabled{% endif %}" 
-                onclick="return sendManualNotification(event);" 
-                {% if not has_recipients %}disabled{% endif %}>
-            Ожидаю у подъезда
-        </button>
-        {% for btn in buttons %}
-        <button class="btn btn-manual {% if not has_recipients %}btn-disabled{% endif %}" 
-                onclick="return sendDynamicButton(event, {{ loop.index0 }});" 
-                {% if not has_recipients %}disabled{% endif %}>
-            {{ btn }}
-        </button>
-        {% endfor %}
-        
-        <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-            <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
-                🗺️ Трекер
-            </a>
-            <a href="/mobile_tracker.html" class="btn btn-toggle off">
-                📶 Резервная передача геоданных
-            </a>
-        </div>
-        
-        {% elif needs_telegram_binding %}
-        <!-- Пользователь авторизован, но нужна привязка Telegram -->
-        <div class="status">
-            Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b>
-        </div>
-        {% if message %}
-            <div class="msg">{{ message }}</div>
-        {% endif %}
-        
-        <div class="info-block" style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444;">
-            <div class="info-block-title" style="color: #dc2626;">
-                ⚠️ Требуется привязка Telegram
-            </div>
-            <div class="info-block-text" style="color: #374151;">
-                Для полного доступа к функциям необходимо привязать ваш Telegram аккаунт. 
-                Без этого вы можете только просматривать статус системы.
-            </div>
-        </div>
-        
-        <div style="display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-            <a href="/bind_telegram_form" class="btn btn-toggle" style="background: linear-gradient(90deg, #0088cc 0%, #229ED9 100%); color: white; font-weight: 500; text-decoration: none;">
-                📱 Привязать Telegram
-            </a>
-            <a href="/tracker" class="btn btn-toggle" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white; font-weight: 500; text-decoration: none;">
-                🗺️ Трекер
-            </a>
-        </div>
-        
-        <div class="info-block">
-            <div class="info-block-title">
-                💡 Ограниченный доступ
-            </div>
-            <div class="info-block-text">
-                После привязки Telegram вы получите полный доступ ко всем функциям: управление отслеживанием, 
-                настройка кнопок уведомлений и многое другое.
-            </div>
-        </div>
-        
-        {% else %}
-        {% endif %}
-    </div>
-    <!-- футер перенесен в hero-legal сверху; нижний футер не нужен -->
+    </script>
     <script>
         window.IS_AUTHORIZED = "{{ is_authorized }}";
     </script>
