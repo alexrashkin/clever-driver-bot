@@ -1218,7 +1218,8 @@ def api_button(idx):
         logger.info(f"API_BUTTON: кнопки пользователя buttons={buttons}")
         if idx < 0 or idx >= len(buttons):
             logger.error(f"API_BUTTON: некорректный номер кнопки idx={idx}, всего кнопок={len(buttons)}")
-            return jsonify({'success': False, 'error': 'Некорректный номер кнопки'}), 400
+            # Возвращаем корректный JSON без 400, чтобы UI смог показать уведомление, а не падать по статус-коду
+            return jsonify({'success': False, 'error': 'Некорректный номер кнопки. Обновите страницу.'})
         
         # Отправляем уведомления всем пользователям с ролями
         greeting = get_greeting() + '!'
