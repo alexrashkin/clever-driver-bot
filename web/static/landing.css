@@ -117,4 +117,9 @@
 
 .hero-subtle { color: #94a3b8; font-size: 14px; margin-top: 8px; }
 
+/* Light section after dark hero */
+body.landing {
+  background: linear-gradient(180deg, #0b1220 0%, #0b1220 55%, #f1f5f9 55%, #f8fafc 100%);
+}
+
 
