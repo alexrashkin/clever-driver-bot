@@ -381,6 +381,17 @@ footer {
         <a href="/register">✍️ Регистрация</a>
         <a href="/telegram_login">📱 Telegram</a>
       </div>
+      {% else %}
+      <div class="top-nav">
+        <a href="/" class="nav-btn">🏠 Главная</a>
+        <a href="/tracker" class="nav-btn">🗺️ Трекер</a>
+        {% if not is_recipient_only %}
+        <a href="/settings" class="nav-btn">⚙️ Настройки</a>
+        {% endif %}
+        <a href="/about" class="nav-btn">ℹ️ О сервисе</a>
+        <a href="/logout" class="nav-btn" style="background: linear-gradient(90deg,#ef4444 0%, #f97316 100%);">↩️ Выход</a>
+        <button id="theme-toggle" class="nav-btn theme-btn" title="Переключить тему">🌙</button>
+      </div>
       {% endif %}
     </header>
     <section class="hero">
@@ -442,6 +453,14 @@ footer {
           <form method="post" action="/toggle" style="text-align:center;">
             <button class="btn btn-toggle {% if not tracking_status %}off{% endif %}" type="submit">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
+          <div class="hero-cta" style="margin-top:12px;">
+            <div class="hero-cta-row">
+              <button class="hero-btn" onclick="return sendManualNotification(event);">Ожидаю у подъезда</button>
+              {% for btn in buttons %}
+                <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});">{{ btn }}</button>
+              {% endfor %}
+            </div>
+          </div>
           <div style="display: flex; justify-content: center; gap: 10px; margin: 12px 0; flex-wrap: wrap;">
             <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: #001018;">🗺️ Трекер</a>
             <a href="/mobile_tracker.html" class="hero-btn" style="background: linear-gradient(90deg, #4b5563 0%, #6b7280 100%); color: #e2e8f0;">📶 Резервная передача геоданных</a>
