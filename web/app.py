@@ -1254,10 +1254,12 @@ def api_button(idx):
                 return jsonify({'success': True, 'message': 'Уведомление отправлено (нет получателей)'})
             else:
                 logger.warning(f"API_BUTTON: не удалось отправить уведомления")
-                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 500
+                # Возвращаем 200, чтобы фронт корректно показал сообщение без 500 в консоли
+                return jsonify({'success': False, 'error': 'Не удалось отправить уведомления'}), 200
     except Exception as e:
         logger.error(f"Ошибка api_button: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        # Возвращаем 200 с описанием ошибки, чтобы не засорять консоль 500-ками
+        return jsonify({'success': False, 'error': str(e)}), 200
 
 @app.route('/test')
 @security_check
