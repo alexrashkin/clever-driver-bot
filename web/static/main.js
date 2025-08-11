@@ -53,7 +53,8 @@ function sendManualNotification(event) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: '{}'
     })
     .then(response => response.json())
     .then(data => {
@@ -86,7 +87,8 @@ function sendDynamicButton(event, idx) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: '{}'
     })
     .then(response => response.json())
     .then(data => {
