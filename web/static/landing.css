@@ -114,7 +114,7 @@ body.landing header .hero-top-links { margin-bottom: 8px !important; }
 .hero-words { margin-top: 6px; }
 
 @media (max-width: 640px) {
-  .hero { min-height: 1px; padding-top: 50px; padding-bottom: 300px;}
+  .hero { min-height: 10px; padding-top: 50px; padding-bottom: 170px;}
   body.landing header .info-block { margin-bottom: 6px !important; }
   body.landing header .hero-top-links { margin-bottom: 10px !important; }
   .hero-top-links { row-gap: 14px; }
