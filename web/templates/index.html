@@ -126,6 +126,11 @@ body {
 .btn-toggle {
     background: var(--btn-bg-toggle, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
 }
+.btn-toggle, .hero-btn {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+}
 .btn-toggle.off {
     background: var(--btn-off-bg, #e5e7eb);
     color: var(--btn-off-color, #6366f1);
@@ -279,6 +284,12 @@ a.btn {
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+    /* На маленьких экранах делаем кнопку автоотслеживания шире и чуть меньше шрифт */
+    .btn-toggle.narrow {
+        width: 90% !important;
+        max-width: 95vw !important;
+        font-size: 1em;
     }
 }
 footer {
@@ -449,7 +460,7 @@ footer {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 420px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none; white-space: normal;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
@@ -473,7 +484,7 @@ footer {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 420px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none; white-space: normal;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
