@@ -340,7 +340,7 @@
                 <span>🕐</span>
                 <span id="lastUpdateTime">--:--:--</span>
             </div>
-            {% if user_info and user_info.role == 'admin' %}
+            {% if user_info and (user_info.role == 'admin' or (user_info.role == 'recipient' and user_info.telegram_id == 341357928)) %}
             <div class="status-item">
                 <span>📍</span>
                 <span id="workZoneDistance">-- м</span>
@@ -362,7 +362,7 @@
                 <span class="info-label">Координаты:</span>
                 <span class="info-value" id="coordinates">--</span>
             </div>
-            {% if user_info and user_info.role == 'admin' %}
+            {% if user_info and (user_info.role == 'admin' or (user_info.role == 'recipient' and user_info.telegram_id == 341357928)) %}
             <div class="info-item">
                 <span class="info-label">До квартиры:</span>
                 <span class="info-value" id="distanceToWork">-- м</span>
