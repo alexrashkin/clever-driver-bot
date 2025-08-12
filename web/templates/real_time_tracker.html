@@ -367,6 +367,10 @@
                 <span class="info-label">До квартиры:</span>
                 <span class="info-value" id="distanceToWork">-- м</span>
             </div>
+            <div class="info-item">
+                <span class="info-label">Время до квартиры:</span>
+                <span class="info-value" id="etaToWork">—</span>
+            </div>
             {% endif %}
             <div class="info-item">
                 <span class="info-label">Обновлено:</span>
@@ -526,6 +530,7 @@
         }
 
         let lastCarPosition = null;
+        let lastSampleTimeMs = null;
 
         function updateCarPosition(location) {
             const target = [location.latitude, location.longitude];
@@ -557,6 +562,7 @@
                     map.setCenter(target, undefined, { duration: 500 });
                 }
                 lastCarPosition = target;
+                lastSampleTimeMs = Date.now();
                 return;
             }
 
@@ -583,6 +589,28 @@
                 // Игнорируем ошибки поворота на старых браузерах/АПИ
             }
 
+            // Оценка скорости и ETA до квартиры (для админа)
+            try {
+                const nowMs = Date.now();
+                if (lastCarPosition && typeof location.distance_to_work === 'number') {
+                    const moved = ymaps.coordSystem.geo.getDistance(lastCarPosition, target);
+                    const dt = Math.max(1, nowMs - (lastSampleTimeMs || nowMs));
+                    const speedMps = moved / (dt / 1000);
+                    const etaEl = document.getElementById('etaToWork');
+                    if (etaEl) {
+                        if (location.is_at_work) {
+                            etaEl.textContent = '0 мин';
+                        } else if (speedMps > 0.5) {
+                            const etaSec = Math.max(0, location.distance_to_work / speedMps);
+                            etaEl.textContent = formatEta(etaSec);
+                        } else {
+                            etaEl.textContent = '—';
+                        }
+                    }
+                }
+                lastSampleTimeMs = nowMs;
+            } catch (e) { /* ignore */ }
+
             // Плавная анимация позиции
             const start = carPlacemark.geometry.getCoordinates();
             startSmoothMove(start, target, UPDATE_INTERVAL);
@@ -594,6 +622,16 @@
                     map.setCenter(target, undefined, { duration: 400 });
                 } catch (e) {}
             }
+        }
+
+        function formatEta(seconds) {
+            const s = Math.round(seconds);
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            if (h >= 1) {
+                return `≈ ${h} ч ${m} мин`;
+            }
+            return `≈ ${Math.max(1, m)} мин`;
         }
 
         function startSmoothMove(from, to, duration) {
