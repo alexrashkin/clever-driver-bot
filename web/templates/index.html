@@ -94,7 +94,7 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,0.12);
 }
 
-.btn {
+ .btn {
     display: block;
     width: 100%;
     margin-bottom: 12px;
@@ -106,15 +106,15 @@ body {
     cursor: pointer;
     background: var(--btn-bg, linear-gradient(90deg, #6366f1 0%, #818cf8 100%));
     color: #fff;
-    box-shadow: var(--btn-shadow, 0 2px 8px #6366f133);
+     box-shadow: none;
     transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.1s;
     outline: none;
     text-align: center;
 }
 .btn:hover, .btn:focus {
-    background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
-    transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 4px 16px #6366f144;
+     background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
+     transform: none;
+     box-shadow: none;
 }
 .btn-manual {
     background: var(--btn-bg-manual, linear-gradient(90deg, #7ed958 0%, #46c474 100%));
@@ -275,7 +275,7 @@ a.btn {
         height: 32px;
         font-size: 0.9em;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: none;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -437,7 +437,7 @@ footer {
             <div class="info-block-text">Вы будете получать автоматические уведомления о прибытии и выезде водителя. Для отслеживания в реальном времени используйте трекер.</div>
           </div>
           <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 12px;">
-            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0;">🗺️ Трекер в реальном времени</a>
+            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0; box-shadow: none;">🗺️ Трекер в реальном времени</a>
           </div>
         </div>
         {% elif is_admin %}
@@ -455,13 +455,13 @@ footer {
             <div class="hero-cta-row">
               <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">Ожидаю у подъезда</button>
               {% for btn in buttons %}
-                <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">{{ btn }}</button>
+                <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">{{ btn }}</button>
               {% endfor %}
             </div>
           </div>
           <div style="display: flex; justify-content: center; gap: 10px; margin: 12px 0; flex-wrap: wrap;">
-            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0;">🗺️ Трекер</a>
-            <a href="/mobile_tracker.html" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color: #001018;">📶 Резервная передача геоданных</a>
+            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0; box-shadow: none;">🗺️ Трекер</a>
+            <a href="/mobile_tracker.html" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color: #001018; box-shadow: none;">📶 Резервная передача геоданных</a>
           </div>
         </div>
         {% elif is_driver %}
@@ -484,8 +484,8 @@ footer {
             </div>
           </div>
           <div style="display: flex; justify-content: center; gap: 10px; margin: 12px 0; flex-wrap: wrap;">
-            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0;">🗺️ Трекер</a>
-            <a href="/mobile_tracker.html" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color: #001018;">📶 Резервная передача геоданных</a>
+            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0; box-shadow: none;">🗺️ Трекер</a>
+            <a href="/mobile_tracker.html" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color: #001018; box-shadow: none;">📶 Резервная передача геоданных</a>
           </div>
         </div>
         {% elif needs_telegram_binding %}
@@ -495,8 +495,8 @@ footer {
             <div class="info-block-text">Для полного доступа необходимо привязать ваш Telegram аккаунт. Без этого доступны только просмотр статуса и трекер.</div>
           </div>
           <div style="display: flex; justify-content: center; gap: 10px; margin: 12px 0; flex-wrap: wrap;">
-            <a href="/bind_telegram_form" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color:#001018;">📱 Привязать Telegram</a>
-            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">🗺️ Трекер</a>
+            <a href="/bind_telegram_form" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color:#001018; box-shadow: none;">📱 Привязать Telegram</a>
+            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">🗺️ Трекер</a>
           </div>
         </div>
         {% endif %}
