@@ -85,7 +85,8 @@ app.secret_key = os.environ.get('WEB_SECRET_KEY', 'default_secret_key')
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
 app.config['SESSION_COOKIE_HTTPONLY'] = os.environ.get('SESSION_COOKIE_HTTPONLY', 'True') == 'True'
 app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=int(os.environ.get('SESSION_COOKIE_MAX_AGE', 1800)))
+# Читаем длительность сессии из .env (в секундах), дефолт 7 дней = 604800
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=int(os.environ.get('SESSION_COOKIE_MAX_AGE', 604800)))
 
 # Создаем новый экземпляр базы данных
 db = Database("driver.db")
