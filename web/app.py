@@ -174,20 +174,23 @@ def send_telegram_arrival(user_id):
         logger.error("Не удалось создать лог уведомления")
         return False
 
-    # Получаем всех получателей (валидный telegram_id, исключая заглушки)
+    # Получаем всех получателей, принявших приглашение текущего отправителя
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT telegram_id
-        FROM users
-        WHERE role IS NOT NULL
-          AND telegram_id IS NOT NULL
-          AND CAST(telegram_id AS TEXT) != '999999999'
-        """
-    )
-    users = cursor.fetchall()
-    conn.close()
+    try:
+        cursor.execute(
+            """
+            SELECT DISTINCT recipient_telegram_id
+            FROM invitations
+            WHERE inviter_id = ?
+              AND status = 'accepted'
+              AND recipient_telegram_id IS NOT NULL
+            """,
+            (user_info.get('id'),)
+        )
+        users = cursor.fetchall()
+    finally:
+        conn.close()
 
     # Если получателей нет — завершаем лог и отправляем подтверждение отправителю
     if not users:
@@ -1240,12 +1243,23 @@ def api_button(idx):
             logger.error(f"API_BUTTON: ошибка создания лога уведомления: {e}")
             notification_log_id = None
         
-        # Получаем всех пользователей с ролями и telegram_id
+        # Получаем получателей, принявших приглашение текущего отправителя
         conn = db.get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL AND telegram_id != 999999999")
-        users = cursor.fetchall()
-        conn.close()
+        try:
+            cursor.execute(
+                """
+                SELECT DISTINCT recipient_telegram_id
+                FROM invitations
+                WHERE inviter_id = ?
+                  AND status = 'accepted'
+                  AND recipient_telegram_id IS NOT NULL
+                """,
+                (user.get('id') if user else None,)
+            )
+            users = cursor.fetchall()
+        finally:
+            conn.close()
         
         logger.info(f"API_BUTTON: найдено пользователей для уведомлений users={len(users)}")
         sent_count = 0
