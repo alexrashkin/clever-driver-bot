@@ -10,6 +10,7 @@ body.dark {
 html { background: #0b1220 !important; }
 body:not(.landing) {
     background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
+    margin-top: 45px;
 }
 
 /* Улучшенная читабельность таблиц в тёмной теме (по умолчанию тёмные таблицы) */
