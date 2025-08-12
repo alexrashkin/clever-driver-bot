@@ -147,41 +147,22 @@ def get_current_user_role():
     return None
 
 def send_telegram_arrival(user_id):
-    """Отправка ручного уведомления о прибытии всем пользователям с ролями."""
-    # Проверяем, что отправитель имеет права отправлять уведомления
-    # user_id может быть telegram_id (число) или login (строка)
+    """Отправка ручного уведомления о прибытии всем пользователям с ролями, с логированием и подтверждением."""
+    # Определяем отправителя и его роль (user_id может быть telegram_id или login)
     if isinstance(user_id, (int, str)) and str(user_id).isdigit():
-        # Это telegram_id
         user_role = db.get_user_role(int(user_id))
         user_info = db.get_user_by_telegram_id(int(user_id))
     else:
-        # Это login
         user_role = db.get_user_role_by_login(user_id)
         user_info = db.get_user_by_login(user_id)
-    
+
     if user_role not in ['admin', 'driver']:
         logger.error(f"Пользователь {user_id} с ролью {user_role} не может отправлять ручные уведомления")
         return False
-    
-    # Получаем всех пользователей с ролями и валидным telegram_id
-    conn = db.get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT telegram_id
-        FROM users
-        WHERE role IS NOT NULL
-          AND telegram_id IS NOT NULL
-          AND CAST(telegram_id AS TEXT) != '999999999'
-    """)
-    users = cursor.fetchall()
-    conn.close()
-    
-    if not users:
-        logger.warning("Нет пользователей с ролями для отправки уведомлений")
-        return False
-    
-    # Создаем лог уведомления
+
     notification_text = create_work_notification()
+
+    # Создаем лог уведомления заранее, даже если получателей нет
     notification_log_id = db.create_notification_log(
         notification_type='manual',
         sender_id=user_info.get('id') if user_info else None,
@@ -189,87 +170,72 @@ def send_telegram_arrival(user_id):
         sender_login=user_info.get('login') if user_info else None,
         notification_text=notification_text
     )
-    
     if not notification_log_id:
         logger.error("Не удалось создать лог уведомления")
         return False
-    
-    # Добавляем получателей в детали
+
+    # Получаем всех получателей (валидный telegram_id, исключая заглушки)
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT telegram_id
+        FROM users
+        WHERE role IS NOT NULL
+          AND telegram_id IS NOT NULL
+          AND CAST(telegram_id AS TEXT) != '999999999'
+        """
+    )
+    users = cursor.fetchall()
+    conn.close()
+
+    # Если получателей нет — завершаем лог и отправляем подтверждение отправителю
+    if not users:
+        db.complete_notification_log(notification_log_id, 0, 0)
+        if user_info:
+            send_confirmation_messages(notification_log_id, user_info, notification_text + "\n(нет получателей)", 'manual')
+        logger.info("Ручное уведомление: получателей нет — лог создан, подтверждение отправлено")
+        return True
+
+    # Добавляем детали для получателей (pending)
     for (telegram_id,) in users:
         recipient_info = db.get_user_by_telegram_id(telegram_id)
         recipient_name = f"{recipient_info.get('first_name', '')} {recipient_info.get('last_name', '')}".strip() if recipient_info else None
-        
         db.add_notification_detail(
             notification_log_id=notification_log_id,
             recipient_telegram_id=telegram_id,
             recipient_name=recipient_name,
             status="pending"
         )
-    
+
     # Отправляем уведомления
-    # Берём токен из TELEGRAM_TOKEN или TELEGRAM_BOT_TOKEN
     token = os.environ.get('TELEGRAM_TOKEN') or os.environ.get('TELEGRAM_BOT_TOKEN') or 'default_token'
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    
+
     sent_count = 0
     failed_count = 0
     total_users = len(users)
-    
     for (telegram_id,) in users:
         try:
             response = requests.post(url, data={"chat_id": telegram_id, "text": notification_text}, timeout=15)
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('ok'):
-                    logger.info(f"Ручное уведомление отправлено пользователю {telegram_id}")
-                    sent_count += 1
-                    db.update_notification_detail(
-                        notification_log_id=notification_log_id,
-                        recipient_telegram_id=telegram_id,
-                        status="sent"
-                    )
-                else:
-                    error_msg = data.get('description', 'Unknown error')
-                    logger.error(f"Ошибка Telegram API для пользователя {telegram_id}: {error_msg}")
-                    failed_count += 1
-                    db.update_notification_detail(
-                        notification_log_id=notification_log_id,
-                        recipient_telegram_id=telegram_id,
-                        status="failed",
-                        error_message=error_msg
-                    )
+            if response.status_code == 200 and response.json().get('ok'):
+                sent_count += 1
+                db.update_notification_detail(notification_log_id, telegram_id, "sent")
             else:
-                error_msg = f"HTTP {response.status_code}"
-                logger.error(f"HTTP ошибка Telegram для пользователя {telegram_id}: {response.status_code}")
+                error_msg = response.json().get('description') if response.headers.get('content-type','').startswith('application/json') else f"HTTP {response.status_code}"
                 failed_count += 1
-                db.update_notification_detail(
-                    notification_log_id=notification_log_id,
-                    recipient_telegram_id=telegram_id,
-                    status="failed",
-                    error_message=error_msg
-                )
+                db.update_notification_detail(notification_log_id, telegram_id, "failed", error_msg)
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Ошибка отправки уведомления пользователю {telegram_id}: {e}")
             failed_count += 1
-            db.update_notification_detail(
-                notification_log_id=notification_log_id,
-                recipient_telegram_id=telegram_id,
-                status="failed",
-                error_message=error_msg
-            )
-    
-    # Завершаем лог
+            db.update_notification_detail(notification_log_id, telegram_id, "failed", str(e))
+
+    # Завершаем лог и отправляем подтверждение
     db.complete_notification_log(notification_log_id, sent_count, failed_count)
-    
-    # Отправляем подтверждения
-    if sent_count > 0 and user_info:
+    if user_info:
         send_confirmation_messages(notification_log_id, user_info, notification_text, 'manual')
-    
+
     logger.info(f"Отправлено уведомлений: {sent_count} из {total_users}")
-    
-    # Возвращаем True, если есть пользователи и хотя бы одно уведомление отправлено
-    return total_users > 0 and sent_count > 0
+    return sent_count > 0
 
 def send_alternative_notification():
     """Альтернативный способ отправки уведомления (логирование)"""
