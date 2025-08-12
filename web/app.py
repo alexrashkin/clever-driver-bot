@@ -1319,6 +1319,111 @@ def test_route():
     """Тестовый маршрут для проверки обновления"""
     return "✅ Код обновлен! Время: " + str(datetime.now())
 
+@app.route('/api/eta')
+@security_check
+def api_eta():
+    """ETA до рабочей точки (МСК) через Yandex Routing Matrix API с учётом пробок.
+    Требует переменную окружения YANDEX_ROUTING_API_KEY.
+    """
+    try:
+        api_key = os.environ.get('YANDEX_ROUTING_API_KEY')
+        if not api_key:
+            return jsonify({'success': False, 'error': 'YANDEX_ROUTING_API_KEY is not set'}), 200
+
+        import sqlite3
+        conn = sqlite3.connect('driver.db')
+        cursor = conn.cursor()
+
+        user = get_current_user()
+        if not user:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+        car_user_id = None
+        work_lat = None
+        work_lon = None
+
+        role = user.get('role')
+        if role == 'recipient':
+            cursor.execute(
+                """
+                SELECT inviter_id
+                FROM invitations
+                WHERE recipient_telegram_id = ?
+                  AND status = 'accepted'
+                ORDER BY accepted_at DESC LIMIT 1
+                """,
+                (user.get('telegram_id'),)
+            )
+            row = cursor.fetchone()
+            if not row:
+                conn.close()
+                return jsonify({'success': False, 'error': 'No inviter found'}), 200
+            car_user_id = row[0]
+            cursor.execute("SELECT work_latitude, work_longitude FROM users WHERE id = ?", (car_user_id,))
+            wz = cursor.fetchone()
+            if wz:
+                work_lat, work_lon = wz[0], wz[1]
+        else:
+            cursor.execute("SELECT id, work_latitude, work_longitude FROM users WHERE telegram_id = ?", (user.get('telegram_id'),))
+            me = cursor.fetchone()
+            if me:
+                car_user_id = me[0]
+                work_lat, work_lon = me[1], me[2]
+
+        if car_user_id is None or work_lat is None or work_lon is None:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Work zone or user not found'}), 200
+
+        cursor.execute(
+            """
+            SELECT latitude, longitude
+            FROM user_locations
+            WHERE user_id = ?
+            ORDER BY id DESC LIMIT 1
+            """,
+            (car_user_id,)
+        )
+        loc = cursor.fetchone()
+        conn.close()
+        if not loc:
+            return jsonify({'success': False, 'error': 'No car location'}), 200
+
+        car_lat, car_lon = float(loc[0]), float(loc[1])
+
+        import requests
+        url = 'https://api.routing.yandex.net/v2/matrix'
+        payload = {
+            "sources": [{"latitude": car_lat, "longitude": car_lon}],
+            "targets": [{"latitude": float(work_lat), "longitude": float(work_lon)}],
+            "annotations": ["distance", "expected_time", "jam_time"],
+            "transport": "car"
+        }
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Api-Key {api_key}'
+        }
+        r = requests.post(url, json=payload, headers=headers, timeout=10)
+        if r.status_code != 200:
+            return jsonify({'success': False, 'error': f'Yandex API HTTP {r.status_code}'}), 200
+        data = r.json()
+        eta_sec = None
+        distance_m = None
+        try:
+            matrix = data.get('matrix') or data
+            if 'distances' in matrix:
+                distance_m = matrix['distances'][0][0]
+            if 'jam_times' in matrix and matrix['jam_times'][0][0] is not None:
+                eta_sec = matrix['jam_times'][0][0]
+            elif 'expected_times' in matrix and matrix['expected_times'][0][0] is not None:
+                eta_sec = matrix['expected_times'][0][0]
+        except Exception:
+            pass
+
+        return jsonify({'success': True, 'eta_seconds': (int(eta_sec) if eta_sec is not None else None), 'distance_meters': (int(distance_m) if distance_m is not None else None)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 200
+
 @app.route('/debug_session')
 @security_check
 def debug_session():

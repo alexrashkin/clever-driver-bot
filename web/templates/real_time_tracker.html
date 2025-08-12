@@ -497,24 +497,34 @@
             map.geoObjects.add(workZoneCircle);
         }
 
-        function updateLocation() {
-            fetch('/api/current_location')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        updateCarPosition(data.location);
-                        updateUI(data.location);
-                        calculateUserDistance(data.location);
-                    } else {
-                        const status = data.status || 'Нет данных о местоположении';
-                        // При отсутствии данных не сбиваем текущий статус: мягко логируем
-                        console.warn('Нет данных:', status);
-                    }
-                })
-                .catch(error => {
-                    console.warn('Ошибка загрузки местоположения:', error);
-                    // Тихий фолбэк без смены статуса
-                });
+        async function updateLocation() {
+            try {
+                const resp = await fetch('/api/current_location');
+                const data = await resp.json();
+                if (data.success) {
+                    updateCarPosition(data.location);
+                    updateUI(data.location);
+                    calculateUserDistance(data.location);
+                    // ETA через Яндекс
+                    try {
+                        const etaResp = await fetch('/api/eta');
+                        const etaData = await etaResp.json();
+                        const el = document.getElementById('etaToWork');
+                        if (el) {
+                            if (etaData.success && typeof etaData.eta_seconds === 'number') {
+                                el.textContent = formatEta(etaData.eta_seconds);
+                            } else {
+                                // не затираем если нет данных
+                            }
+                        }
+                    } catch (e) { /* ignore */ }
+                } else {
+                    const status = data.status || 'Нет данных о местоположении';
+                    console.warn('Нет данных:', status);
+                }
+            } catch (error) {
+                console.warn('Ошибка загрузки местоположения:', error);
+            }
         }
 
         function computeBearingDeg(fromLat, fromLon, toLat, toLon) {
