@@ -514,10 +514,21 @@
                             if (etaData.success && typeof etaData.eta_seconds === 'number') {
                                 el.textContent = formatEta(etaData.eta_seconds);
                             } else {
-                                // не затираем если нет данных
+                                // Клиентский фолбэк без ключа: маршрут в Яндекс JS API
+                                computeClientETA(location.latitude, location.longitude, WORK_LAT, WORK_LON)
+                                    .then(sec => { if (typeof sec === 'number') el.textContent = formatEta(sec); })
+                                    .catch(() => {});
                             }
                         }
-                    } catch (e) { /* ignore */ }
+                    } catch (e) {
+                        // Клиентский фолбэк
+                        const el = document.getElementById('etaToWork');
+                        if (el) {
+                            computeClientETA(location.latitude, location.longitude, WORK_LAT, WORK_LON)
+                                .then(sec => { if (typeof sec === 'number') el.textContent = formatEta(sec); })
+                                .catch(() => {});
+                        }
+                    }
                 } else {
                     const status = data.status || 'Нет данных о местоположении';
                     console.warn('Нет данных:', status);
@@ -642,6 +653,33 @@
                 return `≈ ${h} ч ${m} мин`;
             }
             return `≈ ${Math.max(1, m)} мин`;
+        }
+
+        // Фолбэк-ETA с использованием клиентского маршрутизатора Яндекс.Карт
+        function computeClientETA(fromLat, fromLon, toLat, toLon) {
+            return new Promise((resolve, reject) => {
+                try {
+                    ymaps.route([[fromLat, fromLon], [toLat, toLon]], { routingMode: 'auto' })
+                        .then(route => {
+                            const timeSec = route.getJamsTime && route.getJamsTime() || route.getTime && route.getTime();
+                            if (typeof timeSec === 'number') {
+                                resolve(timeSec);
+                            } else {
+                                // Попытка через summary
+                                const mv = route.getActiveRoute && route.getActiveRoute();
+                                if (mv && mv.properties && typeof mv.properties.get('durationInTraffic') === 'object') {
+                                    const secs = mv.properties.get('durationInTraffic').value;
+                                    resolve(secs);
+                                } else {
+                                    reject('no_time');
+                                }
+                            }
+                        })
+                        .catch(reject);
+                } catch (e) {
+                    reject(e);
+                }
+            });
         }
 
         function startSmoothMove(from, to, duration) {
