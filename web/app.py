@@ -1227,6 +1227,18 @@ def api_button(idx):
         # Используем TELEGRAM_TOKEN или TELEGRAM_BOT_TOKEN
         token = os.environ.get('TELEGRAM_TOKEN') or os.environ.get('TELEGRAM_BOT_TOKEN') or 'default_token'
         url = f"https://api.telegram.org/bot{token}/sendMessage"
+        # Создаём лог уведомления для кнопки
+        try:
+            notification_log_id = db.create_notification_log(
+                notification_type='button',
+                sender_id=user.get('id') if user else None,
+                sender_telegram_id=user.get('telegram_id') if user else None,
+                sender_login=user.get('login') if user else None,
+                notification_text=text
+            )
+        except Exception as e:
+            logger.error(f"API_BUTTON: ошибка создания лога уведомления: {e}")
+            notification_log_id = None
         
         # Получаем всех пользователей с ролями и telegram_id
         conn = db.get_connection()
@@ -1238,13 +1250,38 @@ def api_button(idx):
         logger.info(f"API_BUTTON: найдено пользователей для уведомлений users={len(users)}")
         sent_count = 0
         for (user_telegram_id,) in users:
+            # pending деталь, если лог создан
+            if notification_log_id:
+                try:
+                    recipient_info = db.get_user_by_telegram_id(user_telegram_id)
+                    recipient_name = f"{recipient_info.get('first_name', '')} {recipient_info.get('last_name', '')}".strip() if recipient_info else None
+                    db.add_notification_detail(notification_log_id, user_telegram_id, recipient_name, 'pending')
+                except Exception as e:
+                    logger.error(f"API_BUTTON: ошибка pending-детали: {e}")
             try:
                 response = requests.post(url, data={"chat_id": user_telegram_id, "text": text}, timeout=15)
                 if response.status_code == 200 and response.json().get('ok'):
                     sent_count += 1
+                    if notification_log_id:
+                        db.update_notification_detail(notification_log_id, user_telegram_id, 'sent')
+                else:
+                    if notification_log_id:
+                        error_msg = response.json().get('description') if response.headers.get('content-type','').startswith('application/json') else f"HTTP {response.status_code}"
+                        db.update_notification_detail(notification_log_id, user_telegram_id, 'failed', error_msg)
             except Exception as e:
                 logger.error(f"Ошибка отправки уведомления пользователю {user_telegram_id}: {e}")
+                if notification_log_id:
+                    db.update_notification_detail(notification_log_id, user_telegram_id, 'failed', str(e))
         
+        # Завершение лога и подтверждение отправителю
+        if notification_log_id:
+            try:
+                failed_count = max(0, len(users) - sent_count)
+                db.complete_notification_log(notification_log_id, sent_count, failed_count)
+                send_confirmation_messages(notification_log_id, user, text, 'button')
+            except Exception as e:
+                logger.error(f"API_BUTTON: ошибка завершения лога/подтверждения: {e}")
+
         if sent_count > 0:
             return jsonify({'success': True})
         else:
