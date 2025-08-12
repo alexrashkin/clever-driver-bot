@@ -163,10 +163,16 @@ def send_telegram_arrival(user_id):
         logger.error(f"Пользователь {user_id} с ролью {user_role} не может отправлять ручные уведомления")
         return False
     
-    # Получаем всех пользователей с ролями и telegram_id
+    # Получаем всех пользователей с ролями и валидным telegram_id
     conn = db.get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT telegram_id FROM users WHERE role IS NOT NULL AND telegram_id IS NOT NULL")
+    cursor.execute("""
+        SELECT telegram_id
+        FROM users
+        WHERE role IS NOT NULL
+          AND telegram_id IS NOT NULL
+          AND CAST(telegram_id AS TEXT) != '999999999'
+    """)
     users = cursor.fetchall()
     conn.close()
     
@@ -201,7 +207,8 @@ def send_telegram_arrival(user_id):
         )
     
     # Отправляем уведомления
-    token = os.environ.get('TELEGRAM_TOKEN', 'default_token')
+    # Берём токен из TELEGRAM_TOKEN или TELEGRAM_BOT_TOKEN
+    token = os.environ.get('TELEGRAM_TOKEN') or os.environ.get('TELEGRAM_BOT_TOKEN') or 'default_token'
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     
     sent_count = 0
