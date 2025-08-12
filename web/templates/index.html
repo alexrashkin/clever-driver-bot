@@ -453,7 +453,7 @@ footer {
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
-              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); color:#001018;">Ожидаю у подъезда</button>
+              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">Ожидаю у подъезда</button>
               {% for btn in buttons %}
                 <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">{{ btn }}</button>
               {% endfor %}
@@ -477,7 +477,7 @@ footer {
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
-              <button class="hero-btn" onclick="return sendManualNotification(event);">Ожидаю у подъезда</button>
+              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">Ожидаю у подъезда</button>
               {% for btn in buttons %}
                 <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});">{{ btn }}</button>
               {% endfor %}
