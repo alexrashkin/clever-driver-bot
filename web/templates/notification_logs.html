@@ -9,11 +9,9 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: #333;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
         }
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -127,9 +125,18 @@
         .type-automatic { color: #28a745; }
         .type-arrival { color: #ffc107; }
         .type-departure { color: #dc3545; }
+
+        /* Тёмная тема: повышаем контраст текста и фонов */
+        body.dark { color: #e5e7eb; background: #0b1220; }
+        body.dark .container { background: #121826; color: #e5e7eb; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+        body.dark .stat-card { background: #1f2937; border-left-color: #6366f1; }
+        body.dark .stat-number { color: #a5b4fc; }
+        body.dark .stat-label { color: #94a3b8; }
+        body.dark .empty-state { color: #94a3b8; }
+        body.dark .btn.btn-secondary { background: #374151; }
     </style>
 </head>
-<body class="dark" style="color:#e5e7eb;">
+<body class="dark">
     <button id="theme-toggle" class="nav-btn theme-btn" style="position: fixed; top: 20px; right: 20px; z-index: 1001; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">🌙</button>
     <div class="header">
         <h1>📊 Логи уведомлений</h1>
