@@ -13,6 +13,40 @@ body:not(.landing) {
     color: #e2e8f0 !important;
 }
 
+/* Улучшенная читабельность таблиц в тёмной теме (по умолчанию тёмные таблицы) */
+body.dark table:not(.users-table) {
+    background: #121826 !important; /* тёмный фон таблиц */
+    color: #e5e7eb !important;      /* светлый текст */
+    border-color: #334155 !important;
+}
+body.dark table:not(.users-table) th {
+    background: #0f172a !important; /* заголовок чуть темнее */
+    color: #f8fafc !important;
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark table:not(.users-table) td {
+    color: #e5e7eb !important;
+    border-bottom: 1px solid #334155 !important;
+}
+body.dark table:not(.users-table) tr:hover {
+    background: #1f2937 !important;
+}
+body.dark table:not(.users-table) a {
+    color: #93c5fd !important; /* ссылки в таблицах */
+}
+body.dark table:not(.users-table) code {
+    background: #0b1220 !important;
+    color: #93c5fd !important;
+}
+
+/* Явно оставляем админ-таблицы светлыми и контрастными */
+body.dark .admin-container table,
+body.dark .admin-container th,
+body.dark .admin-container td {
+    background: #ffffff !important;
+    color: #111827 !important;
+}
+
 /* Админ-страница: общий фон и шапка/навигация */
 body.dark .admin-container {
     background: #23232b !important;
