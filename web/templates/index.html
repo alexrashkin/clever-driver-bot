@@ -447,7 +447,7 @@ footer {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
@@ -471,7 +471,7 @@ footer {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
