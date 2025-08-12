@@ -245,10 +245,23 @@ class SecurityManager:
         self.command_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.command_patterns]
         self.csrf_regex = [re.compile(pattern, re.IGNORECASE) for pattern in self.csrf_patterns]
         
-        # Инициализируем ограничители
-        self.rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
-        self.login_rate_limiter = RateLimiter(max_requests=5, window_seconds=300)  # 5 попыток за 5 минут
-        self.password_reset_rate_limiter = RateLimiter(max_requests=10, window_seconds=600)  # 10 попыток за 10 минут для восстановления пароля
+        # Инициализируем ограничители (читаем значения из config)
+        try:
+            from config.settings import config as _cfg
+            general_max = getattr(_cfg, 'RATE_LIMIT_REQUESTS', 100)
+            general_win = getattr(_cfg, 'RATE_LIMIT_WINDOW', 60)
+            login_max = getattr(_cfg, 'LOGIN_RATE_LIMIT_REQUESTS', 5)
+            login_win = getattr(_cfg, 'LOGIN_RATE_LIMIT_WINDOW', 300)
+            pwd_max = getattr(_cfg, 'LOGIN_RATE_LIMIT_REQUESTS', 10)  # fallback если нет отдельной настройки
+            pwd_win = 600
+        except Exception:
+            general_max, general_win = 100, 60
+            login_max, login_win = 5, 300
+            pwd_max, pwd_win = 10, 600
+
+        self.rate_limiter = RateLimiter(max_requests=general_max, window_seconds=general_win)
+        self.login_rate_limiter = RateLimiter(max_requests=login_max, window_seconds=login_win)  # попытки входа
+        self.password_reset_rate_limiter = RateLimiter(max_requests=pwd_max, window_seconds=pwd_win)  # восстановление пароля
         self.ip_blocker = IPBlocker(max_failed_attempts=10, block_duration_minutes=60)
     
     def check_xss(self, data):
