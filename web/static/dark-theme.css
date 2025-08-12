@@ -6,6 +6,13 @@ body.dark {
     color: #f1f5ff !important;
 }
 
+/* Единый тёмный фон как на главной для всех страниц, кроме самой главной (body.landing) */
+html { background: #0b1220 !important; }
+body:not(.landing) {
+    background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
+    color: #e2e8f0 !important;
+}
+
 /* Админ-страница: общий фон и шапка/навигация */
 body.dark .admin-container {
     background: #23232b !important;
