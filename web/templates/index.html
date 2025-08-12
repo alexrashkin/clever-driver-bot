@@ -449,11 +449,11 @@ footer {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
-              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">Ожидаю у подъезда</button>
+              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">Ожидаю у подъезда</button>
               {% for btn in buttons %}
                 <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">{{ btn }}</button>
               {% endfor %}
@@ -473,11 +473,11 @@ footer {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 320px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:12px;">
             <div class="hero-cta-row">
-              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0;">Ожидаю у подъезда</button>
+              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">Ожидаю у подъезда</button>
               {% for btn in buttons %}
                 <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});">{{ btn }}</button>
               {% endfor %}
