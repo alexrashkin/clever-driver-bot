@@ -504,7 +504,6 @@
                 if (data.success) {
                     updateCarPosition(data.location);
                     updateUI(data.location);
-                    calculateUserDistance(data.location);
                     // ETA через Яндекс
                     try {
                         const etaResp = await fetch('/api/eta');
@@ -754,22 +753,7 @@
                 `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
         }
 
-        function calculateUserDistance(carLocation) {
-            if (!userLocation) return;
-
-            const carPos = [carLocation.latitude, carLocation.longitude];
-            const userPos = [userLocation.latitude, userLocation.longitude];
-            
-            const distance = ymaps.coordSystem.geo.getDistance(carPos, userPos);
-            const distanceKm = (distance / 1000).toFixed(1);
-            
-            const userDistanceEl = document.getElementById('userDistance');
-            const distanceToUserWrap = document.getElementById('distanceToUser');
-            if (userDistanceEl && distanceToUserWrap) {
-                userDistanceEl.textContent = `${distanceKm} км`;
-                distanceToUserWrap.style.display = 'block';
-            }
-        }
+        // Удален расчёт дистанции до получателя по запросу
 
         function requestUserLocation() {
             if (navigator.geolocation) {
