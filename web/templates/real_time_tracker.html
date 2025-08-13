@@ -506,8 +506,9 @@
                 const resp = await fetch('/api/current_location');
                 const data = await resp.json();
                 if (data.success) {
-                    updateCarPosition(data.location);
-                    updateUI(data.location);
+                    const location = data.location;
+                    updateCarPosition(location);
+                    updateUI(location);
                     // ETA с ограничением частоты и сглаживанием
                     const el = document.getElementById('etaToWork');
                     const now = Date.now();

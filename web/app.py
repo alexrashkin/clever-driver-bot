@@ -1396,7 +1396,8 @@ def api_eta():
         payload = {
             "sources": [{"latitude": car_lat, "longitude": car_lon}],
             "targets": [{"latitude": float(work_lat), "longitude": float(work_lon)}],
-            "annotations": ["distance", "expected_time", "jam_time"],
+            "annotations": ["distance", "expected_time", "jam_time", "weights", "times", "durations"],
+            "consider_traffic": True,
             "transport": "car"
         }
         headers = {
@@ -1411,12 +1412,29 @@ def api_eta():
         distance_m = None
         try:
             matrix = data.get('matrix') or data
-            if 'distances' in matrix:
-                distance_m = matrix['distances'][0][0]
-            if 'jam_times' in matrix and matrix['jam_times'][0][0] is not None:
-                eta_sec = matrix['jam_times'][0][0]
-            elif 'expected_times' in matrix and matrix['expected_times'][0][0] is not None:
-                eta_sec = matrix['expected_times'][0][0]
+            # расстояние
+            if isinstance(matrix, dict):
+                if 'distances' in matrix and matrix['distances'] and matrix['distances'][0]:
+                    distance_m = matrix['distances'][0][0]
+                # основные поля времени
+                if 'jam_times' in matrix and matrix['jam_times'] and matrix['jam_times'][0]:
+                    eta_sec = matrix['jam_times'][0][0]
+                elif 'expected_times' in matrix and matrix['expected_times'] and matrix['expected_times'][0]:
+                    eta_sec = matrix['expected_times'][0][0]
+                elif 'times' in matrix and matrix['times'] and matrix['times'][0]:
+                    eta_sec = matrix['times'][0][0]
+                elif 'durations' in matrix and matrix['durations'] and matrix['durations'][0]:
+                    eta_sec = matrix['durations'][0][0]
+                # структура weights {times, distances}
+                elif 'weights' in matrix and matrix['weights'] and matrix['weights'][0]:
+                    w = matrix['weights'][0][0]
+                    if isinstance(w, dict):
+                        if 'jam_time' in w and w['jam_time'] is not None:
+                            eta_sec = w['jam_time']
+                        elif 'time' in w and w['time'] is not None:
+                            eta_sec = w['time']
+                        if 'distance' in w and w['distance'] is not None:
+                            distance_m = distance_m or w['distance']
         except Exception:
             pass
 
