@@ -8,7 +8,7 @@ body.dark {
 
 /* Единый тёмный фон как на главной для всех страниц, кроме самой главной (body.landing) */
 html { background: #0b1220 !important; }
-body:not(.landing) {
+body:not(.landing):not(.admin-page) {
     background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
     margin-top: 45px;
 }
