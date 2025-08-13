@@ -430,11 +430,14 @@
                 console.log('Yandex Maps готов, инициализируем карту...');
                 // Восстанавливаем последнее известное ETA из localStorage, чтобы не показывать прочерк после перезагрузки
                 try {
-                    const savedEta = parseFloat(localStorage.getItem('etaSmoothSec'));
-                    if (!Number.isNaN(savedEta) && isFinite(savedEta)) {
-                        etaSmoothSec = savedEta;
-                        const el = document.getElementById('etaToWork');
-                        if (el) el.textContent = formatEta(etaSmoothSec);
+                    const savedEtaRaw = localStorage.getItem('etaSmoothSec');
+                    if (savedEtaRaw !== null && savedEtaRaw !== undefined) {
+                        const savedEta = parseFloat(savedEtaRaw);
+                        if (!Number.isNaN(savedEta) && isFinite(savedEta)) {
+                            etaSmoothSec = savedEta;
+                            const el = document.getElementById('etaToWork');
+                            if (el) el.textContent = formatEta(etaSmoothSec);
+                        }
                     }
                 } catch (e) { /* ignore */ }
                 init();
@@ -772,6 +775,14 @@
                 const el = document.getElementById('distanceToWork');
                 if (el) el.textContent = `${distance} м`;
                 lastDistanceToWorkM = distance;
+
+                // Если ETA ещё не рассчитано и мы не в точке, покажем мгновенную оценку по средней скорости
+                const etaEl = document.getElementById('etaToWork');
+                if (etaEl && etaSmoothSec == null && !location.is_at_work) {
+                    const avgSpeedMps = 8.33; // ≈30 км/ч как безопасная базовая оценка
+                    const approxSec = Math.max(60, distance / avgSpeedMps);
+                    etaEl.textContent = formatEta(approxSec);
+                }
             }
 
             // Обновляем координаты
