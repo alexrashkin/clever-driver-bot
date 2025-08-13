@@ -240,7 +240,19 @@
 
     <div class="container">
         <div class="back-link">
-            <a href="/admin" class="btn btn-secondary">← Назад к админ-панели</a>
+            <a href="/admin" class="btn btn-secondary" style="
+                display: inline-block;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-decoration: none;
+                font-weight: 600;
+                padding: 12px 24px;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                transition: all 0.3s ease;
+                min-width: 140px;
+                text-align: center;
+            ">← Назад к админ-панели</a>
         </div>
 
         {% if recipient_locations %}
