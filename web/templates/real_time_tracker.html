@@ -413,6 +413,10 @@
         let animationRequestId = null;
         let userInteracting = false;
         let interactionTimer = null;
+        // Доп. переменные для стабильного ETA
+        let lastEtaFetchMs = 0;
+        let etaSmoothSec = null;
+        let lastDistanceToWorkM = null;
 
         // Конфигурация (используем tojson, чтобы избежать конфликтов шаблонизатора с JS)
         const WORK_LAT = {{ (work_lat if work_lat is not none else 55.7539)|tojson }};
@@ -504,27 +508,24 @@
                 if (data.success) {
                     updateCarPosition(data.location);
                     updateUI(data.location);
-                    // ETA через Яндекс
-                    try {
-                        const etaResp = await fetch('/api/eta');
-                        const etaData = await etaResp.json();
-                        const el = document.getElementById('etaToWork');
-                        if (el) {
+                    // ETA с ограничением частоты и сглаживанием
+                    const el = document.getElementById('etaToWork');
+                    const now = Date.now();
+                    if (el && now - lastEtaFetchMs > 15000) {
+                        lastEtaFetchMs = now;
+                        try {
+                            const etaResp = await fetch('/api/eta');
+                            const etaData = await etaResp.json();
                             if (etaData.success && typeof etaData.eta_seconds === 'number') {
-                                el.textContent = formatEta(etaData.eta_seconds);
+                                updateEtaSmooth(etaData.eta_seconds);
                             } else {
-                                // Клиентский фолбэк без ключа: маршрут в Яндекс JS API
                                 computeClientETA(location.latitude, location.longitude, WORK_LAT, WORK_LON)
-                                    .then(sec => { if (typeof sec === 'number') el.textContent = formatEta(sec); })
+                                    .then(sec => updateEtaSmooth(sec))
                                     .catch(() => {});
                             }
-                        }
-                    } catch (e) {
-                        // Клиентский фолбэк
-                        const el = document.getElementById('etaToWork');
-                        if (el) {
+                        } catch (e) {
                             computeClientETA(location.latitude, location.longitude, WORK_LAT, WORK_LON)
-                                .then(sec => { if (typeof sec === 'number') el.textContent = formatEta(sec); })
+                                .then(sec => updateEtaSmooth(sec))
                                 .catch(() => {});
                         }
                     }
@@ -660,25 +661,37 @@
                 try {
                     ymaps.route([[fromLat, fromLon], [toLat, toLon]], { routingMode: 'auto' })
                         .then(route => {
-                            const timeSec = route.getJamsTime && route.getJamsTime() || route.getTime && route.getTime();
-                            if (typeof timeSec === 'number') {
-                                resolve(timeSec);
-                            } else {
-                                // Попытка через summary
-                                const mv = route.getActiveRoute && route.getActiveRoute();
-                                if (mv && mv.properties && typeof mv.properties.get('durationInTraffic') === 'object') {
-                                    const secs = mv.properties.get('durationInTraffic').value;
+                            const mv = route.getActiveRoute && route.getActiveRoute();
+                            if (mv && mv.properties) {
+                                const durTraffic = mv.properties.get('durationInTraffic');
+                                const dur = mv.properties.get('duration');
+                                let secs = null;
+                                if (durTraffic && typeof durTraffic.value === 'number') secs = durTraffic.value;
+                                else if (dur && typeof dur.value === 'number') secs = dur.value;
+                                if (typeof secs === 'number') {
+                                    // sanity-fix: нереалистично малые значения приводим к минутам
+                                    if (secs < 60 && typeof lastDistanceToWorkM === 'number' && lastDistanceToWorkM > 2000) {
+                                        secs = secs * 60;
+                                    }
                                     resolve(secs);
-                                } else {
-                                    reject('no_time');
+                                    return;
                                 }
                             }
+                            reject('no_time');
                         })
                         .catch(reject);
                 } catch (e) {
                     reject(e);
                 }
             });
+        }
+
+        function updateEtaSmooth(sec) {
+            if (typeof sec !== 'number' || !isFinite(sec)) return;
+            const alpha = 0.3; // экспоненциальное сглаживание
+            etaSmoothSec = etaSmoothSec == null ? sec : (alpha * sec + (1 - alpha) * etaSmoothSec);
+            const el = document.getElementById('etaToWork');
+            if (el) el.textContent = formatEta(etaSmoothSec);
         }
 
         function startSmoothMove(from, to, duration) {
@@ -746,6 +759,7 @@
                 workZoneDistance.textContent = `${distance} м`;
                 const el = document.getElementById('distanceToWork');
                 if (el) el.textContent = `${distance} м`;
+                lastDistanceToWorkM = distance;
             }
 
             // Обновляем координаты
