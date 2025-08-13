@@ -249,7 +249,7 @@
         }
         
         .back-link {
-            display: block;
+            display: inline-block; /* не растягиваем на всю ширину */
             margin: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -261,7 +261,6 @@
             transition: all 0.3s ease;
             min-width: 140px;
             text-align: center;
-            width: 100%;
         }
         
         .back-link:hover {
@@ -528,13 +527,13 @@
     </style>
 </head>
 <body>
-    <div style="max-width: 100%; margin: 0; padding: 20px 30px;">
+    <div style="max-width: 100%; margin: 0; padding: 20px 30px; background: transparent;">
         <a href="/" class="back-link">← Назад на главную</a>
     </div>
     <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
     
     <div class="admin-container">
-        <div class="admin-header">
+        <div class="admin-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <h1 class="admin-title">👑 Управление пользователями</h1>
             <p class="admin-subtitle">Администрирование системы Умный водитель</p>
         </div>
