@@ -428,6 +428,15 @@
         ymaps.ready(function() {
             try {
                 console.log('Yandex Maps готов, инициализируем карту...');
+                // Восстанавливаем последнее известное ETA из localStorage, чтобы не показывать прочерк после перезагрузки
+                try {
+                    const savedEta = parseFloat(localStorage.getItem('etaSmoothSec'));
+                    if (!Number.isNaN(savedEta) && isFinite(savedEta)) {
+                        etaSmoothSec = savedEta;
+                        const el = document.getElementById('etaToWork');
+                        if (el) el.textContent = formatEta(etaSmoothSec);
+                    }
+                } catch (e) { /* ignore */ }
                 init();
             } catch (error) {
                 console.error('Ошибка инициализации карты:', error);
@@ -694,6 +703,7 @@
             etaSmoothSec = etaSmoothSec == null ? sec : (alpha * sec + (1 - alpha) * etaSmoothSec);
             const el = document.getElementById('etaToWork');
             if (el) el.textContent = formatEta(etaSmoothSec);
+            try { localStorage.setItem('etaSmoothSec', String(etaSmoothSec)); } catch (e) { /* ignore */ }
         }
 
         function startSmoothMove(from, to, duration) {
