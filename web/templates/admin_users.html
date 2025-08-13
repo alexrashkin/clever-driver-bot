@@ -37,7 +37,9 @@
             color: #f1f3f9;
             padding: 30px;
             text-align: center;
-            margin: 0 30px 0 30px;
+            margin: -8px 30px 0 30px; /* слегка перекрываем полоску под кнопкой */
+            border-top: none;
+            box-shadow: none;
         }
         
         .admin-title {
@@ -529,7 +531,7 @@
     </style>
 </head>
 <body class="">
-    <div style="max-width: 100%; margin: 0; padding: 20px 30px; background: transparent;">
+    <div style="max-width: 100%; margin: 0; padding: 20px 30px; background: transparent; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <a href="/" class="back-link">← Назад на главную</a>
     </div>
     <button id="theme-toggle" class="nav-btn theme-btn">🌙</button>
