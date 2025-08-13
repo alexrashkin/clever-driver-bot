@@ -1392,53 +1392,101 @@ def api_eta():
         car_lat, car_lon = float(loc[0]), float(loc[1])
 
         import requests
+        # Диагностические параметры
+        args = request.args or {}
+        force_traffic = args.get('traffic')  # '1' / '0' or None
+        compare = args.get('compare') in ('1', 'true', 'yes')
+        debug = args.get('debug') in ('1', 'true', 'yes')
+
+        def build_payload(consider_traffic: bool):
+            return {
+                "sources": [{"latitude": car_lat, "longitude": car_lon}],
+                "targets": [{"latitude": float(work_lat), "longitude": float(work_lon)}],
+                "annotations": ["distance", "expected_time", "jam_time", "weights", "times", "durations"],
+                "consider_traffic": consider_traffic,
+                "transport": "car"
+            }
+
         url = 'https://api.routing.yandex.net/v2/matrix'
-        payload = {
-            "sources": [{"latitude": car_lat, "longitude": car_lon}],
-            "targets": [{"latitude": float(work_lat), "longitude": float(work_lon)}],
-            "annotations": ["distance", "expected_time", "jam_time", "weights", "times", "durations"],
-            "consider_traffic": True,
-            "transport": "car"
-        }
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Api-Key {api_key}'
         }
-        r = requests.post(url, json=payload, headers=headers, timeout=10)
-        if r.status_code != 200:
-            return jsonify({'success': False, 'error': f'Yandex API HTTP {r.status_code}'}), 200
-        data = r.json()
-        eta_sec = None
-        distance_m = None
-        try:
-            matrix = data.get('matrix') or data
-            # расстояние
-            if isinstance(matrix, dict):
-                if 'distances' in matrix and matrix['distances'] and matrix['distances'][0]:
-                    distance_m = matrix['distances'][0][0]
-                # основные поля времени
-                if 'jam_times' in matrix and matrix['jam_times'] and matrix['jam_times'][0]:
-                    eta_sec = matrix['jam_times'][0][0]
-                elif 'expected_times' in matrix and matrix['expected_times'] and matrix['expected_times'][0]:
-                    eta_sec = matrix['expected_times'][0][0]
-                elif 'times' in matrix and matrix['times'] and matrix['times'][0]:
-                    eta_sec = matrix['times'][0][0]
-                elif 'durations' in matrix and matrix['durations'] and matrix['durations'][0]:
-                    eta_sec = matrix['durations'][0][0]
-                # структура weights {times, distances}
-                elif 'weights' in matrix and matrix['weights'] and matrix['weights'][0]:
-                    w = matrix['weights'][0][0]
-                    if isinstance(w, dict):
-                        if 'jam_time' in w and w['jam_time'] is not None:
-                            eta_sec = w['jam_time']
-                        elif 'time' in w and w['time'] is not None:
-                            eta_sec = w['time']
-                        if 'distance' in w and w['distance'] is not None:
-                            distance_m = distance_m or w['distance']
-        except Exception:
-            pass
+        def call_and_parse(consider_traffic: bool):
+            payload = build_payload(consider_traffic)
+            r = requests.post(url, json=payload, headers=headers, timeout=10)
+            result = {
+                'http_status': r.status_code,
+                'consider_traffic': consider_traffic,
+                'eta_seconds': None,
+                'distance_meters': None,
+                'source': None,
+                'raw': None
+            }
+            if r.status_code != 200:
+                return result
+            data = r.json()
+            result['raw'] = data if debug else None
+            try:
+                matrix = data.get('matrix') or data
+                if isinstance(matrix, dict):
+                    if 'distances' in matrix and matrix['distances'] and matrix['distances'][0]:
+                        result['distance_meters'] = matrix['distances'][0][0]
+                    # основные поля времени
+                    if 'jam_times' in matrix and matrix['jam_times'] and matrix['jam_times'][0] and matrix['jam_times'][0][0] is not None:
+                        result['eta_seconds'] = matrix['jam_times'][0][0]
+                        result['source'] = 'jam_times'
+                    elif 'expected_times' in matrix and matrix['expected_times'] and matrix['expected_times'][0] and matrix['expected_times'][0][0] is not None:
+                        result['eta_seconds'] = matrix['expected_times'][0][0]
+                        result['source'] = 'expected_times'
+                    elif 'times' in matrix and matrix['times'] and matrix['times'][0] and matrix['times'][0][0] is not None:
+                        result['eta_seconds'] = matrix['times'][0][0]
+                        result['source'] = 'times'
+                    elif 'durations' in matrix and matrix['durations'] and matrix['durations'][0] and matrix['durations'][0][0] is not None:
+                        result['eta_seconds'] = matrix['durations'][0][0]
+                        result['source'] = 'durations'
+                    elif 'weights' in matrix and matrix['weights'] and matrix['weights'][0]:
+                        w = matrix['weights'][0][0]
+                        if isinstance(w, dict):
+                            if 'jam_time' in w and w['jam_time'] is not None:
+                                result['eta_seconds'] = w['jam_time']
+                                result['source'] = 'weights.jam_time'
+                            elif 'time' in w and w['time'] is not None:
+                                result['eta_seconds'] = w['time']
+                                result['source'] = 'weights.time'
+                            if 'distance' in w and w['distance'] is not None and result['distance_meters'] is None:
+                                result['distance_meters'] = w['distance']
+            except Exception:
+                pass
+            return result
 
-        return jsonify({'success': True, 'eta_seconds': (int(eta_sec) if eta_sec is not None else None), 'distance_meters': (int(distance_m) if distance_m is not None else None)})
+        # Выбор режима
+        if compare:
+            res_with = call_and_parse(True if force_traffic is None else (force_traffic in ('1', 'true', 'yes')))
+            res_without = call_and_parse(False)
+            return jsonify({
+                'success': True,
+                'compare': True,
+                'with_traffic': res_with,
+                'without_traffic': res_without,
+                'car_lat': car_lat,
+                'car_lon': car_lon,
+                'work_lat': float(work_lat),
+                'work_lon': float(work_lon)
+            })
+        else:
+            consider = True if force_traffic is None else (force_traffic in ('1', 'true', 'yes'))
+            res = call_and_parse(consider)
+            if res['http_status'] != 200:
+                return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}'}), 200
+            return jsonify({
+                'success': True,
+                'eta_seconds': (int(res['eta_seconds']) if res['eta_seconds'] is not None else None),
+                'distance_meters': (int(res['distance_meters']) if res['distance_meters'] is not None else None),
+                'source': res['source'],
+                'consider_traffic': consider,
+                'debug': (res['raw'] if debug else None)
+            })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 200
 
