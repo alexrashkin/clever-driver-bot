@@ -512,8 +512,8 @@
                     // ETA с ограничением частоты и сглаживанием
                     const el = document.getElementById('etaToWork');
                     const now = Date.now();
-                    // Никогда не показываем прочерк: если ещё не было расчёта — не перезаписываем
-                    if (el && now - lastEtaFetchMs > 15000) {
+                    // Никогда не показываем прочерк: если ещё не было расчёта — считаем сразу
+                    if (el && (etaSmoothSec == null || now - lastEtaFetchMs > 15000)) {
                         lastEtaFetchMs = now;
                         try {
                             const etaResp = await fetch('/api/eta');
