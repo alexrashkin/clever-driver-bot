@@ -1471,12 +1471,24 @@ def api_eta():
             }
 
         # Эндпоинты Yandex Routes Matrix: сначала облачный, затем легаси как фолбэк
+        env_full_url = os.environ.get('YANDEX_ROUTING_MATRIX_URL')
         env_base_url = os.environ.get('YANDEX_ROUTING_BASE_URL')
-        url_primary = (env_base_url.rstrip('/') + '/routes/v2/matrix') if env_base_url else 'https://routes.api.cloud.yandex.net/routes/v2/matrix'
-        url_legacy = 'https://api.routing.yandex.net/v2/matrix'
+        endpoint_candidates = []
+        if env_full_url:
+            endpoint_candidates.append(env_full_url.strip())
+        if env_base_url:
+            endpoint_candidates.append(env_base_url.rstrip('/') + '/routes/v2/matrix')
+            endpoint_candidates.append(env_base_url.rstrip('/') + '/v2/matrix')
+        # Облачные варианты (оба встречаются в документации/примерах)
+        endpoint_candidates.append('https://routes.api.cloud.yandex.net/routes/v2/matrix')
+        endpoint_candidates.append('https://routes.api.cloud.yandex.net/v2/matrix')
+        # Легаси вариант
+        endpoint_candidates.append('https://api.routing.yandex.net/v2/matrix')
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': f'Api-Key {api_key}'
+            'Authorization': f'Api-Key {api_key}',
+            # Дублируем схему для совместимости со старыми/прокси конфигурациями
+            'X-Api-Key': api_key
         }
         def call_and_parse(consider_traffic: bool):
             payload = build_payload(consider_traffic)
@@ -1492,17 +1504,40 @@ def api_eta():
                         return {"errors": ["Too many requests (local backoff)"]}
                 r = Resp()
             else:
-                url_used = url_primary
-                try:
-                    r = requests.post(url_primary, json=payload, headers=headers, timeout=10)
-                    # Если облачный эндпоинт не найден (например, в среде без доступа к Yandex Cloud), пробуем легаси
-                    if getattr(r, 'status_code', None) == 404:
-                        r = requests.post(url_legacy, json=payload, headers=headers, timeout=10)
-                        url_used = url_legacy
-                except Exception:
-                    # На любые сетевые ошибки (в т.ч. NameResolutionError) попробуем легаси-хост
-                    r = requests.post(url_legacy, json=payload, headers=headers, timeout=10)
-                    url_used = url_legacy
+                r = None
+                url_used = None
+                last_exc = None
+                for candidate in endpoint_candidates:
+                    try:
+                        resp = requests.post(candidate, json=payload, headers=headers, timeout=10)
+                        # Если это не 404, принимаем ответ и выходим
+                        if getattr(resp, 'status_code', None) != 404:
+                            r = resp
+                            url_used = candidate
+                            break
+                        # 404 — пробуем следующий кандидат
+                        r = resp
+                        url_used = candidate
+                    except Exception as e:
+                        last_exc = e
+                        continue
+                # Если ни один кандидат не сработал (например, только исключения) — пробуем последний легаси на всякий случай
+                if r is None:
+                    try:
+                        r = requests.post('https://api.routing.yandex.net/v2/matrix', json=payload, headers=headers, timeout=10)
+                        url_used = 'https://api.routing.yandex.net/v2/matrix'
+                    except Exception:
+                        # Сформируем фиктивный ответ с 503
+                        class Resp:
+                            status_code = 503
+                            headers = {}
+                            def json(self_inner):
+                                return {"errors": ["All endpoints failed"], "last_exception": str(last_exc) if last_exc else None}
+                            @property
+                            def text(self_inner):
+                                return "All endpoints failed"
+                        r = Resp()
+                        url_used = 'multiple'
                 # Сохраняем глобальный Retry-After, если вернулся 429
                 if r.status_code == 429:
                     # Глобальный бэкофф по Retry-After или дефолтный, если заголовка нет
@@ -1521,15 +1556,17 @@ def api_eta():
             }
             if r.status_code != 200:
                 try:
-                    result['raw'] = r.json()
+                    parsed = r.json()
+                    result['raw'] = ({'endpoint_used': url_used, 'response': parsed} if debug else parsed)
                 except Exception:
                     try:
-                        result['raw'] = r.text
+                        txt = r.text
+                        result['raw'] = ({'endpoint_used': url_used, 'response': txt} if debug else txt)
                     except Exception:
                         result['raw'] = None
                 return result
             data = r.json()
-            result['raw'] = data if debug else None
+            result['raw'] = ({'endpoint_used': url_used, 'response': data} if debug else None)
             try:
                 matrix = data.get('matrix') or data
                 if isinstance(matrix, dict):
