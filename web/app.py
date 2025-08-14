@@ -1456,6 +1456,8 @@ def api_eta():
         force_traffic = args.get('traffic')  # '1' / '0' or None
         compare = args.get('compare') in ('1', 'true', 'yes')
         debug = args.get('debug') in ('1', 'true', 'yes')
+        # Требовать ли пробки всегда
+        require_traffic = os.environ.get('ETA_REQUIRE_TRAFFIC', 'true').lower() in ('1', 'true', 'yes')
 
         def build_payload(consider_traffic: bool):
             return {
@@ -1547,7 +1549,7 @@ def api_eta():
             return result
 
         # Выбор режима
-        if compare:
+        if compare and not require_traffic:
             res_with = call_and_parse(True if force_traffic is None else (force_traffic in ('1', 'true', 'yes')))
             res_without = call_and_parse(False)
             return jsonify({
@@ -1561,7 +1563,8 @@ def api_eta():
                 'work_lon': float(work_lon)
             })
         else:
-            consider = True if force_traffic is None else (force_traffic in ('1', 'true', 'yes'))
+            # Если требуем пробки, игнорируем параметр и всегда включаем
+            consider = True if require_traffic else (True if force_traffic is None else (force_traffic in ('1', 'true', 'yes')))
             # Ключ кэша: пользователь, координаты и флаг consider_traffic
             cache_key = f"eta:{user.get('telegram_id') or user.get('login')}:" \
                         f"{car_lat:.5f},{car_lon:.5f}->{float(work_lat):.5f},{float(work_lon):.5f}:" \
@@ -1579,54 +1582,59 @@ def api_eta():
                 cached = _eta_cache_get(cache_key)
                 if cached is not None:
                     return jsonify(cached)
-                return jsonify({'success': False, 'error': 'Yandex API HTTP 429', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
+                # Если требуются пробки — не уходим на фолбэки без пробок
+                if require_traffic:
+                    return jsonify({'success': False, 'error': 'Yandex API HTTP 429', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             if res['http_status'] != 200:
-                # Поставщик-фолбэк: OSRM (публичный демо-сервер). Если выключен, сразу идём к приблизительной оценке.
-                use_osrm = os.environ.get('USE_OSRM_FALLBACK', 'true').lower() in ('1', 'true', 'yes')
-                if use_osrm:
+                # Если строго требуем пробки — не используем фолбэки без пробок
+                if not require_traffic:
+                    # Поставщик-фолбэк: OSRM (публичный демо-сервер). Если выключен, сразу идём к приблизительной оценке.
+                    use_osrm = os.environ.get('USE_OSRM_FALLBACK', 'true').lower() in ('1', 'true', 'yes')
+                    if use_osrm:
+                        try:
+                            osrm_url = (
+                                f"https://router.project-osrm.org/route/v1/driving/"
+                                f"{float(car_lon):.6f},{float(car_lat):.6f};{float(work_lon):.6f},{float(work_lat):.6f}?overview=false&alternatives=false&annotations=duration"
+                            )
+                            osrm_resp = requests.get(osrm_url, timeout=10)
+                            if osrm_resp.status_code == 200:
+                                osrm_json = osrm_resp.json()
+                                if osrm_json.get('routes'):
+                                    duration_sec = int(max(0, osrm_json['routes'][0].get('duration', 0)))
+                                    distance_m = calculate_distance(car_lat, car_lon, float(work_lat), float(work_lon))
+                                    response_payload = {
+                                        'success': True,
+                                        'eta_seconds': duration_sec,
+                                        'distance_meters': int(distance_m),
+                                        'source': 'osrm_fallback',
+                                        'consider_traffic': consider,
+                                        'debug': (res['raw'] if debug else None)
+                                    }
+                                    _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
+                                    return jsonify(response_payload)
+                        except Exception:
+                            pass
+                    # Серверный фолбэк: приблизительная оценка ETA по прямому расстоянию и средней скорости
                     try:
-                        osrm_url = (
-                            f"https://router.project-osrm.org/route/v1/driving/"
-                            f"{float(car_lon):.6f},{float(car_lat):.6f};{float(work_lon):.6f},{float(work_lat):.6f}?overview=false&alternatives=false&annotations=duration"
-                        )
-                        osrm_resp = requests.get(osrm_url, timeout=10)
-                        if osrm_resp.status_code == 200:
-                            osrm_json = osrm_resp.json()
-                            if osrm_json.get('routes'):
-                                duration_sec = int(max(0, osrm_json['routes'][0].get('duration', 0)))
-                                distance_m = calculate_distance(car_lat, car_lon, float(work_lat), float(work_lon))
-                                response_payload = {
-                                    'success': True,
-                                    'eta_seconds': duration_sec,
-                                    'distance_meters': int(distance_m),
-                                    'source': 'osrm_fallback',
-                                    'consider_traffic': consider,
-                                    'debug': (res['raw'] if debug else None)
-                                }
-                                _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
-                                return jsonify(response_payload)
+                        avg_speed_kmh = float(os.environ.get('ETA_FALLBACK_SPEED_KMH', 30))  # дефолт 30 км/ч
+                        distance_m = calculate_distance(car_lat, car_lon, float(work_lat), float(work_lon))
+                        eta_sec = int(max(0, (distance_m / (max(1e-3, avg_speed_kmh) * 1000.0 / 3600.0))))
+                        response_payload = {
+                            'success': True,
+                            'eta_seconds': eta_sec,
+                            'distance_meters': int(distance_m),
+                            'source': 'fallback_estimate',
+                            'consider_traffic': consider,
+                            'debug': (res['raw'] if debug else None)
+                        }
+                        # Кэшируем и возвращаем фолбэк, чтобы не дёргать внешний API
+                        _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
+                        return jsonify(response_payload)
                     except Exception:
-                        pass
-
-                # Серверный фолбэк: приблизительная оценка ETA по прямому расстоянию и средней скорости
-                try:
-                    avg_speed_kmh = float(os.environ.get('ETA_FALLBACK_SPEED_KMH', 30))  # дефолт 30 км/ч
-                    distance_m = calculate_distance(car_lat, car_lon, float(work_lat), float(work_lon))
-                    eta_sec = int(max(0, (distance_m / (max(1e-3, avg_speed_kmh) * 1000.0 / 3600.0))))
-                    response_payload = {
-                        'success': True,
-                        'eta_seconds': eta_sec,
-                        'distance_meters': int(distance_m),
-                        'source': 'fallback_estimate',
-                        'consider_traffic': consider,
-                        'debug': (res['raw'] if debug else None)
-                    }
-                    # Кэшируем и возвращаем фолбэк, чтобы не дёргать внешний API
-                    _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
-                    return jsonify(response_payload)
-                except Exception:
-                    return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
+                        return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
+                # Здесь require_traffic=True и нет валидного ответа — возвращаем ошибку поставщика
+                return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             response_payload = {
                 'success': True,
