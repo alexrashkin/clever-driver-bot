@@ -1582,7 +1582,24 @@ def api_eta():
                 return jsonify({'success': False, 'error': 'Yandex API HTTP 429', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             if res['http_status'] != 200:
-                return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
+                # Серверный фолбэк: приблизительная оценка ETA по прямому расстоянию и средней скорости
+                try:
+                    avg_speed_kmh = float(os.environ.get('ETA_FALLBACK_SPEED_KMH', 30))  # дефолт 30 км/ч
+                    distance_m = calculate_distance(car_lat, car_lon, float(work_lat), float(work_lon))
+                    eta_sec = int(max(0, (distance_m / (max(1e-3, avg_speed_kmh) * 1000.0 / 3600.0))))
+                    response_payload = {
+                        'success': True,
+                        'eta_seconds': eta_sec,
+                        'distance_meters': int(distance_m),
+                        'source': 'fallback_estimate',
+                        'consider_traffic': consider,
+                        'debug': (res['raw'] if debug else None)
+                    }
+                    # Кэшируем и возвращаем фолбэк, чтобы не дёргать внешний API
+                    _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
+                    return jsonify(response_payload)
+                except Exception:
+                    return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             response_payload = {
                 'success': True,
