@@ -525,19 +525,35 @@
                     const el = document.getElementById('etaToWork');
                     const now = Date.now();
                     // Никогда не показываем прочерк: если ещё не было расчёта — считаем сразу
-                    if (el && (etaSmoothSec == null || now - lastEtaFetchMs > 15000)) {
+                    // Вводим бэкофф и джиттер для снижения 429
+                    const ETA_FETCH_BASE_MS = 30000; // 30s
+                    const ETA_ON_ERROR_MIN_MS = 90000; // 90s
+                    const ETA_ON_429_MS = 180000; // 180s
+                    const ETA_JITTER_MS = 10000; // +/- 10s
+                    if (typeof window.nextEtaFetchAllowedAt === 'undefined') window.nextEtaFetchAllowedAt = 0;
+                    const jitter = Math.floor(Math.random() * ETA_JITTER_MS);
+                    if (el && (etaSmoothSec == null || now >= (window.nextEtaFetchAllowedAt || 0))) {
                         lastEtaFetchMs = now;
                         try {
                             const etaResp = await fetch('/api/eta');
                             const etaData = await etaResp.json();
                             if (etaData.success && typeof etaData.eta_seconds === 'number') {
                                 updateEtaSmooth(etaData.eta_seconds);
+                                window.nextEtaFetchAllowedAt = now + ETA_FETCH_BASE_MS + jitter;
                             } else {
+                                // Если сервер сигналит про 429 — увеличиваем паузу
+                                const errStr = (etaData && typeof etaData.error === 'string') ? etaData.error : '';
+                                if (errStr.includes('429') || errStr.toLowerCase().includes('too many')) {
+                                    window.nextEtaFetchAllowedAt = now + ETA_ON_429_MS + jitter;
+                                } else {
+                                    window.nextEtaFetchAllowedAt = now + ETA_ON_ERROR_MIN_MS + jitter;
+                                }
                                 computeClientETA(location.latitude, location.longitude, WORK_LAT, WORK_LON)
                                     .then(sec => updateEtaSmooth(sec))
                                     .catch(() => {});
                             }
                         } catch (e) {
+                            window.nextEtaFetchAllowedAt = now + ETA_ON_ERROR_MIN_MS + jitter;
                             computeClientETA(location.latitude, location.longitude, WORK_LAT, WORK_LON)
                                 .then(sec => updateEtaSmooth(sec))
                                 .catch(() => {});
