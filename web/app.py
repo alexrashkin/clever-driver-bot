@@ -1458,6 +1458,8 @@ def api_eta():
         debug = args.get('debug') in ('1', 'true', 'yes')
         # Требовать ли пробки всегда
         require_traffic = os.environ.get('ETA_REQUIRE_TRAFFIC', 'true').lower() in ('1', 'true', 'yes')
+        # Разрешить фолбэк при 429 даже если require_traffic=true (по умолчанию выключено)
+        allow_fallback_on_429 = os.environ.get('ETA_FALLBACK_ON_429', 'false').lower() in ('1', 'true', 'yes')
 
         def build_payload(consider_traffic: bool):
             return {
@@ -1595,12 +1597,12 @@ def api_eta():
                 cached = _eta_cache_get(cache_key)
                 if cached is not None:
                     return jsonify(cached)
-                # Если требуются пробки — не уходим на фолбэки без пробок
-                if require_traffic:
+                # Если строго требуются пробки и не разрешён фолбэк при 429 — возвращаем ошибку
+                if require_traffic and not allow_fallback_on_429:
                     return jsonify({'success': False, 'error': 'Yandex API HTTP 429', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             if res['http_status'] != 200:
-                # Если строго требуем пробки — не используем фолбэки без пробок
+                # Разрешаем фолбэки только если пробки не обязательны
                 if not require_traffic:
                     # Поставщик-фолбэк: OSRM (публичный демо-сервер). Если выключен, сразу идём к приблизительной оценке.
                     use_osrm = os.environ.get('USE_OSRM_FALLBACK', 'true').lower() in ('1', 'true', 'yes')
