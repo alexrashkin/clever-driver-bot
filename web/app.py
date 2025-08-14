@@ -104,6 +104,7 @@ _eta_cache_lock = threading.Lock()
 _eta_global_next_allowed_ts = 0.0  # глобальная отсечка времени следующего запроса с учётом Retry-After
 _eta_stale_store = {}  # храним последний успешный ответ без TTL для режима stale-on-error
 _eta_last_call_ts = {}  # последнее обращение к внешнему API по ключу маршрута (для троттлинга)
+_eta_stale_meta = {}   # последняя позиция авто для ключа маршрута (для принятия решения по движению)
 
 def _eta_cache_get(cache_key: str):
     now_ts = time.time()
@@ -135,6 +136,18 @@ def _eta_stale_get(cache_key: str, max_age_sec: int):
         if entry and (now_ts - entry.get('ts', 0)) <= max_age_sec:
             return entry['data']
     return None
+
+def _eta_stale_set_meta(cache_key: str, car_lat: float, car_lon: float):
+    with _eta_cache_lock:
+        _eta_stale_meta[cache_key] = {
+            'lat': float(car_lat),
+            'lon': float(car_lon),
+            'ts': time.time(),
+        }
+
+def _eta_stale_get_meta(cache_key: str):
+    with _eta_cache_lock:
+        return _eta_stale_meta.get(cache_key)
 
 def _eta_set_global_backoff(retry_after_header: str):
     """Учитываем Retry-After из ответа Яндекса.
@@ -1482,7 +1495,8 @@ def api_eta():
             return {
                 "sources": [{"latitude": car_lat, "longitude": car_lon}],
                 "targets": [{"latitude": float(work_lat), "longitude": float(work_lon)}],
-                "annotations": ["distance", "expected_time", "jam_time", "weights", "times", "durations"],
+                # Оставляем минимально необходимый набор аннотаций для снижения нагрузки
+                "annotations": ["distance", "jam_time", "expected_time"],
                 "consider_traffic": consider_traffic,
                 "transport": "car"
             }
@@ -1659,6 +1673,26 @@ def api_eta():
                 # Если нет ничего — мягкая ошибка, чтобы фронт не дёргал чаще
                 return jsonify({'success': False, 'error': 'ETA throttled, try later'}), 200
 
+            # Если автомобиль почти не двигался, можно вернуть последний успешный результат (stale) без похода во внешний API
+            try:
+                min_move_m = float(os.environ.get('ETA_MIN_MOVEMENT_M', 30))
+            except Exception:
+                min_move_m = 30.0
+            prev_meta = _eta_stale_get_meta(cache_key)
+            if prev_meta is not None:
+                try:
+                    prev_lat = float(prev_meta.get('lat'))
+                    prev_lon = float(prev_meta.get('lon'))
+                    # Используем ту же функцию дистанции
+                    moved_m = calculate_distance(prev_lat, prev_lon, float(car_lat), float(car_lon))
+                    if moved_m < max(0.0, min_move_m):
+                        stale_window_sec = int(os.environ.get('ETA_STALE_ON_NO_MOVE_SEC', 600)) if os.environ.get('ETA_STALE_ON_NO_MOVE_SEC') else 600
+                        stale = _eta_stale_get(cache_key, stale_window_sec)
+                        if stale is not None:
+                            return jsonify(stale)
+                except Exception:
+                    pass
+
             # Вызываем внешний API
             _eta_last_call_ts[cache_key] = now_ts_local
             res = call_and_parse(consider)
@@ -1741,6 +1775,7 @@ def api_eta():
 
             # Сохраняем в кэш на 60 секунд
             _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
+            _eta_stale_set_meta(cache_key, car_lat, car_lon)
             return jsonify(response_payload)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 200
