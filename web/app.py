@@ -1484,6 +1484,7 @@ def api_eta():
         endpoint_candidates.append('https://routes.api.cloud.yandex.net/v2/matrix')
         # Легаси вариант
         endpoint_candidates.append('https://api.routing.yandex.net/v2/matrix')
+        endpoint_candidates.append('https://api.routing.yandex.net/v2/distancematrix')
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Api-Key {api_key}',
