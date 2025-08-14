@@ -1513,9 +1513,11 @@ def api_eta():
         # Облачные варианты (оба встречаются в документации/примерах)
         endpoint_candidates.append('https://routes.api.cloud.yandex.net/routes/v2/matrix')
         endpoint_candidates.append('https://routes.api.cloud.yandex.net/v2/matrix')
-        # Легаси вариант
-        endpoint_candidates.append('https://api.routing.yandex.net/v2/matrix')
-        endpoint_candidates.append('https://api.routing.yandex.net/v2/distancematrix')
+        # Легаси варианты (можно отключить через YANDEX_ROUTING_DISABLE_LEGACY)
+        disable_legacy = os.environ.get('YANDEX_ROUTING_DISABLE_LEGACY', 'false').lower() in ('1', 'true', 'yes')
+        if not disable_legacy:
+            endpoint_candidates.append('https://api.routing.yandex.net/v2/matrix')
+            endpoint_candidates.append('https://api.routing.yandex.net/v2/distancematrix')
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Api-Key {api_key}',
@@ -1553,23 +1555,18 @@ def api_eta():
                     except Exception as e:
                         last_exc = e
                         continue
-                # Если ни один кандидат не сработал (например, только исключения) — пробуем последний легаси на всякий случай
+                # Если ни один кандидат не сработал — формируем ответ 503 без принудительного ухода на legacy
                 if r is None:
-                    try:
-                        r = requests.post('https://api.routing.yandex.net/v2/matrix', json=payload, headers=headers, timeout=10)
-                        url_used = 'https://api.routing.yandex.net/v2/matrix'
-                    except Exception:
-                        # Сформируем фиктивный ответ с 503
-                        class Resp:
-                            status_code = 503
-                            headers = {}
-                            def json(self_inner):
-                                return {"errors": ["All endpoints failed"], "last_exception": str(last_exc) if last_exc else None}
-                            @property
-                            def text(self_inner):
-                                return "All endpoints failed"
-                        r = Resp()
-                        url_used = 'multiple'
+                    class Resp:
+                        status_code = 503
+                        headers = {}
+                        def json(self_inner):
+                            return {"errors": ["All endpoints failed"], "last_exception": str(last_exc) if last_exc else None}
+                        @property
+                        def text(self_inner):
+                            return "All endpoints failed"
+                    r = Resp()
+                    url_used = 'multiple'
                 # Сохраняем глобальный Retry-After, если вернулся 429
                 if r.status_code == 429:
                     # Глобальный бэкофф по Retry-After или дефолтный, если заголовка нет
