@@ -1582,6 +1582,33 @@ def api_eta():
                 return jsonify({'success': False, 'error': 'Yandex API HTTP 429', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             if res['http_status'] != 200:
+                # Поставщик-фолбэк: OSRM (публичный демо-сервер). Если выключен, сразу идём к приблизительной оценке.
+                use_osrm = os.environ.get('USE_OSRM_FALLBACK', 'true').lower() in ('1', 'true', 'yes')
+                if use_osrm:
+                    try:
+                        osrm_url = (
+                            f"https://router.project-osrm.org/route/v1/driving/"
+                            f"{float(car_lon):.6f},{float(car_lat):.6f};{float(work_lon):.6f},{float(work_lat):.6f}?overview=false&alternatives=false&annotations=duration"
+                        )
+                        osrm_resp = requests.get(osrm_url, timeout=10)
+                        if osrm_resp.status_code == 200:
+                            osrm_json = osrm_resp.json()
+                            if osrm_json.get('routes'):
+                                duration_sec = int(max(0, osrm_json['routes'][0].get('duration', 0)))
+                                distance_m = calculate_distance(car_lat, car_lon, float(work_lat), float(work_lon))
+                                response_payload = {
+                                    'success': True,
+                                    'eta_seconds': duration_sec,
+                                    'distance_meters': int(distance_m),
+                                    'source': 'osrm_fallback',
+                                    'consider_traffic': consider,
+                                    'debug': (res['raw'] if debug else None)
+                                }
+                                _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
+                                return jsonify(response_payload)
+                    except Exception:
+                        pass
+
                 # Серверный фолбэк: приблизительная оценка ETA по прямому расстоянию и средней скорости
                 try:
                     avg_speed_kmh = float(os.environ.get('ETA_FALLBACK_SPEED_KMH', 30))  # дефолт 30 км/ч
