@@ -144,6 +144,15 @@ def _eta_set_global_backoff(retry_after_header: str):
         # игнорируем, если не удалось распарсить
         pass
 
+def _eta_set_default_backoff(seconds: int = None):
+    """Устанавливаем дефолтный backoff, если сервер не прислал Retry-After."""
+    global _eta_global_next_allowed_ts
+    try:
+        sec = int(seconds) if seconds is not None else int(os.environ.get('ETA_DEFAULT_BACKOFF_SEC', 60))
+    except Exception:
+        sec = 60
+    _eta_global_next_allowed_ts = max(_eta_global_next_allowed_ts, time.time() + max(1, sec))
+
 # Добавляем заголовки безопасности для всех ответов
 @app.after_request
 def add_security_headers(response):
@@ -1479,7 +1488,12 @@ def api_eta():
                 r = requests.post(url, json=payload, headers=headers, timeout=10)
                 # Сохраняем глобальный Retry-After, если вернулся 429
                 if r.status_code == 429:
-                    _eta_set_global_backoff(r.headers.get('Retry-After'))
+                    # Глобальный бэкофф по Retry-After или дефолтный, если заголовка нет
+                    ra = r.headers.get('Retry-After') if hasattr(r, 'headers') else None
+                    if ra:
+                        _eta_set_global_backoff(ra)
+                    else:
+                        _eta_set_default_backoff()
             result = {
                 'http_status': r.status_code,
                 'consider_traffic': consider_traffic,
