@@ -1489,6 +1489,13 @@ def api_eta():
                 'raw': None
             }
             if r.status_code != 200:
+                try:
+                    result['raw'] = r.json()
+                except Exception:
+                    try:
+                        result['raw'] = r.text
+                    except Exception:
+                        result['raw'] = None
                 return result
             data = r.json()
             result['raw'] = data if debug else None
@@ -1558,10 +1565,10 @@ def api_eta():
                 cached = _eta_cache_get(cache_key)
                 if cached is not None:
                     return jsonify(cached)
-                return jsonify({'success': False, 'error': 'Yandex API HTTP 429'}), 200
+                return jsonify({'success': False, 'error': 'Yandex API HTTP 429', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             if res['http_status'] != 200:
-                return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}'}), 200
+                return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
 
             response_payload = {
                 'success': True,
