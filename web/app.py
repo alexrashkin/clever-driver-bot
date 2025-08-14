@@ -102,6 +102,7 @@ app.register_blueprint(location_web_tracker)
 _eta_cache_store = {}
 _eta_cache_lock = threading.Lock()
 _eta_global_next_allowed_ts = 0.0  # глобальная отсечка времени следующего запроса с учётом Retry-After
+_eta_stale_store = {}  # храним последний успешный ответ без TTL для режима stale-on-error
 
 def _eta_cache_get(cache_key: str):
     now_ts = time.time()
@@ -118,6 +119,21 @@ def _eta_cache_set(cache_key: str, data: dict, ttl_sec: int):
             'data': data,
             'expires_at': expires_at,
         }
+        # Параллельно запоминаем как последний успешный ответ (для stale-on-error)
+        _eta_stale_store[cache_key] = {
+            'data': data,
+            'ts': time.time(),
+        }
+
+def _eta_stale_get(cache_key: str, max_age_sec: int):
+    if max_age_sec <= 0:
+        return None
+    now_ts = time.time()
+    with _eta_cache_lock:
+        entry = _eta_stale_store.get(cache_key)
+        if entry and (now_ts - entry.get('ts', 0)) <= max_age_sec:
+            return entry['data']
+    return None
 
 def _eta_set_global_backoff(retry_after_header: str):
     """Учитываем Retry-After из ответа Яндекса.
@@ -1635,6 +1651,14 @@ def api_eta():
                 cached = _eta_cache_get(cache_key)
                 if cached is not None:
                     return jsonify(cached)
+                # Stale-on-error: вернём последний успешный ответ в пределах окна
+                try:
+                    stale_window_sec = int(os.environ.get('ETA_STALE_ON_ERROR_SEC', 300))
+                except Exception:
+                    stale_window_sec = 300
+                stale = _eta_stale_get(cache_key, stale_window_sec)
+                if stale is not None:
+                    return jsonify(stale)
                 # Если строго требуются пробки и не разрешён фолбэк при 429 — возвращаем ошибку
                 if require_traffic and not allow_fallback_on_429:
                     return jsonify({'success': False, 'error': 'Yandex API HTTP 429', 'car_lat': car_lat, 'car_lon': car_lon, 'work_lat': float(work_lat), 'work_lon': float(work_lon), 'debug': (res['raw'] if debug else None)}), 200
