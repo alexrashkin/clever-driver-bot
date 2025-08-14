@@ -103,6 +103,7 @@ _eta_cache_store = {}
 _eta_cache_lock = threading.Lock()
 _eta_global_next_allowed_ts = 0.0  # глобальная отсечка времени следующего запроса с учётом Retry-After
 _eta_stale_store = {}  # храним последний успешный ответ без TTL для режима stale-on-error
+_eta_last_call_ts = {}  # последнее обращение к внешнему API по ключу маршрута (для троттлинга)
 
 def _eta_cache_get(cache_key: str):
     now_ts = time.time()
@@ -1643,7 +1644,23 @@ def api_eta():
             if cached is not None:
                 return jsonify(cached)
 
+            # Серверный троттлинг: если последний внешний вызов для этого ключа был недавно, отдаём кэш/стейл
+            try:
+                min_interval_sec = int(os.environ.get('ETA_MIN_INTERVAL_SEC', 30))
+            except Exception:
+                min_interval_sec = 30
+            now_ts_local = time.time()
+            last_ts_local = _eta_last_call_ts.get(cache_key)
+            if last_ts_local is not None and (now_ts_local - last_ts_local) < max(0, min_interval_sec):
+                stale_window_sec = int(os.environ.get('ETA_STALE_ON_ERROR_SEC', 300)) if os.environ.get('ETA_STALE_ON_ERROR_SEC') else 300
+                stale = _eta_stale_get(cache_key, stale_window_sec)
+                if stale is not None:
+                    return jsonify(stale)
+                # Если нет ничего — мягкая ошибка, чтобы фронт не дёргал чаще
+                return jsonify({'success': False, 'error': 'ETA throttled, try later'}), 200
+
             # Вызываем внешний API
+            _eta_last_call_ts[cache_key] = now_ts_local
             res = call_and_parse(consider)
 
             # Если 429 — попробуем вернуть последний валидный кэш (если есть)
