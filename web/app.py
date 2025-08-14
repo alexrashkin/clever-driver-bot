@@ -1468,7 +1468,7 @@ def api_eta():
                 "transport": "car"
             }
 
-        url = 'https://api.routing.yandex.net/v2/matrix'
+        url = 'https://routes.api.cloud.yandex.net/routes/v2/matrix'
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Api-Key {api_key}'
