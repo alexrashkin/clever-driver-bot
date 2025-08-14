@@ -1635,8 +1635,8 @@ def api_eta():
         else:
             # Если требуем пробки, игнорируем параметр и всегда включаем
             consider = True if require_traffic else (True if force_traffic is None else (force_traffic in ('1', 'true', 'yes')))
-            # Ключ кэша: пользователь, координаты и флаг consider_traffic
-            cache_key = f"eta:{user.get('telegram_id') or user.get('login')}:" \
+            # Ключ кэша/троттлинга: маршрут конкретного водителя (объединяем просмотры разных пользователей)
+            cache_key = f"eta2:car:{car_user_id}:" \
                         f"{car_lat:.5f},{car_lon:.5f}->{float(work_lat):.5f},{float(work_lon):.5f}:" \
                         f"traffic={int(consider)}"
             # Попытка вернуть из кэша
