@@ -1468,7 +1468,10 @@ def api_eta():
                 "transport": "car"
             }
 
-        url = 'https://routes.api.cloud.yandex.net/routes/v2/matrix'
+        # Эндпоинты Yandex Routes Matrix: сначала облачный, затем легаси как фолбэк
+        env_base_url = os.environ.get('YANDEX_ROUTING_BASE_URL')
+        url_primary = (env_base_url.rstrip('/') + '/routes/v2/matrix') if env_base_url else 'https://routes.api.cloud.yandex.net/routes/v2/matrix'
+        url_legacy = 'https://api.routing.yandex.net/v2/matrix'
         headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Api-Key {api_key}'
@@ -1487,7 +1490,17 @@ def api_eta():
                         return {"errors": ["Too many requests (local backoff)"]}
                 r = Resp()
             else:
-                r = requests.post(url, json=payload, headers=headers, timeout=10)
+                url_used = url_primary
+                try:
+                    r = requests.post(url_primary, json=payload, headers=headers, timeout=10)
+                    # Если облачный эндпоинт не найден (например, в среде без доступа к Yandex Cloud), пробуем легаси
+                    if getattr(r, 'status_code', None) == 404:
+                        r = requests.post(url_legacy, json=payload, headers=headers, timeout=10)
+                        url_used = url_legacy
+                except Exception:
+                    # На любые сетевые ошибки (в т.ч. NameResolutionError) попробуем легаси-хост
+                    r = requests.post(url_legacy, json=payload, headers=headers, timeout=10)
+                    url_used = url_legacy
                 # Сохраняем глобальный Retry-After, если вернулся 429
                 if r.status_code == 429:
                     # Глобальный бэкофф по Retry-After или дефолтный, если заголовка нет
