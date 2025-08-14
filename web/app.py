@@ -94,6 +94,56 @@ db = Database("driver.db")
 # Регистрируем Blueprint для веб-отслеживания
 app.register_blueprint(location_web_tracker)
 
+# ------------------------------
+# Небольшой кэш для ETA, чтобы не выбивать лимиты Yandex Routing API
+# Кэшируем на короткое время (по умолчанию 60 сек) и учитываем Retry-After
+# Ключ кэша зависит от пользователя/координат и флага пробок
+# ------------------------------
+_eta_cache_store = {}
+_eta_cache_lock = threading.Lock()
+_eta_global_next_allowed_ts = 0.0  # глобальная отсечка времени следующего запроса с учётом Retry-After
+
+def _eta_cache_get(cache_key: str):
+    now_ts = time.time()
+    with _eta_cache_lock:
+        entry = _eta_cache_store.get(cache_key)
+        if entry and entry.get('expires_at', 0) > now_ts:
+            return entry['data']
+    return None
+
+def _eta_cache_set(cache_key: str, data: dict, ttl_sec: int):
+    expires_at = time.time() + max(1, int(ttl_sec))
+    with _eta_cache_lock:
+        _eta_cache_store[cache_key] = {
+            'data': data,
+            'expires_at': expires_at,
+        }
+
+def _eta_set_global_backoff(retry_after_header: str):
+    """Учитываем Retry-After из ответа Яндекса.
+    Поддерживает оба формата: число секунд или HTTP-date.
+    """
+    global _eta_global_next_allowed_ts
+    if not retry_after_header:
+        return
+    retry_after_header = str(retry_after_header).strip()
+    try:
+        # Формат в секундах
+        sec = int(retry_after_header)
+        _eta_global_next_allowed_ts = max(_eta_global_next_allowed_ts, time.time() + max(1, sec))
+        return
+    except Exception:
+        pass
+    # Попробуем распарсить HTTP-date
+    try:
+        from email.utils import parsedate_to_datetime
+        dt = parsedate_to_datetime(retry_after_header)
+        if dt is not None:
+            _eta_global_next_allowed_ts = max(_eta_global_next_allowed_ts, dt.timestamp())
+    except Exception:
+        # игнорируем, если не удалось распарсить
+        pass
+
 # Добавляем заголовки безопасности для всех ответов
 @app.after_request
 def add_security_headers(response):
@@ -1414,7 +1464,22 @@ def api_eta():
         }
         def call_and_parse(consider_traffic: bool):
             payload = build_payload(consider_traffic)
-            r = requests.post(url, json=payload, headers=headers, timeout=10)
+            # Глобальный backoff с учётом Retry-After
+            now_ts = time.time()
+            global _eta_global_next_allowed_ts
+            if now_ts < _eta_global_next_allowed_ts:
+                # Преждевременно не обращаемся к внешнему API
+                class Resp:
+                    status_code = 429
+                    headers = {'Retry-After': str(int(_eta_global_next_allowed_ts - now_ts) + 1)}
+                    def json(self):
+                        return {"errors": ["Too many requests (local backoff)"]}
+                r = Resp()
+            else:
+                r = requests.post(url, json=payload, headers=headers, timeout=10)
+                # Сохраняем глобальный Retry-After, если вернулся 429
+                if r.status_code == 429:
+                    _eta_set_global_backoff(r.headers.get('Retry-After'))
             result = {
                 'http_status': r.status_code,
                 'consider_traffic': consider_traffic,
@@ -1476,17 +1541,40 @@ def api_eta():
             })
         else:
             consider = True if force_traffic is None else (force_traffic in ('1', 'true', 'yes'))
+            # Ключ кэша: пользователь, координаты и флаг consider_traffic
+            cache_key = f"eta:{user.get('telegram_id') or user.get('login')}:" \
+                        f"{car_lat:.5f},{car_lon:.5f}->{float(work_lat):.5f},{float(work_lon):.5f}:" \
+                        f"traffic={int(consider)}"
+            # Попытка вернуть из кэша
+            cached = _eta_cache_get(cache_key)
+            if cached is not None:
+                return jsonify(cached)
+
+            # Вызываем внешний API
             res = call_and_parse(consider)
+
+            # Если 429 — попробуем вернуть последний валидный кэш (если есть)
+            if res['http_status'] == 429:
+                cached = _eta_cache_get(cache_key)
+                if cached is not None:
+                    return jsonify(cached)
+                return jsonify({'success': False, 'error': 'Yandex API HTTP 429'}), 200
+
             if res['http_status'] != 200:
                 return jsonify({'success': False, 'error': f'Yandex API HTTP {res["http_status"]}'}), 200
-            return jsonify({
+
+            response_payload = {
                 'success': True,
                 'eta_seconds': (int(res['eta_seconds']) if res['eta_seconds'] is not None else None),
                 'distance_meters': (int(res['distance_meters']) if res['distance_meters'] is not None else None),
                 'source': res['source'],
                 'consider_traffic': consider,
                 'debug': (res['raw'] if debug else None)
-            })
+            }
+
+            # Сохраняем в кэш на 60 секунд
+            _eta_cache_set(cache_key, response_payload, ttl_sec=int(os.environ.get('ETA_CACHE_TTL_SEC', 60)))
+            return jsonify(response_payload)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 200
 
