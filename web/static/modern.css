@@ -14,6 +14,11 @@
   --danger-end: #dc2626;        /* red-600 */
 }
 
+/* Светлый фон по умолчанию для всех страниц */
+html { 
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)) !important;
+}
+
 body {
   background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end)) !important;
   color: var(--text-color) !important;

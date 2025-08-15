@@ -6,11 +6,22 @@ body.dark {
     color: #f1f5ff !important;
 }
 
-/* Единый тёмный фон как на главной для всех страниц, кроме самой главной (body.landing) */
-html { background: #0b1220 !important; }
+/* По умолчанию светлый фон для страниц about и settings */
+html { 
+    background: linear-gradient(135deg, #eef2ff, #f8fafc) !important; /* светлый градиент по умолчанию */
+}
 body:not(.landing):not(.admin-page) {
-    background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
+    background: linear-gradient(135deg, #eef2ff, #f8fafc) !important; /* светлый градиент по умолчанию */
     margin-top: 45px;
+}
+
+/* Тёмная тема для внешнего фона (применяется только когда body.dark) */
+body.dark:not(.landing):not(.admin-page) {
+    background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
+}
+
+body.dark html {
+    background: #0b1220 !important;
 }
 
 /* Улучшенная читабельность таблиц в тёмной теме (по умолчанию тёмные таблицы) */

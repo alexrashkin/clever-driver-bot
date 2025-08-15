@@ -21,11 +21,15 @@ class ThemeManager {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.body.classList.add('dark');
+            // Применяем тёмный фон для html и body
+            this.applyDarkBackground();
             if (this.themeToggleBtn) {
                 this.themeToggleBtn.textContent = '☀️';
             }
         } else {
             document.body.classList.remove('dark');
+            // Применяем светлый фон для html и body
+            this.applyLightBackground();
             if (this.themeToggleBtn) {
                 this.themeToggleBtn.textContent = '🌙';
             }
@@ -41,18 +45,38 @@ class ThemeManager {
         if (isDark) {
             document.body.classList.remove('dark');
             localStorage.setItem('theme', 'light');
+            // Применяем светлый фон
+            this.applyLightBackground();
             if (this.themeToggleBtn) {
                 this.themeToggleBtn.textContent = '🌙';
             }
         } else {
             document.body.classList.add('dark');
             localStorage.setItem('theme', 'dark');
+            // Применяем тёмный фон
+            this.applyDarkBackground();
             if (this.themeToggleBtn) {
                 this.themeToggleBtn.textContent = '☀️';
             }
         }
         
         this.updateLogo();
+    }
+
+    applyLightBackground() {
+        // Светлый градиентный фон для страниц about и settings
+        if (!document.body.classList.contains('landing')) {
+            document.documentElement.style.background = 'linear-gradient(135deg, #eef2ff, #f8fafc)';
+            document.body.style.background = 'linear-gradient(135deg, #eef2ff, #f8fafc)';
+        }
+    }
+
+    applyDarkBackground() {
+        // Тёмный фон для страниц about и settings
+        if (!document.body.classList.contains('landing')) {
+            document.documentElement.style.background = '#0b1220';
+            document.body.style.background = 'linear-gradient(180deg, #0b1220 0%, #0b1220 100%)';
+        }
     }
 
     updateLogo() {
