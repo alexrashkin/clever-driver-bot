@@ -1,0 +1,13 @@
+[1mdiff --git a/web/static/landing.css b/web/static/landing.css[m
+[1mindex 13f49a3..39743bc 100644[m
+[1m--- a/web/static/landing.css[m
+[1m+++ b/web/static/landing.css[m
+[36m@@ -15,7 +15,7 @@[m
+   flex-direction: column;[m
+   align-items: center;[m
+   justify-content: flex-start;[m
+[31m-  padding-top: 24px;[m
+[32m+[m[32m  padding-top: 80px[m
+   overflow: hidden;[m
+   background: radial-gradient(60% 60% at 50% 40%, rgba(6, 182, 212, 0.15) 0%, rgba(2, 6, 23, 0.4) 35%, rgba(2, 6, 23, 0.95) 100%),[m
+               linear-gradient(180deg, var(--hero-bg-start), var(--hero-bg-end));[m
