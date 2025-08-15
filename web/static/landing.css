@@ -15,8 +15,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 60px; /* Уменьшил с 80px */
-  padding-bottom: 20px; /* Добавил небольшой отступ снизу */
+  padding-top: 40px; /* Уменьшил еще больше */
+  padding-bottom: 10px; /* Минимальный отступ снизу */
   background: radial-gradient(60% 60% at 50% 40%, rgba(6, 182, 212, 0.15) 0%, rgba(2, 6, 23, 0.4) 35%, rgba(2, 6, 23, 0.95) 100%),
               linear-gradient(180deg, var(--hero-bg-start), var(--hero-bg-end));
 }
@@ -81,21 +81,21 @@
 .hero-target { position: relative; display: block; }
 
 .hero-cta {
-  margin-top: 20px; /* Уменьшил с 28px */
+  margin-top: 12px; /* Уменьшил еще больше */
 }
 
-.hero-cta-row { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:20px; }
+.hero-cta-row { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:12px; }
 .hero-cta-row .hero-btn { width: 260px; text-align:center; }
 
 .hero-words.hero-stack { row-gap: 18px; }
 
 /* Top links (e.g., About) */
 .hero-top-links { 
-  margin-top: 8px; /* Уменьшил с 12px */
+  margin-top: 4px; /* Уменьшил еще больше */
   display: flex; 
   flex-wrap: wrap; 
   column-gap: 12px; 
-  row-gap: 8px; /* Уменьшил с 12px */
+  row-gap: 6px; /* Уменьшил еще больше */
   justify-content: center; 
   align-items: center;
 }
@@ -109,20 +109,20 @@
 .hero-top-links a:hover { color: #fff; background: rgba(99,102,241,0.22); }
 
 /* Tighter spacing between header and hero words */
-body.landing header .info-block { margin-bottom: 6px !important; } /* Уменьшил с 8px */
-body.landing header .hero-top-links { margin-bottom: 6px !important; } /* Уменьшил с 8px */
-.hero-words { margin-top: 4px; } /* Уменьшил с 6px */
+body.landing header .info-block { margin-bottom: 4px !important; } /* Уменьшил еще больше */
+body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уменьшил еще больше */
+.hero-words { margin-top: 2px; } /* Уменьшил еще больше */
 
 @media (max-width: 640px) {
   .hero { 
     min-height: auto; 
-    padding-top: 40px; /* Уменьшил с 50px */
-    padding-bottom: 15px; /* Уменьшил с 0 */
+    padding-top: 30px; /* Уменьшил еще больше */
+    padding-bottom: 8px; /* Уменьшил еще больше */
   }
-  body.landing header .info-block { margin-bottom: 4px !important; } /* Уменьшил с 6px */
-  body.landing header .hero-top-links { margin-bottom: 8px !important; } /* Уменьшил с 10px */
-  .hero-top-links { row-gap: 12px; } /* Уменьшил с 14px */
-  .hero-words { margin-top: 1px; } /* Уменьшил с 2px */
+  body.landing header .info-block { margin-bottom: 2px !important; } /* Уменьшил еще больше */
+  body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уменьшил еще больше */
+  .hero-top-links { row-gap: 8px; } /* Уменьшил еще больше */
+  .hero-words { margin-top: 0px; } /* Убрал отступ */
 }
 
 /* Responsive adjustments */
@@ -162,7 +162,7 @@ body.landing header .hero-top-links { margin-bottom: 6px !important; } /* Уме
   background: rgba(2, 6, 23, 0.4);
 }
 
-.hero-subtle { color: #94a3b8; font-size: 14px; margin-top: 24px; }
+.hero-subtle { color: #94a3b8; font-size: 14px; margin-top: 16px; } /* Уменьшил еще больше */
 
 /* Light section after dark hero */
 body.landing {
@@ -171,6 +171,8 @@ body.landing {
   color: #e2e8f0 !important;
   /* Убираем лишний отступ снизу для body */
   padding-bottom: 0 !important;
+  /* Убираем скролл */
+  overflow: hidden !important;
 }
 
 /* Карточки-инфоблоки на тёмном фоне */
@@ -178,7 +180,7 @@ body.landing .info-block {
   background: rgba(99, 102, 241, 0.08) !important;
   border-left: 4px solid #6366f1 !important;
   color: #cbd5e1 !important;
-  margin: 15px auto !important; /* Уменьшил отступы */
+  margin: 8px auto !important; /* Уменьшил отступы еще больше */
 }
 body.landing .info-block-title { color: #a5b4fc !important; }
 body.landing .info-block-text { color: #cbd5e1 !important; }
@@ -188,13 +190,13 @@ body.landing footer {
   color: #94a3b8 !important; 
   /* Убираем фиксированное позиционирование для главной страницы */
   position: static !important;
-  margin-top: 20px; /* Добавляем отступ сверху */
+  margin-top: 8px; /* Уменьшил отступ еще больше */
 }
 
 /* Статус и время в hero (тёмный фон) */
 body.landing .status-panel { 
   display: flex; gap: 15px; align-items: center; justify-content: center; 
-  flex-wrap: wrap; margin: 15px auto; /* Уменьшил с 18px */
+  flex-wrap: wrap; margin: 8px auto; /* Уменьшил еще больше */
 }
 body.landing .status-item {
   display: flex; align-items: center; gap: 8px; 
@@ -204,35 +206,52 @@ body.landing .status-item {
   color: #e2e8f0 !important; 
   box-shadow: 0 1px 6px rgba(0,0,0,0.25);
 }
-.hero-legal { color: #94a3b8; font-size: 14px; margin-top: 20px; } /* Уменьшил с 24px */
+.hero-legal { color: #94a3b8; font-size: 14px; margin-top: 12px; } /* Уменьшил еще больше */
 
 /* Дополнительные стили для компактности */
 body.landing .hero-cta {
-  margin-top: 15px !important; /* Уменьшил отступ */
+  margin-top: 8px !important; /* Уменьшил отступ еще больше */
 }
 
 body.landing .hero-cta-row {
-  margin-top: 15px !important; /* Уменьшил отступ */
+  margin-top: 8px !important; /* Уменьшил отступ еще больше */
 }
 
 /* Убираем лишние отступы для информационных блоков */
 body.landing .info-block {
-  margin: 12px auto !important; /* Уменьшил отступы */
+  margin: 6px auto !important; /* Уменьшил отступы еще больше */
 }
 
 /* Компактные отступы для кнопок */
 body.landing .btn-toggle {
-  margin: 8px auto !important; /* Уменьшил отступ */
+  margin: 4px auto !important; /* Уменьшил отступ еще больше */
 }
 
 /* Убираем лишние отступы для статуса */
 body.landing .status {
-  margin: 8px auto !important; /* Уменьшил отступ */
+  margin: 4px auto !important; /* Уменьшил отступ еще больше */
 }
 
 /* Компактные отступы для сообщений */
 body.landing .msg {
-  margin: 8px auto !important; /* Уменьшил отступ */
+  margin: 4px auto !important; /* Уменьшил отступ еще больше */
+}
+
+/* Убираем все лишние отступы для body */
+body.landing {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+/* Убираем отступы для html */
+html {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 
