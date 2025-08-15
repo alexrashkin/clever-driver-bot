@@ -292,9 +292,6 @@ a.btn {
         font-size: 1em;
     }
 }
-footer {
-    flex-shrink: 0;
-}
 
 /* Панель статуса */
 .status-panel {
@@ -346,8 +343,6 @@ footer {
     }
 }
 
-
-
 /* Информационный блок */
 .info-block {
     margin: 20px auto;
@@ -360,15 +355,11 @@ footer {
     transition: background 0.3s, border-color 0.3s;
 }
 
-
-
 .info-block-title {
     margin-bottom: 8px;
     font-weight: 500;
     color: #4338ca;
 }
-
-
 
 .info-block-text {
     font-size: 0.9em;
@@ -376,7 +367,39 @@ footer {
     line-height: 1.4;
 }
 
+/* Фиксированный footer внизу страницы */
+footer {
+    flex-shrink: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background: rgba(11, 18, 32, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 12px 16px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.9em;
+    z-index: 100;
+}
 
+/* Отступ снизу для контента, чтобы footer не перекрывал */
+body {
+    padding-bottom: 80px;
+}
+
+@media (max-width: 640px) {
+    footer {
+        padding: 10px 12px;
+        font-size: 0.85em;
+    }
+    
+    body {
+        padding-bottom: 70px;
+    }
+}
 </style>
 </head>
 <body class="landing">
@@ -515,7 +538,7 @@ footer {
 
       </div>
     </section>
-    <footer style="text-align:center; color:#94a3b8;">
+    <footer>
       © {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин
     </footer>
     <!-- Скрипт обновления времени и статуса -->
