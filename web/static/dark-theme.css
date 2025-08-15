@@ -202,6 +202,92 @@ body.dark .settings-container div {
     color: #e2e8f0 !important; /* Улучшенный контраст - светло-серый текст */
 }
 
+/* Стили для всех элементов страницы настроек в тёмной теме */
+body.dark .settings-container *,
+body.dark .container * {
+    color: #e2e8f0 !important; /* Улучшенный контраст для всех элементов */
+}
+
+/* Специальные стили для информационных блоков на странице настроек */
+body.dark .settings-container div[style*="background: rgba(99, 102, 241, 0.1)"],
+body.dark .settings-container div[style*="background: rgba(34, 197, 94, 0.1)"] {
+    background: rgba(99, 102, 241, 0.15) !important;
+    color: #ffffff !important;
+}
+
+body.dark .settings-container div[style*="background: rgba(34, 197, 94, 0.1)"] {
+    background: rgba(34, 197, 94, 0.15) !important;
+}
+
+/* Стили для заголовков в информационных блоках */
+body.dark .settings-container div[style*="font-weight: 600"] {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Стили для текста в информационных блоках */
+body.dark .settings-container div[style*="color: #374151"] {
+    color: #e2e8f0 !important;
+}
+
+/* Стили для кнопки "Назад на главную" */
+body.dark .back-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+}
+
+body.dark .back-btn:hover,
+body.dark .back-btn:focus {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Стили для всех заголовков на странице */
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6 {
+    color: #ffffff !important;
+}
+
+/* Стили для всех параграфов на странице */
+body.dark p {
+    color: #e2e8f0 !important;
+}
+
+/* Стили для всех span элементов на странице */
+body.dark span {
+    color: #e2e8f0 !important;
+}
+
+/* Стили для всех div элементов на странице */
+body.dark div {
+    color: #e2e8f0 !important;
+}
+
+/* Стили для всех strong элементов на странице */
+body.dark strong {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Стили для всех элементов с inline стилями */
+body.dark [style*="color: #374151"] {
+    color: #e2e8f0 !important;
+}
+
+body.dark [style*="color: #4338ca"] {
+    color: #ffffff !important;
+}
+
+body.dark [style*="color: #15803d"] {
+    color: #ffffff !important;
+}
+
 /* FAQ элементы */
 body.dark .faq-item {
     background: #374151 !important;
@@ -418,4 +504,54 @@ body.dark .btn-secondary {
 }
 body.dark .btn-secondary:hover {
     background: #4f46e5 !important;
+}
+
+/* Универсальные стили для всех элементов на странице в тёмной теме */
+body.dark * {
+    color: #e2e8f0 !important; /* Базовый цвет для всех элементов */
+}
+
+/* Исключения для заголовков и важных элементов */
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+body.dark .container,
+body.dark .settings-container,
+body.dark .login-container,
+body.dark .register-container,
+body.dark .about-container {
+    color: #ffffff !important; /* Белый цвет для основных контейнеров и заголовков */
+}
+
+/* Стили для элементов с inline стилями на странице настроек */
+body.dark div[style*="color: #374151"] {
+    color: #e2e8f0 !important;
+}
+
+body.dark div[style*="color: #4338ca"] {
+    color: #ffffff !important;
+}
+
+body.dark div[style*="color: #15803d"] {
+    color: #ffffff !important;
+}
+
+/* Стили для кнопок и интерактивных элементов */
+body.dark button,
+body.dark .btn,
+body.dark .back-btn {
+    color: #ffffff !important;
+}
+
+/* Стили для текста в информационных блоках */
+body.dark div[style*="font-size: 0.9em"] {
+    color: #e2e8f0 !important;
+}
+
+/* Стили для всех текстовых элементов вне контейнеров */
+body.dark body > *:not(.container):not(.settings-container):not(.login-container):not(.register-container):not(.about-container) {
+    color: #e2e8f0 !important;
 }
