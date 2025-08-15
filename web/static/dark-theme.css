@@ -17,14 +17,14 @@ body.dark body {
     background-color: #0b1220 !important;
 }
 
-/* Дополнительно убираем белую полоску сверху - принудительно переопределяем все элементы */
-body.dark *,
+/* Убираем слишком агрессивные правила для всех элементов */
+/* body.dark *,
 body.dark *::before,
 body.dark *::after {
     background: #0b1220 !important;
     background-image: none !important;
     background-color: #0b1220 !important;
-}
+} */
 
 /* НЕ применяем тёмный фон к элементам на главной странице (landing) */
 body.dark.landing *,
@@ -40,10 +40,10 @@ body.dark.landing,
 body.dark.landing *,
 body.dark.landing *::before,
 body.dark.landing *::after {
-    background: initial !important;
-    background-image: initial !important;
-    background-color: initial !important;
-    color: initial !important;
+    background: transparent !important;
+    background-image: none !important;
+    background-color: transparent !important;
+    color: inherit !important;
 }
 
 /* Специально для кнопок на главной странице */
@@ -51,12 +51,12 @@ body.dark.landing .btn,
 body.dark.landing button,
 body.dark.landing .hero-btn,
 body.dark.landing .nav-btn {
-    background: initial !important;
-    background-image: initial !important;
-    background-color: initial !important;
-    color: initial !important;
-    border: initial !important;
-    box-shadow: initial !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background-color: transparent !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
 }
 
 /* Специально для текста на главной странице */
@@ -70,10 +70,35 @@ body.dark.landing p,
 body.dark.landing span,
 body.dark.landing div,
 body.dark.landing a {
-    color: initial !important;
-    background: initial !important;
-    background-image: initial !important;
-    background-color: initial !important;
+    color: #374151 !important;
+    background: transparent !important;
+    background-image: none !important;
+    background-color: transparent !important;
+}
+
+/* Специально для навигации на главной странице */
+body.dark.landing .nav-btn {
+    background: rgba(99, 102, 241, 0.1) !important;
+    color: #6366f1 !important;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Специально для статусной панели на главной странице */
+body.dark.landing .status-panel {
+    background: rgba(99, 102, 241, 0.1) !important;
+    color: #6366f1 !important;
+}
+
+/* Специально для информационных блоков на главной странице */
+body.dark.landing .info-block {
+    background: rgba(99, 102, 241, 0.1) !important;
+    color: #374151 !important;
+}
+
+/* Специально для футера на главной странице */
+body.dark.landing footer {
+    background: #f8fafc !important;
+    color: #64748b !important;
 }
 
 /* Принудительно переопределяем ВСЕ inline стили на ВСЕХ страницах (кроме главной) */
