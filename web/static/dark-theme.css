@@ -232,98 +232,110 @@ body.dark .theme-btn:hover {
     }
 }
 
-/* Стили для мобильной страницы в тёмной теме */
-body.dark .mobile-tracker {
-    background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
-    color: #ffffff !important;
-}
+/* ===== КРИТИЧЕСКИ ВАЖНЫЕ СТИЛИ ДЛЯ МОБИЛЬНОЙ СТРАНИЦЫ ===== */
 
-/* Убираем белую полоску - принудительно устанавливаем тёмный фон */
+/* Принудительно убираем белую полоску - устанавливаем тёмный фон для ВСЕХ элементов */
 body.dark .mobile-tracker,
+body.dark .mobile-tracker *,
 body.dark .mobile-tracker html,
-body.dark .mobile-tracker body {
+body.dark .mobile-tracker body,
+body.dark .mobile-tracker div,
+body.dark .mobile-tracker section,
+body.dark .mobile-tracker header,
+body.dark .mobile-tracker footer {
     background: #0b1220 !important;
     background-image: none !important;
+    background-color: #0b1220 !important;
 }
 
+/* Основной контейнер мобильной страницы */
 body.dark .mobile-tracker .container {
     background: #23232b !important;
     color: #ffffff !important;
     box-shadow: 0 4px 24px rgba(30, 41, 59, 0.25) !important;
 }
 
-body.dark .mobile-tracker h2 {
+/* Заголовки */
+body.dark .mobile-tracker h1,
+body.dark .mobile-tracker h2,
+body.dark .mobile-tracker h3,
+body.dark .mobile-tracker h4,
+body.dark .mobile-tracker h5,
+body.dark .mobile-tracker h6 {
     color: #ffffff !important;
+    font-weight: 600 !important;
 }
 
+/* Информационные блоки */
 body.dark .mobile-tracker .info {
     color: #e2e8f0 !important;
 }
 
 body.dark .mobile-tracker .info strong {
     color: #ffffff !important;
+    font-weight: 600 !important;
 }
 
+/* Футер */
 body.dark .mobile-tracker footer {
     color: #94a3b8 !important;
 }
 
-/* Улучшенные стили для всех элементов на мобильной странице в тёмной теме */
-body.dark .mobile-tracker * {
-    color: #e2e8f0 !important; /* Базовый цвет для всех элементов */
-}
+/* ===== КРИТИЧЕСКИ ВАЖНЫЕ СТИЛИ ДЛЯ СТАТУСНЫХ БЛОКОВ ===== */
 
-/* Исключения для заголовков и важных элементов */
-body.dark .mobile-tracker h1,
-body.dark .mobile-tracker h2,
-body.dark .mobile-tracker h3,
-body.dark .mobile-tracker h4,
-body.dark .mobile-tracker h5,
-body.dark .mobile-tracker h6,
-body.dark .mobile-tracker .container {
-    color: #ffffff !important; /* Белый цвет для основных элементов */
-}
-
-body.dark .mobile-tracker .info strong {
-    color: #ffffff !important;
-    font-weight: 600 !important;
-}
-
-/* Улучшенные стили для статусных блоков - максимальная читаемость */
-body.dark .mobile-tracker .status-block {
-    color: #ffffff !important;
-    background: #374151 !important;
-    font-weight: 500 !important;
-}
-
-body.dark .mobile-tracker .status-block.working {
+/* Принудительно переопределяем ВСЕ статусные блоки */
+body.dark .mobile-tracker .status-block,
+body.dark .mobile-tracker div[class*="status"],
+body.dark .mobile-tracker div[style*="background"],
+body.dark .mobile-tracker div[style*="background:"] {
     background: #1f2937 !important;
-    color: #ffffff !important; /* Белый текст для максимальной читаемости */
+    color: #ffffff !important;
     font-weight: 600 !important;
+    font-size: 16px !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
-body.dark .mobile-tracker .status-block.error {
+/* Рабочий статус */
+body.dark .mobile-tracker .status-block.working,
+body.dark .mobile-tracker div[class*="working"],
+body.dark .mobile-tracker div[style*="green"] {
+    background: #1f2937 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 18px !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Ошибка */
+body.dark .mobile-tracker .status-block.error,
+body.dark .mobile-tracker div[class*="error"],
+body.dark .mobile-tracker div[style*="red"] {
     background: #4b2323 !important;
-    color: #ffffff !important; /* Белый текст для максимальной читаемости */
-    font-weight: 600 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 18px !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
-/* Принудительно убираем все светлые фоны на мобильной странице */
-body.dark .mobile-tracker *[style*="background"] {
+/* ===== ПРИНУДИТЕЛЬНОЕ ПЕРЕОПРЕДЕЛЕНИЕ ВСЕХ СВЕТЛЫХ ФОНОВ ===== */
+
+/* Убираем ВСЕ светлые фоны на мобильной странице */
+body.dark .mobile-tracker *[style*="background"],
+body.dark .mobile-tracker *[style*="background:"],
+body.dark .mobile-tracker *[style*="linear-gradient"],
+body.dark .mobile-tracker *[style*="rgba"],
+body.dark .mobile-tracker *[style*="rgb"] {
     background: #23232b !important;
+    background-image: none !important;
 }
 
-body.dark .mobile-tracker *[style*="background:"] {
-    background: #23232b !important;
-}
-
-/* Стили для кнопки переключения темы на мобильной странице */
-body.dark .theme-toggle {
+/* Кнопка переключения темы */
+body.dark .mobile-tracker .theme-toggle {
     background: rgba(55, 65, 81, 0.9) !important;
     color: #f1f5ff !important;
     border: 1px solid #4b5563 !important;
 }
 
-body.dark .theme-toggle:hover {
+body.dark .mobile-tracker .theme-toggle:hover {
     background: rgba(75, 85, 99, 0.9) !important;
 }
