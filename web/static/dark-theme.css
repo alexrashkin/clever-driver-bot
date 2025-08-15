@@ -2,7 +2,7 @@
 
 /* Основные стили тёмной темы */
 body.dark {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
     color: #f1f5ff !important;
 }
 
@@ -147,19 +147,19 @@ body:not(.landing):not(.admin-page) {
 
 /* Тёмная тема для внешнего фона (применяется только когда body.dark) */
 body.dark:not(.landing):not(.admin-page) {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
     /* Убираем margin-top который создаёт белую полоску сверху */
 }
 
 body.dark html {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 /* Принудительно устанавливаем тёмный фон для html элемента на главной странице */
 body.dark.landing html {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-    background-color: #020617 !important;
-    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0f172a !important;
+    background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 /* Контейнеры */

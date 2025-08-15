@@ -15,9 +15,9 @@
     <style>
         /* Принудительно устанавливаем темный фон до загрузки CSS */
         html, body {
-            background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-            background-color: #020617 !important;
-            background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+            background-color: #0f172a !important;
+            background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
         }
         
         /* Принудительно убираем все светлые фоны */
@@ -36,9 +36,9 @@
 /* ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН ДЛЯ ВСЕХ ЭЛЕМЕНТОВ */
 html, body {
     font-family: 'Inter', Arial, sans-serif;
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-    background-color: #020617 !important;
-    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0f172a !important;
+    background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
     color: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -731,15 +731,15 @@ html, body, header, section, div, main, .hero, .hero-inner {
         // Функция для принудительной установки темного фона
         function forceDarkBackground() {
             // Принудительно устанавливаем темный фон для всех элементов
-            const darkGradient = 'linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%)';
+            const darkGradient = 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)';
             
             // Устанавливаем фон для html и body
             document.documentElement.style.background = darkGradient + ' !important';
-            document.documentElement.style.backgroundColor = '#020617 !important';
+            document.documentElement.style.backgroundColor = '#0f172a !important';
             document.documentElement.style.backgroundImage = darkGradient + ' !important';
             
             document.body.style.background = darkGradient + ' !important';
-            document.body.style.backgroundColor = '#020617 !important';
+            document.body.style.backgroundColor = '#0f172a !important';
             document.body.style.backgroundImage = darkGradient + ' !important';
             
             // Устанавливаем фон для всех div, section, header, main
@@ -747,7 +747,7 @@ html, body, header, section, div, main, .hero, .hero-inner {
             elements.forEach(el => {
                 if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
                     el.style.background = darkGradient + ' !important';
-                    el.style.backgroundColor = '#020617 !important';
+                    el.style.backgroundColor = '#0f172a !important';
                     el.style.backgroundImage = darkGradient + ' !important';
                 }
             });
@@ -760,7 +760,7 @@ html, body, header, section, div, main, .hero, .hero-inner {
                     if (bg.includes('white') || bg.includes('#fff') || bg.includes('#ffffff') || 
                         bg.includes('rgba(255') || bg.includes('rgb(255')) {
                         el.style.background = darkGradient + ' !important';
-                        el.style.backgroundColor = '#020617 !important';
+                        el.style.backgroundColor = '#0f172a !important';
                         el.style.backgroundImage = darkGradient + ' !important';
                     }
                 }

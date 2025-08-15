@@ -3,9 +3,9 @@
 /* Принудительно устанавливаем тёмный фон для html и body */
 html.landing,
 body.landing {
-  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-  background-color: #020617 !important;
-  background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+  background-color: #0f172a !important;
+  background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 :root {
@@ -25,7 +25,7 @@ body.landing {
   justify-content: flex-start;
   padding-top: 40px; /* Уменьшил еще больше */
   padding-bottom: 10px; /* Минимальный отступ снизу */
-  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
 }
 
 /* Убираем лишние эффекты для единообразного фона */
@@ -168,15 +168,15 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 /* Light section after dark hero */
 body.landing {
   /* Принудительно устанавливаем тёмный фон для всей страницы */
-  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
   color: #e2e8f0 !important;
   /* Убираем лишний отступ снизу для body */
   padding-bottom: 0 !important;
   /* Убираем скролл */
   overflow: hidden !important;
   /* Принудительно убираем все светлые фоны */
-  background-color: #020617 !important;
-  background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+  background-color: #0f172a !important;
+  background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 /* Карточки-инфоблоки на тёмном фоне */
@@ -304,9 +304,9 @@ body.landing main {
 
 /* Принудительно устанавливаем тёмный фон для html элемента */
 html.landing {
-  background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-  background-color: #020617 !important;
-  background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+  background-color: #0f172a !important;
+  background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 
