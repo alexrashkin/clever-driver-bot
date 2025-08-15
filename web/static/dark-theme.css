@@ -329,6 +329,57 @@ body.dark .mobile-tracker *[style*="rgb"] {
     background-image: none !important;
 }
 
+/* ===== МАКСИМАЛЬНО АГРЕССИВНЫЕ ПРАВИЛА ===== */
+
+/* Принудительно переопределяем ВСЕ inline стили на мобильной странице */
+body.dark .mobile-tracker *[style] {
+    background: #0b1220 !important;
+    background-image: none !important;
+    background-color: #0b1220 !important;
+}
+
+/* Принудительно переопределяем ВСЕ градиенты */
+body.dark .mobile-tracker *[style*="linear-gradient"] {
+    background: #0b1220 !important;
+    background-image: none !important;
+}
+
+/* Принудительно переопределяем ВСЕ цвета фона */
+body.dark .mobile-tracker *[style*="background:"] {
+    background: #0b1220 !important;
+}
+
+/* Принудительно переопределяем ВСЕ цвета текста */
+body.dark .mobile-tracker *[style*="color:"] {
+    color: #ffffff !important;
+}
+
+/* ===== МАКСИМАЛЬНО АГРЕССИВНОЕ ПЕРЕОПРЕДЕЛЕНИЕ ===== */
+
+/* Принудительно переопределяем ВСЕ элементы на мобильной странице */
+body.dark .mobile-tracker,
+body.dark .mobile-tracker *,
+body.dark .mobile-tracker *::before,
+body.dark .mobile-tracker *::after {
+    background: #0b1220 !important;
+    background-image: none !important;
+    background-color: #0b1220 !important;
+}
+
+/* Принудительно переопределяем ВСЕ текстовые элементы */
+body.dark .mobile-tracker *,
+body.dark .mobile-tracker p,
+body.dark .mobile-tracker span,
+body.dark .mobile-tracker div,
+body.dark .mobile-tracker h1,
+body.dark .mobile-tracker h2,
+body.dark .mobile-tracker h3,
+body.dark .mobile-tracker h4,
+body.dark .mobile-tracker h5,
+body.dark .mobile-tracker h6 {
+    color: #ffffff !important;
+}
+
 /* Кнопка переключения темы */
 body.dark .mobile-tracker .theme-toggle {
     background: rgba(55, 65, 81, 0.9) !important;
