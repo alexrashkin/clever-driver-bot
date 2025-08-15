@@ -6,6 +6,30 @@ body.dark {
     color: #f1f5ff !important;
 }
 
+/* ===== УНИВЕРСАЛЬНОЕ УБРАНИЕ БЕЛОЙ ПОЛОСКИ ===== */
+
+/* Принудительно убираем белую полоску на ВСЕХ страницах в тёмной теме */
+body.dark,
+body.dark html,
+body.dark body,
+body.dark *,
+body.dark *::before,
+body.dark *::after {
+    background: #0b1220 !important;
+    background-image: none !important;
+    background-color: #0b1220 !important;
+}
+
+/* Принудительно переопределяем ВСЕ inline стили на ВСЕХ страницах */
+body.dark *[style*="background"],
+body.dark *[style*="background:"],
+body.dark *[style*="linear-gradient"],
+body.dark *[style*="rgba"],
+body.dark *[style*="rgb"] {
+    background: #0b1220 !important;
+    background-image: none !important;
+}
+
 /* По умолчанию светлый фон для страниц about и settings */
 html { 
     background: linear-gradient(135deg, #eef2ff, #f8fafc) !important; /* светлый градиент по умолчанию */
@@ -210,6 +234,39 @@ body.dark #theme-toggle:hover,
 body.dark .theme-btn:hover {
     background: rgba(75, 85, 99, 0.9) !important;
     transform: scale(1.05) !important;
+}
+
+/* ===== СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ СТРАНИЦЫ TELEGRAM_LOGIN ===== */
+
+/* Принудительно убираем белую полоску на странице telegram_login */
+body.dark .telegram-login,
+body.dark .telegram-login *,
+body.dark .telegram-login html,
+body.dark .telegram-login body,
+body.dark .telegram-login div,
+body.dark .telegram-login section,
+body.dark .telegram-login header,
+body.dark .telegram-login footer {
+    background: #0b1220 !important;
+    background-image: none !important;
+    background-color: #0b1220 !important;
+}
+
+/* Принудительно переопределяем ВСЕ inline стили на странице telegram_login */
+body.dark .telegram-login *[style*="background"],
+body.dark .telegram-login *[style*="background:"],
+body.dark .telegram-login *[style*="linear-gradient"],
+body.dark .telegram-login *[style*="rgba"],
+body.dark .telegram-login *[style*="rgb"] {
+    background: #0b1220 !important;
+    background-image: none !important;
+}
+
+/* Принудительно переопределяем ВСЕ inline стили на странице telegram_login */
+body.dark .telegram-login *[style] {
+    background: #0b1220 !important;
+    background-image: none !important;
+    background-color: #0b1220 !important;
 }
 
 /* Кнопка темы в навигации */

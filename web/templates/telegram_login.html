@@ -16,6 +16,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            transition: background 0.3s, color 0.3s;
         }
         .container {
             flex: 1 0 auto;
@@ -29,11 +30,13 @@
             flex-direction: column;
             gap: 18px;
             text-align: center;
+            transition: background 0.3s, color 0.3s;
         }
         h2 {
             text-align: center;
             margin-bottom: 18px;
             color: #4338ca;
+            transition: color 0.3s;
         }
         .instruction {
             background: rgba(99, 102, 241, 0.1);
@@ -42,6 +45,7 @@
             margin-bottom: 20px;
             font-size: 0.9em;
             color: #4338ca;
+            transition: background 0.3s, color 0.3s;
         }
         .back-btn {
             display: block;
@@ -66,6 +70,25 @@
             background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
             transform: translateX(-50%) translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
         .alternative-links {
             margin-top: 20px;
@@ -106,9 +129,9 @@
         }
     </style>
 </head>
-<body class="dark">
+<body class="dark telegram-login">
     <a href="/" class="back-btn">← Назад на главную</a>
-    <button id="theme-toggle" class="nav-btn theme-btn" style="position: fixed; top: 20px; right: 20px; z-index: 1001; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">🌙</button>
+    <button id="theme-toggle" class="theme-toggle">🌙</button>
     
     <div class="container">
         <h2>📱 Вход через Telegram</h2>
@@ -157,6 +180,10 @@
     </div>
     <script src="/static/theme-manager.js"></script>
     <script>
+        // Инициализация менеджера темы
+        const themeManager = new ThemeManager();
+        themeManager.init();
+        
         // Проверка загрузки виджета Telegram
         document.addEventListener('DOMContentLoaded', function() {
             const widgetContainer = document.getElementById('telegram-widget-container');
