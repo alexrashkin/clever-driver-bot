@@ -11,21 +11,25 @@ body.dark {
 /* Принудительно убираем белую полоску на ВСЕХ страницах в тёмной теме */
 body.dark,
 body.dark html,
-body.dark body,
-body.dark *,
-body.dark *::before,
-body.dark *::after {
+body.dark body {
     background: #0b1220 !important;
     background-image: none !important;
     background-color: #0b1220 !important;
 }
 
-/* Принудительно переопределяем ВСЕ inline стили на ВСЕХ страницах */
-body.dark *[style*="background"],
-body.dark *[style*="background:"],
-body.dark *[style*="linear-gradient"],
-body.dark *[style*="rgba"],
-body.dark *[style*="rgb"] {
+/* НЕ применяем тёмный фон к элементам на главной странице (landing) */
+body.dark.landing *,
+body.dark.landing *::before,
+body.dark.landing *::after {
+    /* Оставляем оригинальные стили для главной страницы */
+}
+
+/* Принудительно переопределяем ВСЕ inline стили на ВСЕХ страницах (кроме главной) */
+body.dark:not(.landing) *[style*="background"],
+body.dark:not(.landing) *[style*="background:"],
+body.dark:not(.landing) *[style*="linear-gradient"],
+body.dark:not(.landing) *[style*="rgba"],
+body.dark:not(.landing) *[style*="rgb"] {
     background: #0b1220 !important;
     background-image: none !important;
 }
@@ -101,11 +105,11 @@ body.dark select:focus {
 }
 
 /* Кнопки */
-body.dark .btn,
-body.dark button,
-body.dark .nav-btn,
-body.dark .back-btn,
-body.dark .back-link {
+body.dark:not(.landing) .btn,
+body.dark:not(.landing) button,
+body.dark:not(.landing) .nav-btn,
+body.dark:not(.landing) .back-btn,
+body.dark:not(.landing) .back-link {
     background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%) !important;
     color: #fff !important;
 }
@@ -190,48 +194,48 @@ body.dark .settings-container div[style*="color: #374151"] {
 }
 
 /* Стили для кнопки "Назад на главную" */
-body.dark .back-btn {
+body.dark:not(.landing) .back-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: #ffffff !important;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
 }
 
-body.dark .back-btn:hover,
-body.dark .back-btn:focus {
+body.dark:not(.landing) .back-btn:hover,
+body.dark:not(.landing) .back-btn:focus {
     background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
 }
 
 /* Стили для всех заголовков на странице */
-body.dark h1,
-body.dark h2,
-body.dark h3,
-body.dark h4,
-body.dark h5,
-body.dark h6 {
+body.dark:not(.landing) h1,
+body.dark:not(.landing) h2,
+body.dark:not(.landing) h3,
+body.dark:not(.landing) h4,
+body.dark:not(.landing) h5,
+body.dark:not(.landing) h6 {
     color: #ffffff !important;
 }
 
 /* Ссылки */
-body.dark a {
+body.dark:not(.landing) a {
     color: #a5b4fc !important;
 }
 
-body.dark a:hover {
+body.dark:not(.landing) a:hover {
     color: #818cf8 !important;
 }
 
 /* Кнопка переключения темы */
-body.dark #theme-toggle,
-body.dark .theme-btn {
+body.dark:not(.landing) #theme-toggle,
+body.dark:not(.landing) .theme-btn {
     background: rgba(55, 65, 81, 0.9) !important;
     color: #f1f5ff !important;
     border: 1px solid #4b5563 !important;
 }
 
-body.dark #theme-toggle:hover,
-body.dark .theme-btn:hover {
+body.dark:not(.landing) #theme-toggle:hover,
+body.dark:not(.landing) .theme-btn:hover {
     background: rgba(75, 85, 99, 0.9) !important;
     transform: scale(1.05) !important;
 }
