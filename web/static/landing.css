@@ -220,11 +220,10 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
   width: 44px; height: 44px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.25);
-  color: #9ca3af;
   background: rgba(2, 6, 23, 0.4);
 }
 
-.hero-subtle { color: #94a3b8; font-size: 14px; margin-top: 16px; } /* Уменьшил еще больше */
+.hero-subtle { font-size: 14px; margin-top: 16px; } /* Уменьшил еще больше */
 
 /* MagnumFocus стиль для всей страницы */
 body.landing {
@@ -280,7 +279,7 @@ body.landing .status-item {
   color: #e2e8f0 !important; 
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
-.hero-legal { color: #94a3b8; font-size: 14px; margin-top: 12px; } /* Уменьшил еще больше */
+.hero-legal { font-size: 14px; margin-top: 12px; } /* Уменьшил еще больше */
 
 /* Дополнительные стили для компактности */
 body.landing .hero-cta {
