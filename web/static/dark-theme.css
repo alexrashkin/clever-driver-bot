@@ -17,6 +17,15 @@ body.dark body {
     background-color: #0b1220 !important;
 }
 
+/* Дополнительно убираем белую полоску сверху - принудительно переопределяем все элементы */
+body.dark *,
+body.dark *::before,
+body.dark *::after {
+    background: #0b1220 !important;
+    background-image: none !important;
+    background-color: #0b1220 !important;
+}
+
 /* НЕ применяем тёмный фон к элементам на главной странице (landing) */
 body.dark.landing *,
 body.dark.landing *::before,
@@ -450,4 +459,44 @@ body.dark .mobile-tracker .theme-toggle {
 
 body.dark .mobile-tracker .theme-toggle:hover {
     background: rgba(75, 85, 99, 0.9) !important;
+}
+
+/* ===== СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ ТЕКСТА ГЕОЛОКАЦИИ ===== */
+
+/* Улучшенная контрастность для всех текстовых элементов на мобильной странице */
+body.dark .mobile-tracker p,
+body.dark .mobile-tracker span,
+body.dark .mobile-tracker div,
+body.dark .mobile-tracker .info,
+body.dark .mobile-tracker .status-text,
+body.dark .mobile-tracker .geolocation-text {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Максимальная контрастность для текста "🔄 Получение геолокации..." */
+body.dark .mobile-tracker div:contains("🔄"),
+body.dark .mobile-tracker div:contains("Получение"),
+body.dark .mobile-tracker div:contains("геолокации"),
+body.dark .mobile-tracker div[style*="🔄"],
+body.dark .mobile-tracker div[style*="Получение"],
+body.dark .mobile-tracker div[style*="геолокации"] {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 18px !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+    background: #1f2937 !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+}
+
+/* Принудительно переопределяем ВСЕ тексты с эмодзи */
+body.dark .mobile-tracker div:contains("🔄"),
+body.dark .mobile-tracker div:contains("✅"),
+body.dark .mobile-tracker div:contains("❌"),
+body.dark .mobile-tracker div:contains("⚠️") {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
