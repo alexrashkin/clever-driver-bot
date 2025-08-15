@@ -260,6 +260,42 @@ body.dark .mobile-tracker footer {
     color: #94a3b8 !important;
 }
 
+/* Улучшенные стили для всех элементов на мобильной странице в тёмной теме */
+body.dark .mobile-tracker * {
+    color: #e2e8f0 !important; /* Базовый цвет для всех элементов */
+}
+
+/* Исключения для заголовков и важных элементов */
+body.dark .mobile-tracker h1,
+body.dark .mobile-tracker h2,
+body.dark .mobile-tracker h3,
+body.dark .mobile-tracker h4,
+body.dark .mobile-tracker h5,
+body.dark .mobile-tracker h6,
+body.dark .mobile-tracker .container {
+    color: #ffffff !important; /* Белый цвет для основных элементов */
+}
+
+body.dark .mobile-tracker .info strong {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+body.dark .mobile-tracker .status-block {
+    color: #ffffff !important;
+    background: #374151 !important;
+}
+
+body.dark .mobile-tracker .status-block.working {
+    background: #1f2937 !important;
+    color: #34d399 !important;
+}
+
+body.dark .mobile-tracker .status-block.error {
+    background: #4b2323 !important;
+    color: #ef4444 !important;
+}
+
 /* Стили для кнопки переключения темы на мобильной странице */
 body.dark .theme-toggle {
     background: rgba(55, 65, 81, 0.9) !important;
