@@ -234,14 +234,14 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
   padding: 14px 22px;
   border-radius: 999px;
   color: #ffffff;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
   font-weight: 700;
-  border: 2px solid #6366f1;
+  border: 2px solid #3b82f6;
   box-shadow: 
-    0 0 20px rgba(99, 102, 241, 0.6),
-    0 0 40px rgba(99, 102, 241, 0.3),
-    0 0 60px rgba(99, 102, 241, 0.1),
-    inset 0 0 20px rgba(99, 102, 241, 0.1);
+    0 0 20px rgba(59, 130, 246, 0.8),
+    0 0 40px rgba(59, 130, 246, 0.5),
+    0 0 60px rgba(59, 130, 246, 0.3),
+    inset 0 0 20px rgba(59, 130, 246, 0.2);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -261,11 +261,11 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 .hero-btn:hover {
   transform: translateY(-3px);
   box-shadow: 
-    0 0 30px rgba(99, 102, 241, 0.8),
-    0 0 60px rgba(99, 102, 241, 0.5),
-    0 0 90px rgba(99, 102, 241, 0.2),
-    inset 0 0 30px rgba(99, 102, 241, 0.2);
-  border-color: #a5b4fc;
+    0 0 30px rgba(59, 130, 246, 1),
+    0 0 60px rgba(59, 130, 246, 0.7),
+    0 0 90px rgba(59, 130, 246, 0.4),
+    inset 0 0 30px rgba(59, 130, 246, 0.3);
+  border-color: #06b6d4;
 }
 
 .hero-btn:hover::before {
@@ -296,14 +296,16 @@ body.landing {
 
 /* Карточки-инфоблоки на тёмном фоне */
 body.landing .info-block {
-  background: rgba(99, 102, 241, 0.12) !important;
-  border-left: 4px solid #6366f1 !important;
-  color: #e2e8f0 !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-left: 4px solid #3b82f6 !important;
+  color: #ffffff !important;
   margin: 8px auto !important; /* Уменьшил отступы еще больше */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(59, 130, 246, 0.2) !important;
 }
-body.landing .info-block-title { color: #a5b4fc !important; }
-body.landing .info-block-text { color: #e2e8f0 !important; }
+body.landing .info-block-title { color: #60a5fa !important; }
+body.landing .info-block-text { color: #ffffff !important; }
 
 /* Футер на тёмном фоне */
 body.landing footer { 
@@ -332,21 +334,22 @@ body.landing .status-panel {
 body.landing .status-item {
   display: flex; align-items: center; gap: 8px; 
   padding: 8px 12px; 
-  background: rgba(99, 102, 241, 0.15) !important; 
+  background: rgba(59, 130, 246, 0.2) !important; 
   border-radius: 10px; 
-  color: #e2e8f0 !important; 
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #ffffff !important; 
+  border: 1px solid rgba(59, 130, 246, 0.6);
   box-shadow: 
-    0 0 15px rgba(99, 102, 241, 0.4),
-    0 0 30px rgba(99, 102, 241, 0.2);
+    0 0 15px rgba(59, 130, 246, 0.6),
+    0 0 30px rgba(59, 130, 246, 0.4);
   transition: all 0.3s ease;
 }
 
 body.landing .status-item:hover {
   box-shadow: 
-    0 0 20px rgba(99, 102, 241, 0.6),
-    0 0 40px rgba(99, 102, 241, 0.3);
+    0 0 20px rgba(59, 130, 246, 0.8),
+    0 0 40px rgba(59, 130, 246, 0.6);
   transform: translateY(-1px);
+  border-color: rgba(6, 182, 212, 0.8);
 }
 .hero-legal { font-size: 14px; margin-top: 12px; } /* Уменьшил еще больше */
 

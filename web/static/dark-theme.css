@@ -78,21 +78,22 @@ body.dark.landing a {
 
 /* Специально для навигации на главной странице */
 body.dark.landing .nav-btn {
-    background: rgba(99, 102, 241, 0.15) !important;
-    color: #a5b4fc !important;
-    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(59, 130, 246, 0.6) !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4) !important;
 }
 
 /* Специально для статусной панели на главной странице */
 body.dark.landing .status-panel {
-    background: rgba(99, 102, 241, 0.15) !important;
-    color: #a5b4fc !important;
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #ffffff !important;
 }
 
 /* Специально для информационных блоков на главной странице */
 body.dark.landing .info-block {
-    background: rgba(99, 102, 241, 0.12) !important;
-    color: #e2e8f0 !important;
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #ffffff !important;
 }
 
 /* Специально для футера на главной странице */
