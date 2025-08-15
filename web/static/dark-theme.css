@@ -238,6 +238,14 @@ body.dark .mobile-tracker {
     color: #ffffff !important;
 }
 
+/* Убираем белую полоску - принудительно устанавливаем тёмный фон */
+body.dark .mobile-tracker,
+body.dark .mobile-tracker html,
+body.dark .mobile-tracker body {
+    background: #0b1220 !important;
+    background-image: none !important;
+}
+
 body.dark .mobile-tracker .container {
     background: #23232b !important;
     color: #ffffff !important;
@@ -281,19 +289,32 @@ body.dark .mobile-tracker .info strong {
     font-weight: 600 !important;
 }
 
+/* Улучшенные стили для статусных блоков - максимальная читаемость */
 body.dark .mobile-tracker .status-block {
     color: #ffffff !important;
     background: #374151 !important;
+    font-weight: 500 !important;
 }
 
 body.dark .mobile-tracker .status-block.working {
     background: #1f2937 !important;
-    color: #34d399 !important;
+    color: #ffffff !important; /* Белый текст для максимальной читаемости */
+    font-weight: 600 !important;
 }
 
 body.dark .mobile-tracker .status-block.error {
     background: #4b2323 !important;
-    color: #ef4444 !important;
+    color: #ffffff !important; /* Белый текст для максимальной читаемости */
+    font-weight: 600 !important;
+}
+
+/* Принудительно убираем все светлые фоны на мобильной странице */
+body.dark .mobile-tracker *[style*="background"] {
+    background: #23232b !important;
+}
+
+body.dark .mobile-tracker *[style*="background:"] {
+    background: #23232b !important;
 }
 
 /* Стили для кнопки переключения темы на мобильной странице */
