@@ -10,17 +10,79 @@
     <link rel="stylesheet" href="/static/modern.css">
     <link rel="stylesheet" href="/static/button-styles.css">
     <link rel="stylesheet" href="/static/dark-theme.css">
+    
+    <!-- ПРИНУДИТЕЛЬНЫЕ СТИЛИ ДЛЯ ТЕМНОГО ФОНА -->
     <style>
-body {
+        /* Принудительно устанавливаем темный фон до загрузки CSS */
+        html, body {
+            background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+            background-color: #0b1220 !important;
+            background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+        }
+        
+        /* Принудительно убираем все светлые фоны */
+        * {
+            background-color: transparent !important;
+        }
+        
+        /* Принудительно устанавливаем темный фон для всех элементов */
+        html, body, header, section, div, main, .hero, .hero-inner {
+            background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+            background-color: #0b1220 !important;
+            background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+        }
+    </style>
+    <style>
+/* ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН ДЛЯ ВСЕХ ЭЛЕМЕНТОВ */
+html, body {
     font-family: 'Inter', Arial, sans-serif;
-    /* Принудительно устанавливаем темный фон */
     background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
     color: #ffffff !important;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Принудительно убираем ВСЕ светлые фоны */
+* {
+    background-color: transparent !important;
+}
+
+/* Принудительно устанавливаем темный фон для всех элементов */
+html, body, header, section, div, main {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
+
+/* Принудительно убираем все возможные светлые фоны */
+body.landing,
+body.dark,
+body.dark.landing,
+html.landing,
+html.dark,
+html.dark.landing {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
+
+/* Принудительно убираем все inline стили с фоном */
+*[style*="background"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Принудительно устанавливаем темный фон для всех элементов с inline стилями */
+*[style*="background"] {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 .container {
@@ -444,6 +506,40 @@ body {
         padding-bottom: 50px;
     }
 }
+
+/* ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН ДЛЯ ВСЕХ ЭЛЕМЕНТОВ С INLINE СТИЛЯМИ */
+*[style*="background"] {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
+
+/* Принудительно убираем все возможные светлые фоны */
+*[style*="background-color"],
+*[style*="background-image"] {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
+
+/* Принудительно устанавливаем темный фон для всех элементов */
+html, body, header, section, div, main, .hero, .hero-inner {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
+
+/* Принудительно убираем все светлые фоны для всех элементов */
+* {
+    background-color: transparent !important;
+}
+
+/* Принудительно устанавливаем темный фон для всех элементов */
+html, body, header, section, div, main, .hero, .hero-inner {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
 </style>
 </head>
 <body class="dark landing">
@@ -628,6 +724,83 @@ body {
     </script>
     <script>
         window.IS_AUTHORIZED = "{{ is_authorized }}";
+    </script>
+    
+    <!-- ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН -->
+    <script>
+        // Функция для принудительной установки темного фона
+        function forceDarkBackground() {
+            // Принудительно устанавливаем темный фон для всех элементов
+            const darkGradient = 'linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%)';
+            
+            // Устанавливаем фон для html и body
+            document.documentElement.style.background = darkGradient + ' !important';
+            document.documentElement.style.backgroundColor = '#0b1220 !important';
+            document.documentElement.style.backgroundImage = darkGradient + ' !important';
+            
+            document.body.style.background = darkGradient + ' !important';
+            document.body.style.backgroundColor = '#0b1220 !important';
+            document.body.style.backgroundImage = darkGradient + ' !important';
+            
+            // Устанавливаем фон для всех div, section, header, main
+            const elements = document.querySelectorAll('div, section, header, main, .hero, .hero-inner');
+            elements.forEach(el => {
+                if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
+                    el.style.background = darkGradient + ' !important';
+                    el.style.backgroundColor = '#0b1220 !important';
+                    el.style.backgroundImage = darkGradient + ' !important';
+                }
+            });
+            
+            // Убираем все светлые фоны
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(el => {
+                if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
+                    const bg = el.style.background || el.style.backgroundColor || el.style.backgroundImage;
+                    if (bg.includes('white') || bg.includes('#fff') || bg.includes('#ffffff') || 
+                        bg.includes('rgba(255') || bg.includes('rgb(255')) {
+                        el.style.background = darkGradient + ' !important';
+                        el.style.backgroundColor = '#0b1220 !important';
+                        el.style.backgroundImage = darkGradient + ' !important';
+                    }
+                }
+            });
+        }
+        
+        // Выполняем сразу после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            forceDarkBackground();
+            
+            // Повторно выполняем через небольшую задержку
+            setTimeout(forceDarkBackground, 100);
+            setTimeout(forceDarkBackground, 500);
+            setTimeout(forceDarkBackground, 1000);
+        });
+        
+        // Выполняем после полной загрузки страницы
+        window.addEventListener('load', function() {
+            forceDarkBackground();
+            setTimeout(forceDarkBackground, 100);
+        });
+        
+        // Выполняем при изменении DOM
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && 
+                    (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+                    forceDarkBackground();
+                }
+            });
+        });
+        
+        // Начинаем наблюдение
+        document.addEventListener('DOMContentLoaded', function() {
+            observer.observe(document.body, {
+                attributes: true,
+                childList: true,
+                subtree: true
+            });
+        });
     </script>
     <script src="/static/main.js?v=2"></script>
     <script src="/static/landing.js"></script>
