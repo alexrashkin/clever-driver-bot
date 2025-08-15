@@ -143,12 +143,6 @@ body.dark .settings-container div {
     color: #e2e8f0 !important; /* Улучшенный контраст - светло-серый текст */
 }
 
-/* Стили для всех элементов страницы настроек в тёмной теме */
-body.dark .settings-container *,
-body.dark .container * {
-    color: #e2e8f0 !important; /* Улучшенный контраст для всех элементов */
-}
-
 /* Специальные стили для информационных блоков на странице настроек */
 body.dark .settings-container div[style*="background: rgba(99, 102, 241, 0.1)"],
 body.dark .settings-container div[style*="background: rgba(34, 197, 94, 0.1)"] {
@@ -193,58 +187,6 @@ body.dark h4,
 body.dark h5,
 body.dark h6 {
     color: #ffffff !important;
-}
-
-/* Стили для всех параграфов на странице */
-body.dark p {
-    color: #e2e8f0 !important;
-}
-
-/* Стили для всех span элементов на странице */
-body.dark span {
-    color: #e2e8f0 !important;
-}
-
-/* Стили для всех div элементов на странице */
-body.dark div {
-    color: #e2e8f0 !important;
-}
-
-/* Стили для всех strong элементов на странице */
-body.dark strong {
-    color: #ffffff !important;
-    font-weight: 600 !important;
-}
-
-/* Стили для всех элементов с inline стилями */
-body.dark [style*="color: #374151"] {
-    color: #e2e8f0 !important;
-}
-
-body.dark [style*="color: #4338ca"] {
-    color: #ffffff !important;
-}
-
-body.dark [style*="color: #15803d"] {
-    color: #ffffff !important;
-}
-
-/* FAQ элементы */
-body.dark .faq-item {
-    background: #374151 !important;
-    border-left-color: #6366f1 !important;
-}
-
-body.dark .faq-item:hover {
-    background: #4b5563 !important;
-}
-
-body.dark .faq-q {
-    color: #f1f5ff !important;
-}
-
-body.dark .faq-a {
-    color: #94a3b8 !important;
 }
 
 /* Ссылки */
