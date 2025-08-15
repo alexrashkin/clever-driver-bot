@@ -266,4 +266,18 @@ html {
   overflow: hidden !important;
 }
 
+/* Стили для правильных отступов кнопок трекера и резервной передачи */
+body.landing .hero-cta + div[style*="display: flex"] {
+  margin-top: 12px !important;
+}
+
+body.landing .hero-cta + div[style*="gap: 10px"] {
+  margin-top: 12px !important;
+}
+
+/* Альтернативный способ - стили для всех блоков с кнопками трекера */
+body.landing div[style*="gap: 10px"][style*="margin: 0px 0"] {
+  margin: 12px 0 !important;
+}
+
 
