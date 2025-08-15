@@ -40,6 +40,7 @@ body.landing {
   line-height: 0.9;
   letter-spacing: -0.02em;
   color: #ffffff !important;
+  filter: brightness(1.2) contrast(1.1);
   margin-bottom: 40px;
 }
 
@@ -50,6 +51,7 @@ body.landing {
   animation: fadeInUp 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   margin-right: 0.1em;
   color: #ffffff !important;
+  filter: brightness(1.2) contrast(1.1);
 }
 
 .hero-word-animated:nth-child(1) { animation-delay: 0.2s; }
