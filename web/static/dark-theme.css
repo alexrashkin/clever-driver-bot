@@ -231,3 +231,42 @@ body.dark .theme-btn:hover {
         color: #ffffff !important; /* Улучшенный контраст - белый основной текст */
     }
 }
+
+/* Стили для мобильной страницы в тёмной теме */
+body.dark .mobile-tracker {
+    background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
+    color: #ffffff !important;
+}
+
+body.dark .mobile-tracker .container {
+    background: #23232b !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 24px rgba(30, 41, 59, 0.25) !important;
+}
+
+body.dark .mobile-tracker h2 {
+    color: #ffffff !important;
+}
+
+body.dark .mobile-tracker .info {
+    color: #e2e8f0 !important;
+}
+
+body.dark .mobile-tracker .info strong {
+    color: #ffffff !important;
+}
+
+body.dark .mobile-tracker footer {
+    color: #94a3b8 !important;
+}
+
+/* Стили для кнопки переключения темы на мобильной странице */
+body.dark .theme-toggle {
+    background: rgba(55, 65, 81, 0.9) !important;
+    color: #f1f5ff !important;
+    border: 1px solid #4b5563 !important;
+}
+
+body.dark .theme-toggle:hover {
+    background: rgba(75, 85, 99, 0.9) !important;
+}

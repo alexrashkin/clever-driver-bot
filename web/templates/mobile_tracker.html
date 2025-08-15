@@ -8,6 +8,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="/static/dark-theme.css">
+    <link rel="stylesheet" href="/static/theme-manager.js">
     <style>
         body {
             display: flex;
@@ -19,6 +21,7 @@
             align-items: center;
             background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
             color: #222;
+            transition: background 0.3s, color 0.3s;
         }
         .container {
             flex: 1 0 auto;
@@ -39,6 +42,7 @@
             margin-bottom: 18px;
             font-size: 1.5em;
             text-align: center;
+            transition: color 0.3s;
         }
         .status-block {
             background: #e0f7fa;
@@ -83,6 +87,7 @@
             margin-top: 10px;
             text-align: center;
             line-height: 1.5;
+            transition: color 0.3s;
         }
         .back-btn {
             display: block;
@@ -104,11 +109,31 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
         footer {
             text-align: center;
             margin-top: 32px;
             color: #888;
             font-size: 14px;
+            transition: color 0.3s;
         }
         @media (max-width: 500px) {
             .container {
@@ -126,10 +151,18 @@
                 padding: 12px 0;
                 width: 100%;
             }
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.1em;
+            }
         }
     </style>
 </head>
-<body class="dark">
+<body class="mobile-tracker">
+    <button id="theme-toggle" class="theme-toggle">🌙</button>
     <a href="/" class="back-btn">← Назад на главную</a>
     <div class="container">
         <div class="logo-wrap" style="display:flex;justify-content:center;align-items:center;margin-bottom:12px;">
@@ -147,7 +180,12 @@
     <footer>
         © {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин
     </footer>
+    <script src="/static/theme-manager.js"></script>
     <script>
+        // Инициализация менеджера темы
+        const themeManager = new ThemeManager();
+        themeManager.init();
+        
         let lastUpdateTime = null;
         let watchId = null;
         
