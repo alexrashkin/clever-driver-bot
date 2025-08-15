@@ -1,8 +1,8 @@
 /* Landing hero inspired by modern dark, neon/glow style */
 
 :root {
-  --hero-bg-start: #020617; /* slate-950 */
-  --hero-bg-end: #001018;   /* deep cyan-black */
+  --hero-bg-start: #0b1220; /* dark blue */
+  --hero-bg-end: #1e293b;   /* slate-800 */
   --hero-cyan: #06b6d4;     /* cyan-500 */
   --hero-cyan-600: #0891b2; /* cyan-600 */
   --hero-text: #e2e8f0;     /* slate-200 */
@@ -17,24 +17,16 @@
   justify-content: flex-start;
   padding-top: 40px; /* Уменьшил еще больше */
   padding-bottom: 10px; /* Минимальный отступ снизу */
-  background: radial-gradient(60% 60% at 50% 40%, rgba(6, 182, 212, 0.15) 0%, rgba(2, 6, 23, 0.4) 35%, rgba(2, 6, 23, 0.95) 100%),
-              linear-gradient(180deg, var(--hero-bg-start), var(--hero-bg-end));
+  background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%);
 }
 
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.12), transparent 45%);
-  filter: blur(60px);
-  z-index: 0;
-}
+/* Убираем лишние эффекты для единообразного фона */
 
 .hero-inner {
   position: relative;
   z-index: 1;
   text-align: center;
-  color: var(--hero-text);
+  color: #ffffff;
   padding: 0;
 }
 
@@ -46,14 +38,15 @@
 
 .hero-word {
   font-size: clamp(28px, 5vw, 72px);
-  opacity: 0.28;
+  opacity: 0.7;
+  color: #e2e8f0;
 }
 
 .hero-center {
   font-size: clamp(38px, 7.6vw, 76px);
   opacity: 1;
-  color: #fff;
-  text-shadow: 0 2px 20px rgba(6, 182, 212, 0.35), 0 0 60px rgba(6, 182, 212, 0.18);
+  color: #ffffff;
+  text-shadow: 0 2px 20px rgba(255, 255, 255, 0.2);
 }
 
 /* Акцент активной строки, когда рядом "Be" */
@@ -61,7 +54,7 @@
 .hero-center.active {
   opacity: 1 !important;
   color: #ffffff !important;
-  text-shadow: 0 2px 20px rgba(6, 182, 212, 0.35), 0 0 60px rgba(6, 182, 212, 0.18);
+  text-shadow: 0 2px 20px rgba(255, 255, 255, 0.3);
 }
 
 /* Animated "Be" */
@@ -72,9 +65,9 @@
   transform: translate(0, 0);
   transition: transform 700ms cubic-bezier(.2,.8,.2,1), opacity 400ms ease;
   font-size: clamp(28px, 5vw, 56px);
-  color: #e2e8f0;
+  color: #ffffff;
   font-weight: 900;
-  text-shadow: 0 0 24px rgba(6, 182, 212, 0.35);
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.3);
   pointer-events: none;
   z-index: 2;
 }
@@ -143,14 +136,14 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
   display: inline-block;
   padding: 14px 22px;
   border-radius: 999px;
-  color: #001018;
-  background: linear-gradient(90deg, var(--hero-cyan), var(--hero-cyan-600));
+  color: #ffffff;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
   font-weight: 700;
-  box-shadow: 0 10px 35px rgba(6, 182, 212, 0.35);
+  box-shadow: 0 10px 35px rgba(99, 102, 241, 0.4);
   transition: transform 0.15s ease, box-shadow 0.25s ease;
 }
 
-.hero-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(6, 182, 212, 0.45); color: #001018; }
+.hero-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(99, 102, 241, 0.5); color: #ffffff; }
 
 .hero-scroll {
   display: none !important;
@@ -167,7 +160,7 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 /* Light section after dark hero */
 body.landing {
   /* Новый единый тёмный фон для всей страницы */
-  background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
+  background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
   color: #e2e8f0 !important;
   /* Убираем лишний отступ снизу для body */
   padding-bottom: 0 !important;
@@ -177,13 +170,14 @@ body.landing {
 
 /* Карточки-инфоблоки на тёмном фоне */
 body.landing .info-block {
-  background: rgba(99, 102, 241, 0.08) !important;
+  background: rgba(99, 102, 241, 0.12) !important;
   border-left: 4px solid #6366f1 !important;
-  color: #cbd5e1 !important;
+  color: #e2e8f0 !important;
   margin: 8px auto !important; /* Уменьшил отступы еще больше */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 body.landing .info-block-title { color: #a5b4fc !important; }
-body.landing .info-block-text { color: #cbd5e1 !important; }
+body.landing .info-block-text { color: #e2e8f0 !important; }
 
 /* Футер на тёмном фоне */
 body.landing footer { 
@@ -194,9 +188,9 @@ body.landing footer {
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
-  background: rgba(11, 18, 32, 0.95) !important;
+  background: rgba(11, 18, 32, 0.98) !important;
   backdrop-filter: blur(10px) !important;
-  border-top: 1px solid rgba(148, 163, 184, 0.1) !important;
+  border-top: 1px solid rgba(148, 163, 184, 0.2) !important;
   padding: 12px 16px !important;
   text-align: center !important;
   font-size: 0.9em !important;
@@ -212,10 +206,10 @@ body.landing .status-panel {
 body.landing .status-item {
   display: flex; align-items: center; gap: 8px; 
   padding: 8px 12px; 
-  background: rgba(148, 163, 184, 0.12) !important; 
+  background: rgba(99, 102, 241, 0.15) !important; 
   border-radius: 10px; 
   color: #e2e8f0 !important; 
-  box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .hero-legal { color: #94a3b8; font-size: 14px; margin-top: 12px; } /* Уменьшил еще больше */
 

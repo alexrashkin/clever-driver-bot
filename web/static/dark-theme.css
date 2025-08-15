@@ -2,7 +2,7 @@
 
 /* Основные стили тёмной темы */
 body.dark {
-    background: #18181b !important;
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
     color: #f1f5ff !important;
 }
 
@@ -78,27 +78,27 @@ body.dark.landing a {
 
 /* Специально для навигации на главной странице */
 body.dark.landing .nav-btn {
-    background: rgba(99, 102, 241, 0.1) !important;
-    color: #6366f1 !important;
-    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+    background: rgba(99, 102, 241, 0.15) !important;
+    color: #a5b4fc !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
 }
 
 /* Специально для статусной панели на главной странице */
 body.dark.landing .status-panel {
-    background: rgba(99, 102, 241, 0.1) !important;
-    color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.15) !important;
+    color: #a5b4fc !important;
 }
 
 /* Специально для информационных блоков на главной странице */
 body.dark.landing .info-block {
-    background: rgba(99, 102, 241, 0.1) !important;
-    color: #374151 !important;
+    background: rgba(99, 102, 241, 0.12) !important;
+    color: #e2e8f0 !important;
 }
 
 /* Специально для футера на главной странице */
 body.dark.landing footer {
-    background: #f8fafc !important;
-    color: #64748b !important;
+    background: rgba(11, 18, 32, 0.98) !important;
+    color: #94a3b8 !important;
 }
 
 /* Принудительно переопределяем ВСЕ inline стили на ВСЕХ страницах (кроме главной) */
@@ -122,12 +122,12 @@ body:not(.landing):not(.admin-page) {
 
 /* Тёмная тема для внешнего фона (применяется только когда body.dark) */
 body.dark:not(.landing):not(.admin-page) {
-    background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
     /* Убираем margin-top который создаёт белую полоску сверху */
 }
 
 body.dark html {
-    background: #0b1220 !important;
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 /* Контейнеры */
@@ -136,9 +136,10 @@ body.dark .register-container,
 body.dark .login-container,
 body.dark .settings-container,
 body.dark .about-container {
-    background: #23232b !important;
+    background: rgba(30, 41, 59, 0.9) !important;
     color: #ffffff !important; /* Улучшенный контраст - белый основной текст */
-    box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25), 0 1.5px 6px #6366f133 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 1.5px 6px rgba(99, 102, 241, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
 }
 
 /* Улучшенная читаемость для всех текстовых элементов */
