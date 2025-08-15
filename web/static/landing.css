@@ -54,7 +54,6 @@ body.landing {
   font-size: clamp(38px, 7.6vw, 76px);
   opacity: 1;
   color: #ffffff;
-  text-shadow: 0 2px 20px rgba(255, 255, 255, 0.2);
 }
 
 /* Акцент активной строки, когда рядом "Be" */
@@ -62,7 +61,6 @@ body.landing {
 .hero-center.active {
   opacity: 1 !important;
   color: #ffffff !important;
-  text-shadow: 0 2px 20px rgba(255, 255, 255, 0.3);
 }
 
 /* Animated "Be" */
@@ -75,7 +73,6 @@ body.landing {
   font-size: clamp(28px, 5vw, 56px);
   color: #ffffff;
   font-weight: 900;
-  text-shadow: 0 0 24px rgba(255, 255, 255, 0.3);
   pointer-events: none;
   z-index: 2;
 }
