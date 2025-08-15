@@ -90,8 +90,27 @@ body.dark .login-container,
 body.dark .settings-container,
 body.dark .about-container {
     background: #23232b !important;
-    color: #f1f5ff !important;
+    color: #ffffff !important; /* Улучшенный контраст - белый основной текст */
     box-shadow: 0 8px 32px rgba(30, 41, 59, 0.25), 0 1.5px 6px #6366f133 !important;
+}
+
+/* Улучшенная читаемость для всех текстовых элементов */
+body.dark .container p,
+body.dark .container span,
+body.dark .container div,
+body.dark .register-container p,
+body.dark .register-container span,
+body.dark .register-container div,
+body.dark .login-container p,
+body.dark .login-container span,
+body.dark .login-container div,
+body.dark .settings-container p,
+body.dark .settings-container span,
+body.dark .settings-container div,
+body.dark .about-container p,
+body.dark .about-container span,
+body.dark .about-container div {
+    color: #e2e8f0 !important; /* Улучшенный контраст - светло-серый текст */
 }
 
 /* Поля ввода */
@@ -153,15 +172,34 @@ body.dark .error-message {
 /* Информационные блоки */
 body.dark .info-block {
     background: rgba(99, 102, 241, 0.1) !important;
-    color: #f1f5ff !important;
+    color: #ffffff !important; /* Улучшенный контраст - белый текст */
 }
 
 body.dark .info-block-title {
-    color: #a5b4fc !important;
+    color: #ffffff !important; /* Улучшенный контраст - белый заголовок */
+    font-weight: 600 !important;
 }
 
 body.dark .info-block-text {
-    color: #94a3b8 !important;
+    color: #e2e8f0 !important; /* Улучшенный контраст - светло-серый текст */
+}
+
+/* Специальные стили для страницы настроек в тёмной теме */
+body.dark .settings-container {
+    background: #23232b !important;
+    color: #ffffff !important; /* Улучшенный контраст - белый основной текст */
+}
+
+body.dark .settings-container h1,
+body.dark .settings-container h2,
+body.dark .settings-container h3 {
+    color: #ffffff !important; /* Улучшенный контраст - белые заголовки */
+}
+
+body.dark .settings-container p,
+body.dark .settings-container span,
+body.dark .settings-container div {
+    color: #e2e8f0 !important; /* Улучшенный контраст - светло-серый текст */
 }
 
 /* FAQ элементы */
@@ -312,7 +350,7 @@ body.dark .theme-btn:hover {
     body.dark .login-container,
     body.dark .settings-container {
         background: #23232b !important;
-        color: #f1f5ff !important;
+        color: #ffffff !important; /* Улучшенный контраст - белый основной текст */
     }
 } 
 
