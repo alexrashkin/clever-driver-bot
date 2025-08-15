@@ -111,6 +111,31 @@ body.dark:not(.landing) *[style*="rgb"] {
     background-image: none !important;
 }
 
+/* Принудительно убираем ВСЕ светлые фоны на главной странице */
+body.dark.landing *[style*="background"],
+body.dark.landing *[style*="background:"],
+body.dark.landing *[style*="linear-gradient"],
+body.dark.landing *[style*="rgba"],
+body.dark.landing *[style*="rgb"] {
+    background: transparent !important;
+    background-image: none !important;
+    background-color: transparent !important;
+}
+
+/* Принудительно устанавливаем тёмный фон для всех элементов на главной странице */
+body.dark.landing * {
+    background-color: transparent !important;
+}
+
+body.dark.landing header,
+body.dark.landing section,
+body.dark.landing div,
+body.dark.landing main {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
 /* По умолчанию светлый фон для страниц about и settings */
 html { 
     background: linear-gradient(135deg, #eef2ff, #f8fafc) !important; /* светлый градиент по умолчанию */
@@ -128,6 +153,13 @@ body.dark:not(.landing):not(.admin-page) {
 
 body.dark html {
     background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
+
+/* Принудительно устанавливаем тёмный фон для html элемента на главной странице */
+body.dark.landing html {
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    background-color: #0b1220 !important;
+    background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 /* Контейнеры */

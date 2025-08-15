@@ -13,8 +13,9 @@
     <style>
 body {
     font-family: 'Inter', Arial, sans-serif;
-    /* фон задаётся в landing.css (body.landing); здесь не переопределяем */
-    color: #222;
+    /* Принудительно устанавливаем темный фон */
+    background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+    color: #ffffff !important;
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -33,6 +34,7 @@ body {
     flex-direction: column;
     gap: 18px;
     transition: background 0.3s, color 0.3s;
+    color: #ffffff;
 }
 
 .logo-wrap {
@@ -54,11 +56,11 @@ body {
     margin-bottom: 8px;
     font-size: 1.1em;
     font-weight: 500;
-    color: #059669;
-    background: #ecfdf5;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.15);
     border-radius: 8px;
     padding: 8px 0;
-    box-shadow: 0 1px 4px #0596691a;
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.2);
     transition: background 0.3s, color 0.3s;
 }
 
@@ -68,10 +70,10 @@ body {
     font-size: 1.15em;
     font-weight: 500;
     color: #a5b4fc;
-    background: rgba(99, 102, 241, 0.12);
+    background: rgba(99, 102, 241, 0.15);
     border-radius: 10px;
     padding: 10px 0;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     transition: background 0.3s, color 0.3s;
 }
 
@@ -82,16 +84,16 @@ body {
     margin-bottom: 10px;
     border-radius: 10px;
     padding: 10px 12px;
-    background: rgba(16,185,129,0.12);
+    background: rgba(16,185,129,0.15);
     color: #34d399;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     transition: background 0.3s, color 0.3s;
 }
 
 .msg.error {
-    background: rgba(239,68,68,0.12);
+    background: rgba(239,68,68,0.15);
     color: #f87171;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
  .btn {
@@ -388,6 +390,48 @@ footer {
 /* Отступ снизу для контента, чтобы footer не перекрывал */
 body {
     padding-bottom: 60px;
+}
+
+/* Стили для информационных блоков на темном фоне */
+.info-block {
+    background: rgba(99, 102, 241, 0.12) !important;
+    border-left: 4px solid #6366f1 !important;
+    color: #e2e8f0 !important;
+    margin: 8px auto !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.info-block-title {
+    color: #a5b4fc !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+    font-size: 1.1em !important;
+}
+
+.info-block-text {
+    color: #e2e8f0 !important;
+    line-height: 1.5 !important;
+}
+
+/* Стили для навигационных ссылок на темном фоне */
+.hero-top-links a {
+    color: #a5b4fc !important;
+    text-decoration: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    background: rgba(99, 102, 241, 0.1) !important;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+    transition: all 0.3s ease !important;
+    margin: 0 4px !important;
+    display: inline-block !important;
+}
+
+.hero-top-links a:hover {
+    background: rgba(99, 102, 241, 0.2) !important;
+    border-color: rgba(99, 102, 241, 0.4) !important;
+    transform: translateY(-1px) !important;
 }
 
 @media (max-width: 640px) {

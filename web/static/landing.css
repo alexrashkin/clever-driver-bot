@@ -1,5 +1,13 @@
 /* Landing hero inspired by modern dark, neon/glow style */
 
+/* Принудительно устанавливаем тёмный фон для html и body */
+html.landing,
+body.landing {
+  background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+  background-color: #0b1220 !important;
+  background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+}
+
 :root {
   --hero-bg-start: #0b1220; /* dark blue */
   --hero-bg-end: #1e293b;   /* slate-800 */
@@ -159,13 +167,16 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 
 /* Light section after dark hero */
 body.landing {
-  /* Новый единый тёмный фон для всей страницы */
+  /* Принудительно устанавливаем тёмный фон для всей страницы */
   background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
   color: #e2e8f0 !important;
   /* Убираем лишний отступ снизу для body */
   padding-bottom: 0 !important;
   /* Убираем скролл */
   overflow: hidden !important;
+  /* Принудительно убираем все светлые фоны */
+  background-color: #0b1220 !important;
+  background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 /* Карточки-инфоблоки на тёмном фоне */
@@ -272,6 +283,30 @@ body.landing .hero-cta + div[style*="gap: 10px"] {
 /* Альтернативный способ - стили для всех блоков с кнопками трекера */
 body.landing div[style*="gap: 10px"][style*="margin: 0px 0"] {
   margin: 12px 0 !important;
+}
+
+/* Принудительно убираем все светлые фоны для всех элементов на главной странице */
+body.landing *,
+body.landing *::before,
+body.landing *::after {
+  background-color: transparent !important;
+}
+
+/* Принудительно устанавливаем тёмный фон для всех элементов, которые могут иметь фон */
+body.landing header,
+body.landing section,
+body.landing div,
+body.landing main {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Принудительно устанавливаем тёмный фон для html элемента */
+html.landing {
+  background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+  background-color: #0b1220 !important;
+  background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
 }
 
 
