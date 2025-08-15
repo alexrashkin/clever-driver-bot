@@ -234,9 +234,9 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
   padding: 14px 22px;
   border-radius: 999px;
   color: #ffffff;
-  background: #00d4ff;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
   font-weight: 700;
-  border: 2px solid #00d4ff;
+  border: 2px solid #6366f1;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -246,8 +246,8 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 
 .hero-btn:hover {
   transform: translateY(-3px);
-  background: #00ffff;
-  border-color: #00ffff;
+  background: linear-gradient(90deg, #8b5cf6, #a855f7);
+  border-color: #a5b4fc;
 }
 
 
@@ -276,13 +276,13 @@ body.landing {
 
 /* Карточки-инфоблоки на тёмном фоне */
 body.landing .info-block {
-  background: #00d4ff !important;
-  border-left: 4px solid #00d4ff !important;
-  color: #000000 !important;
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-left: 4px solid #6366f1 !important;
+  color: #e2e8f0 !important;
   margin: 8px auto !important; /* Уменьшил отступы еще больше */
 }
-body.landing .info-block-title { color: #000000 !important; }
-body.landing .info-block-text { color: #000000 !important; }
+body.landing .info-block-title { color: #a5b4fc !important; }
+body.landing .info-block-text { color: #e2e8f0 !important; }
 
 /* Футер на тёмном фоне */
 body.landing footer { 
@@ -311,15 +311,15 @@ body.landing .status-panel {
 body.landing .status-item {
   display: flex; align-items: center; gap: 8px; 
   padding: 8px 12px; 
-  background: #00d4ff !important; 
+  background: rgba(99, 102, 241, 0.15) !important; 
   border-radius: 10px; 
-  color: #000000 !important; 
-  border: 1px solid #00d4ff;
+  color: #e2e8f0 !important; 
+  border: 1px solid rgba(99, 102, 241, 0.3);
   transition: all 0.3s ease;
 }
 
 body.landing .status-item:hover {
-  background: #00ffff !important;
+  background: rgba(99, 102, 241, 0.25) !important;
   transform: translateY(-1px);
 }
 .hero-legal { font-size: 14px; margin-top: 12px; } /* Уменьшил еще больше */
