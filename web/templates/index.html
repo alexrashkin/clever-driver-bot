@@ -13,11 +13,11 @@
     
     <!-- ПРИНУДИТЕЛЬНЫЕ СТИЛИ ДЛЯ ТЕМНОГО ФОНА -->
     <style>
-        /* Принудительно устанавливаем темный фон до загрузки CSS */
+        /* MagnumFocus стиль - чистый черный фон */
         html, body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
-            background-color: #0f172a !important;
-            background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+            background: #0a0a0a !important;
+            background-color: #0a0a0a !important;
+            background-image: none !important;
         }
         
         /* Принудительно убираем все светлые фоны */
@@ -36,9 +36,9 @@
 /* ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН ДЛЯ ВСЕХ ЭЛЕМЕНТОВ */
 html, body {
     font-family: 'Inter', Arial, sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
-    background-color: #0f172a !important;
-    background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+    background: #0a0a0a !important;
+    background-color: #0a0a0a !important;
+    background-image: none !important;
     color: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -569,12 +569,18 @@ html, body, header, section, div, main, .hero, .hero-inner {
     <section class="hero">
       <div class="hero-inner">
         {% if not is_authorized %}
-        <!-- Затем слова Fast/Smart/Clever Driver с анимацией Be -->
-        <div class="hero-words hero-stack" style="display:inline-grid; grid-template-columns:auto 1fr; grid-row-gap:10px; align-items:center; column-gap:12px;">
-          <span id="hero-be" class="hero-be-floating" style="grid-column:1 / 2; grid-row:1;">Be</span>
-          <div class="hero-word hero-target" data-hero-target style="grid-column:2 / 3; grid-row:1;">Fast</div>
-          <div class="hero-word hero-target" data-hero-target style="grid-column:2 / 3; grid-row:2;">Smart</div>
-          <div class="hero-center hero-target" data-hero-target style="grid-column:2 / 3; grid-row:3;">Clever Driver</div>
+        <!-- MagnumFocus стиль заголовка -->
+        <div class="hero-title-container">
+          <div class="hero-title">
+            <span class="hero-word-animated" data-word="Be">Be</span>
+            <span class="hero-word-animated" data-word="Fast">Fast</span>
+            <span class="hero-word-animated" data-word="Smart">Smart</span>
+            <span class="hero-word-animated" data-word="Clever">Clever</span>
+            <span class="hero-word-animated" data-word="Driver">Driver</span>
+          </div>
+          <div class="hero-cta-magnum">
+            <a href="/register" class="hero-btn-magnum">Join Waitlist</a>
+          </div>
         </div>
         {% endif %}
         
@@ -728,27 +734,27 @@ html, body, header, section, div, main, .hero, .hero-inner {
     
     <!-- ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН -->
     <script>
-        // Функция для принудительной установки темного фона
-        function forceDarkBackground() {
-            // Принудительно устанавливаем темный фон для всех элементов
-            const darkGradient = 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)';
+        // Функция для принудительной установки MagnumFocus стиля
+        function forceMagnumFocusStyle() {
+            // Принудительно устанавливаем MagnumFocus стиль для всех элементов
+            const magnumBackground = '#0a0a0a';
             
             // Устанавливаем фон для html и body
-            document.documentElement.style.background = darkGradient + ' !important';
-            document.documentElement.style.backgroundColor = '#0f172a !important';
-            document.documentElement.style.backgroundImage = darkGradient + ' !important';
+            document.documentElement.style.background = magnumBackground + ' !important';
+            document.documentElement.style.backgroundColor = magnumBackground + ' !important';
+            document.documentElement.style.backgroundImage = 'none !important';
             
-            document.body.style.background = darkGradient + ' !important';
-            document.body.style.backgroundColor = '#0f172a !important';
-            document.body.style.backgroundImage = darkGradient + ' !important';
+            document.body.style.background = magnumBackground + ' !important';
+            document.body.style.backgroundColor = magnumBackground + ' !important';
+            document.body.style.backgroundImage = 'none !important';
             
             // Устанавливаем фон для всех div, section, header, main
             const elements = document.querySelectorAll('div, section, header, main, .hero, .hero-inner');
             elements.forEach(el => {
                 if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
-                    el.style.background = darkGradient + ' !important';
-                    el.style.backgroundColor = '#0f172a !important';
-                    el.style.backgroundImage = darkGradient + ' !important';
+                    el.style.background = magnumBackground + ' !important';
+                    el.style.backgroundColor = magnumBackground + ' !important';
+                    el.style.backgroundImage = 'none !important';
                 }
             });
             
@@ -759,9 +765,9 @@ html, body, header, section, div, main, .hero, .hero-inner {
                     const bg = el.style.background || el.style.backgroundColor || el.style.backgroundImage;
                     if (bg.includes('white') || bg.includes('#fff') || bg.includes('#ffffff') || 
                         bg.includes('rgba(255') || bg.includes('rgb(255')) {
-                        el.style.background = darkGradient + ' !important';
-                        el.style.backgroundColor = '#0f172a !important';
-                        el.style.backgroundImage = darkGradient + ' !important';
+                        el.style.background = magnumBackground + ' !important';
+                        el.style.backgroundColor = magnumBackground + ' !important';
+                        el.style.backgroundImage = 'none !important';
                     }
                 }
             });

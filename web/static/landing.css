@@ -1,11 +1,11 @@
-/* Landing hero inspired by modern dark, neon/glow style */
+/* MagnumFocus inspired design - modern, clean, elegant */
 
 /* Принудительно устанавливаем тёмный фон для html и body */
 html.landing,
 body.landing {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
-  background-color: #0f172a !important;
-  background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  background-image: none !important;
 }
 
 :root {
@@ -18,14 +18,75 @@ body.landing {
 
 .hero {
   position: relative;
-  min-height: auto;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-top: 40px; /* Уменьшил еще больше */
-  padding-bottom: 10px; /* Минимальный отступ снизу */
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  justify-content: center;
+  padding: 0;
+  background: #0a0a0a;
+}
+
+/* MagnumFocus стиль заголовка */
+.hero-title-container {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.hero-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 900;
+  font-size: clamp(48px, 8vw, 120px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 40px;
+}
+
+.hero-word-animated {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.8s ease-out forwards;
+  margin-right: 0.1em;
+}
+
+.hero-word-animated:nth-child(1) { animation-delay: 0.1s; }
+.hero-word-animated:nth-child(2) { animation-delay: 0.3s; }
+.hero-word-animated:nth-child(3) { animation-delay: 0.5s; }
+.hero-word-animated:nth-child(4) { animation-delay: 0.7s; }
+.hero-word-animated:nth-child(5) { animation-delay: 0.9s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Кнопка в стиле MagnumFocus */
+.hero-cta-magnum {
+  margin-top: 40px;
+}
+
+.hero-btn-magnum {
+  display: inline-block;
+  background: #ffffff;
+  color: #0a0a0a;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  padding: 16px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 2px solid #ffffff;
+}
+
+.hero-btn-magnum:hover {
+  background: transparent;
+  color: #ffffff;
+  transform: translateY(-2px);
 }
 
 /* Убираем лишние эффекты для единообразного фона */
@@ -162,18 +223,15 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 
 .hero-subtle { color: #94a3b8; font-size: 14px; margin-top: 16px; } /* Уменьшил еще больше */
 
-/* Light section after dark hero */
+/* MagnumFocus стиль для всей страницы */
 body.landing {
-  /* Принудительно устанавливаем тёмный фон для всей страницы */
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
-  color: #e2e8f0 !important;
-  /* Убираем лишний отступ снизу для body */
-  padding-bottom: 0 !important;
-  /* Убираем скролл */
-  overflow: hidden !important;
-  /* Принудительно убираем все светлые фоны */
-  background-color: #0f172a !important;
-  background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow-x: hidden !important;
+  background-color: #0a0a0a !important;
+  background-image: none !important;
 }
 
 /* Карточки-инфоблоки на тёмном фоне */
@@ -301,9 +359,9 @@ body.landing main {
 
 /* Принудительно устанавливаем тёмный фон для html элемента */
 html.landing {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
-  background-color: #0f172a !important;
-  background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%) !important;
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  background-image: none !important;
 }
 
 
