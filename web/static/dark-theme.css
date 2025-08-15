@@ -33,6 +33,49 @@ body.dark.landing *::after {
     /* Оставляем оригинальные стили для главной страницы */
 }
 
+/* ===== КРИТИЧЕСКИ ВАЖНО: ПОЛНАЯ ЗАЩИТА ГЛАВНОЙ СТРАНИЦЫ ===== */
+
+/* Принудительно восстанавливаем оригинальные стили для главной страницы */
+body.dark.landing,
+body.dark.landing *,
+body.dark.landing *::before,
+body.dark.landing *::after {
+    background: initial !important;
+    background-image: initial !important;
+    background-color: initial !important;
+    color: initial !important;
+}
+
+/* Специально для кнопок на главной странице */
+body.dark.landing .btn,
+body.dark.landing button,
+body.dark.landing .hero-btn,
+body.dark.landing .nav-btn {
+    background: initial !important;
+    background-image: initial !important;
+    background-color: initial !important;
+    color: initial !important;
+    border: initial !important;
+    box-shadow: initial !important;
+}
+
+/* Специально для текста на главной странице */
+body.dark.landing h1,
+body.dark.landing h2,
+body.dark.landing h3,
+body.dark.landing h4,
+body.dark.landing h5,
+body.dark.landing h6,
+body.dark.landing p,
+body.dark.landing span,
+body.dark.landing div,
+body.dark.landing a {
+    color: initial !important;
+    background: initial !important;
+    background-image: initial !important;
+    background-color: initial !important;
+}
+
 /* Принудительно переопределяем ВСЕ inline стили на ВСЕХ страницах (кроме главной) */
 body.dark:not(.landing) *[style*="background"],
 body.dark:not(.landing) *[style*="background:"],
