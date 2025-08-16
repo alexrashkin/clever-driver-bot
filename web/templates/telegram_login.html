@@ -298,11 +298,15 @@
                                     const relativeUrl = '/telegram_auth';
                                     console.log('🔧 Используем относительный URL:', relativeUrl);
                                     
-                                    // Дополнительная проверка - принудительно используем HTTP
-                                    const forcedHttpUrl = 'http://' + window.location.host + '/telegram_auth';
-                                    console.log('🔧 Принудительно HTTP URL:', forcedHttpUrl);
+                                    // Используем текущий протокол вместо принудительного HTTP
+                                    const currentProtocol = window.location.protocol;
+                                    const currentUrl = currentProtocol + '//' + window.location.host + '/telegram_auth';
+                                    console.log('🔧 Используем текущий протокол URL:', currentUrl);
                                     
-                                    fetch(forcedHttpUrl, {
+                                    console.log('🔧 Отправляем данные авторизации:', data);
+                                    console.log('🔧 Content-Type:', 'application/json');
+                                    
+                                    fetch(currentUrl, {
                                         method: 'POST',
                                         headers: {
                                             'Content-Type': 'application/json',
@@ -388,6 +392,9 @@
                                             if (error.message.includes('SSL_PROTOCOL_ERROR')) {
                                                 console.error('🔒 Ошибка SSL: Сервер работает по HTTP, а браузер пытается подключиться по HTTPS');
                                                 alert('Ошибка SSL: Сервер работает по HTTP. Попробуйте обновить страницу или использовать HTTP протокол.');
+                                            } else if (error.message.includes('Content Security Policy')) {
+                                                console.error('🔒 Ошибка CSP: Content Security Policy блокирует запрос');
+                                                alert('Ошибка безопасности: Content Security Policy блокирует запрос. Обратитесь к администратору.');
                                             } else {
                                                 console.error('🌐 Ошибка сети: Не удается подключиться к серверу');
                                                 alert('Ошибка сети: Не удается подключиться к серверу. Проверьте, запущен ли сервер.');
