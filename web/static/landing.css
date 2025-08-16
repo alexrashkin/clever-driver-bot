@@ -359,8 +359,7 @@ body.landing {
   padding: 0 !important;
   padding-bottom: 60px !important; /* Добавляем отступ снизу для футера */
   min-height: 100vh !important;
-  height: 100vh !important;
-  overflow: hidden !important;
+  overflow: auto !important;
 }
 
 /* Убираем отступы для html */
@@ -368,7 +367,7 @@ html {
   margin: 0 !important;
   padding: 0 !important;
   height: 100% !important;
-  overflow: hidden !important;
+  overflow: auto !important;
 }
 
 /* Стили для правильных отступов кнопок трекера и резервной передачи */
@@ -402,11 +401,43 @@ body.landing main {
   background-image: none !important;
 }
 
+/* Обеспечиваем правильную прокрутку */
+body.landing {
+  -webkit-overflow-scrolling: touch !important; /* Для iOS */
+  scroll-behavior: smooth !important;
+}
+
 /* Принудительно устанавливаем тёмный фон для html элемента */
 html.landing {
   background: #0a0a0a !important;
   background-color: #0a0a0a !important;
   background-image: none !important;
+}
+
+/* Медиа-запрос для мобильных устройств */
+@media (max-width: 768px) {
+  body.landing {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+  
+  html {
+    overflow: auto !important;
+    height: auto !important;
+  }
+  
+  /* Убираем фиксированную высоту для мобильных */
+  body.landing .hero {
+    min-height: auto !important;
+    height: auto !important;
+  }
+  
+  /* Футер на мобильных устройствах */
+  body.landing footer {
+    position: sticky !important;
+    bottom: 0 !important;
+  }
 }
 
 
