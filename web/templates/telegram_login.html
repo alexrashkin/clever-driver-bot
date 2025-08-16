@@ -171,7 +171,7 @@
     <script src="/static/theme-manager.js"></script>
     -->
     <script>
-        // Telegram Login через popup окно - версия 2 (исправлена обработка JSON)
+        // Telegram Login через popup окно - версия 3 (исправлена область видимости переменных)
         document.addEventListener('DOMContentLoaded', function() {
             // Принудительно обновляем страницу при загрузке для избежания проблем с кэшем
             if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
@@ -182,9 +182,9 @@
             
             console.log('🔧 Страница загружена, версия 2, время:', Date.now());
             // Принудительно обновляем страницу для избежания проблем с кэшем
-            if (window.location.search.indexOf('v=2') === -1) {
-                console.log('🔧 Принудительно обновляем страницу для применения исправлений');
-                window.location.href = window.location.href + (window.location.search ? '&' : '?') + 'v=2';
+            if (window.location.search.indexOf('v=3') === -1) {
+                console.log('🔧 Принудительно обновляем страницу для применения исправлений v3');
+                window.location.href = window.location.href + (window.location.search ? '&' : '?') + 'v=3';
                 return;
             }
             const loginBtn = document.getElementById('telegram-login-btn');
