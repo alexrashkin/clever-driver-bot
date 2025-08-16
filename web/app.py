@@ -78,8 +78,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+# Создаем Flask приложение с правильным путем к шаблонам
+template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 app.secret_key = os.environ.get('WEB_SECRET_KEY', 'default_secret_key')
+
+# Настройка MIME-типов для правильного отображения HTML
+app.config['MIME_TYPES'] = {
+    '.html': 'text/html; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.js': 'application/javascript; charset=utf-8'
+}
 
 # Настройки безопасности сессий
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
@@ -93,6 +103,13 @@ db = Database("driver.db")
 
 # Регистрируем Blueprint для веб-отслеживания
 app.register_blueprint(location_web_tracker)
+
+# Middleware для установки правильных заголовков
+# @app.after_request
+# def add_header(response):
+#     if response.mimetype == 'text/html':
+#         response.headers['Content-Type'] = 'text/html; charset=utf-8'
+#     return response
 
 # ------------------------------
 # Небольшой кэш для ETA, чтобы не выбивать лимиты Yandex Routing API
@@ -187,30 +204,49 @@ def _eta_set_default_backoff(seconds: int = None):
 @app.after_request
 def add_security_headers(response):
     """Добавляем заголовки безопасности для защиты от ложных срабатываний антивирусов"""
-    # Content Security Policy - строгая политика безопасности
-    csp_policy = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://telegram.org https://t.me https://api-maps.yandex.ru https://yastatic.net; "
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-        "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-        "img-src 'self' data: https:; "
-        "connect-src 'self' https://api.telegram.org https://api-maps.yandex.ru; "
-        "frame-src 'self' https://telegram.org https://t.me https://oauth.telegram.org; "
-        "object-src 'none'; "
-        "base-uri 'self'; "
-        "form-action 'self'; "
-        "frame-ancestors 'self'; "
-        "upgrade-insecure-requests;"
-    )
     
-    # Добавляем заголовки безопасности
-    response.headers['Content-Security-Policy'] = csp_policy
+    # Устанавливаем правильный Content-Type для HTML
+    if response.mimetype == 'text/html':
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    
+    # Специальная CSP политика для telegram_login
+    if '/telegram_login' in request.path:
+        # Разрешаем popup окна и убираем ограничения iframe
+        csp_policy = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://telegram.org https://t.me; "
+            "style-src 'self' 'unsafe-inline'; "
+            "font-src 'self'; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.telegram.org; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
+            "frame-ancestors 'self';"
+        )
+        response.headers['Content-Security-Policy'] = csp_policy
+        logger.info(f"CSP для telegram_login: {csp_policy}")
+    else:
+        # Content Security Policy - строгая политика безопасности
+        csp_policy = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://telegram.org https://t.me https://api-maps.yandex.ru https://yastatic.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+            "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.telegram.org https://api-maps.yandex.ru; "
+            "frame-src 'self' https://telegram.org https://t.me https://oauth.telegram.org; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
+            "frame-ancestors 'self';"
+        )
+        response.headers['Content-Security-Policy'] = csp_policy
+    
+    # Устанавливаем заголовки безопасности
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    response.headers['Permissions-Policy'] = 'geolocation=(self), microphone=(), camera=()'
     
     return response
 
@@ -639,7 +675,7 @@ def index():
                     work_latitude = user.get('work_latitude') if user else None
                     work_longitude = user.get('work_longitude') if user else None
                     work_radius = user.get('work_radius') if user else None
-                    return render_template(
+                    response = make_response(render_template(
                         'index.html',
                         tracking_status=tracking_status,
                         message=session.pop('flash_message', None),
@@ -655,7 +691,9 @@ def index():
                         auth_type=auth_type,
                         user_name=user_name,
                         needs_telegram_binding=True
-                    )
+                    ))
+                    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+                    return response
         
         # Общая обработка ролей для всех типов авторизации
         if telegram_id or user_login:
@@ -713,7 +751,7 @@ def index():
             conn.close()
             has_recipients = recipients_count > 0
         
-        return render_template(
+        response = make_response(render_template(
             'index.html',
             tracking_status=tracking_status,
             message=message,  # Передаем flash сообщение в шаблон
@@ -730,10 +768,14 @@ def index():
             user_name=user_name,
             needs_telegram_binding=needs_telegram_binding,
             has_recipients=has_recipients
-        )
+        ))
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+        return response
     except Exception as e:
         logger.error(f"Ошибка загрузки главной страницы: {e}")
-        return render_template('index.html', tracking_status=False, message="Ошибка загрузки статуса", year=datetime.now().year)
+        response = make_response(render_template('index.html', tracking_status=False, message="Ошибка загрузки статуса", year=datetime.now().year))
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+        return response
 
 @app.route('/mobile')
 @security_check
@@ -2454,11 +2496,29 @@ def telegram_auth():
             logger.error("TELEGRAM_AUTH: токен Telegram не установлен ни в TELEGRAM_TOKEN, ни в TELEGRAM_BOT_TOKEN, ни в BOT_TOKEN")
             return 'Ошибка конфигурации: токен Telegram не установлен. Обратитесь к администратору.', 500
         
-        # Проверка подписи Telegram
-        data = request.args if request.method == 'GET' else request.form
-        auth_data = dict(data)
-        logger.info(f"TELEGRAM_AUTH: полученные данные: {auth_data}")
+        # Получаем данные в зависимости от метода и типа контента
+        logger.info(f"TELEGRAM_AUTH: Content-Type: {request.headers.get('Content-Type', 'НЕ УСТАНОВЛЕН')}")
+        logger.info(f"TELEGRAM_AUTH: метод запроса: {request.method}")
         
+        if request.method == 'POST':
+            if request.is_json:
+                # Данные приходят как JSON
+                auth_data = request.get_json()
+                logger.info(f"TELEGRAM_AUTH: получены JSON данные: {auth_data}")
+            else:
+                # Данные приходят как form data
+                auth_data = dict(request.form)
+                logger.info(f"TELEGRAM_AUTH: получены form данные: {auth_data}")
+        else:
+            # GET запрос
+            auth_data = dict(request.args)
+            logger.info(f"TELEGRAM_AUTH: получены GET данные: {auth_data}")
+        
+        if not auth_data:
+            logger.error("TELEGRAM_AUTH: данные не получены")
+            return 'Данные авторизации не получены', 400
+        
+        # Проверка подписи Telegram
         hash_ = auth_data.pop('hash', None)
         auth_data.pop('user_id', None)  # Удаляем user_id, если есть
         auth_data = {k: v for k, v in auth_data.items()}
@@ -2502,12 +2562,24 @@ def telegram_auth():
         
         if not user_role:
             # Если роли нет - отправляем на страницу выбора роли
-            logger.info(f"TELEGRAM_AUTH: роли нет, перенаправляем на /select_role")
-            return redirect(url_for('select_role'))
+            logger.info(f"TELEGRAM_AUTH: роли нет, возвращаем JSON для перенаправления на /select_role")
+            response_data = {
+                'success': True,
+                'redirect': '/select_role',
+                'message': 'Пользователь создан, требуется выбор роли'
+            }
+            logger.info(f"TELEGRAM_AUTH: отправляем JSON ответ: {response_data}")
+            return jsonify(response_data)
         else:
             # Если роль есть - отправляем на главную или в настройки
-            logger.info(f"TELEGRAM_AUTH: роль есть ({user_role}), перенаправляем на /")
-            return redirect(url_for('index'))
+            logger.info(f"TELEGRAM_AUTH: роль есть ({user_role}), возвращаем JSON для перенаправления на /")
+            response_data = {
+                'success': True,
+                'redirect': '/',
+                'message': 'Авторизация успешна'
+            }
+            logger.info(f"TELEGRAM_AUTH: отправляем JSON ответ: {response_data}")
+            return jsonify(response_data)
     except Exception as e:
         logger.error(f"TELEGRAM_AUTH: исключение: {e}")
         logger.error(f"TELEGRAM_AUTH: тип исключения: {type(e)}")
@@ -3241,9 +3313,8 @@ def resend_telegram_code():
         return jsonify({'success': False, 'message': f'Внутренняя ошибка сервера: {str(e)}'})
 
 @app.route('/telegram_login')
-@security_check
 def telegram_login():
-    """Страница входа через Telegram"""
+    """Страница входа через Telegram - без rate limiting для локальной разработки"""
     telegram_bot_username = os.environ.get('TELEGRAM_BOT_USERNAME', 'default_bot_username')
     logger.info(f"TELEGRAM_LOGIN: bot_username={telegram_bot_username}")
     
@@ -3251,15 +3322,24 @@ def telegram_login():
     if telegram_bot_username.startswith('@'):
         telegram_bot_username = telegram_bot_username[1:]
     
-    # НЕ изменяем username - используем оригинальный
-    # telegram_bot_username = telegram_bot_username.replace('_', '').lower()
-    
     logger.info(f"TELEGRAM_LOGIN: cleaned_bot_username={telegram_bot_username}")
     
-    # Принудительно используем HTTPS для URL авторизации
-    auth_url = url_for('telegram_auth', _external=True, _scheme='https')
+    # Получаем bot_id из конфигурации
+    from config.settings import Config
+    config = Config()
+    telegram_bot_id = config.TELEGRAM_BOT_ID
+    logger.info(f"TELEGRAM_LOGIN: bot_id={telegram_bot_id}")
     
-    return render_template('telegram_login.html', telegram_bot_username=telegram_bot_username, auth_url=auth_url)
+    # Используем автоматическое определение протокола для URL авторизации
+    auth_url = url_for('telegram_auth', _external=True)
+    
+    # Создаем ответ
+    response = make_response(render_template('telegram_login.html', 
+                                          telegram_bot_username=telegram_bot_username, 
+                                          telegram_bot_id=telegram_bot_id,
+                                          auth_url=auth_url))
+    
+    return response
 
 @app.route('/unbind_telegram', methods=['POST'])
 @security_check
@@ -3622,26 +3702,40 @@ def change_password():
     
     return render_template('change_password.html', message=message, error=error)
 
+# Обработчик для Chrome DevTools
+@app.route('/.well-known/appspecific/com.chrome.devtools.json')
+def chrome_devtools():
+    """Обработчик для Chrome DevTools - возвращает пустой JSON"""
+    return jsonify({}), 200
+
 # Обработчик ошибок
 @app.errorhandler(404)
 def not_found_error(error):
     logger.warning(f"404 ERROR: {request.remote_addr} - {request.url}")
-    return render_template('404.html'), 404
+    response = make_response(render_template('404.html'), 404)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return response
 
 @app.errorhandler(500)
 def internal_error(error):
     logger.error(f"500 ERROR: {request.remote_addr} - {request.url} - {str(error)}")
-    return render_template('500.html'), 500
+    response = make_response(render_template('500.html'), 500)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return response
 
 @app.errorhandler(403)
 def forbidden_error(error):
     logger.warning(f"403 ERROR: {request.remote_addr} - {request.url}")
-    return render_template('403.html'), 403
+    response = make_response(render_template('403.html'), 403)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return response
 
 @app.errorhandler(429)
 def rate_limit_error(error):
     logger.warning(f"429 ERROR: Rate limit exceeded for {request.remote_addr}")
-    return render_template('429.html'), 429
+    response = make_response(render_template('429.html'), 429)
+    response.headers['Content-Type'] = 'text/html; charset=utf-8'
+    return response
 
 
 
@@ -3651,5 +3745,19 @@ def rate_limit_error(error):
 
 if __name__ == '__main__':
     print("🌐 Запуск веб-интерфейса...")
-    print(f"📍 Адрес: http://{config.WEB_HOST}:{config.WEB_PORT}")
-    app.run(host=config.WEB_HOST, port=config.WEB_PORT, debug=False) 
+    
+    if config.SSL_ENABLED and config.SSL_CERT_FILE and config.SSL_KEY_FILE:
+        print(f"🔒 Запуск с HTTPS (SSL)")
+        print(f"📍 Адрес: https://{config.WEB_HOST}:{config.WEB_PORT}")
+        print(f"📜 SSL сертификат: {config.SSL_CERT_FILE}")
+        print(f"🔑 SSL ключ: {config.SSL_KEY_FILE}")
+        app.run(
+            host=config.WEB_HOST, 
+            port=config.WEB_PORT, 
+            debug=False,
+            ssl_context=(config.SSL_CERT_FILE, config.SSL_KEY_FILE)
+        )
+    else:
+        print(f"🌐 Запуск с HTTP")
+        print(f"📍 Адрес: http://{config.WEB_HOST}:{config.WEB_PORT}")
+        app.run(host=config.WEB_HOST, port=config.WEB_PORT, debug=False) 

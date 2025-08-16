@@ -42,6 +42,50 @@ a[class*="btn"] {
     justify-content: center !important;
 }
 
+/* Единый стиль для всех кнопок hero-btn */
+.hero-btn {
+    background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%) !important;
+    color: #e2e8f0 !important;
+    box-shadow: none !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+.hero-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(109, 40, 217, 0.4) !important;
+    background: linear-gradient(90deg, #5b21b6 0%, #4338ca 100%) !important;
+    text-decoration: none !important;
+}
+
+/* Принудительно применяем стили ко всем кнопкам hero-btn */
+button.hero-btn,
+a.hero-btn {
+    background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%) !important;
+    color: #e2e8f0 !important;
+    box-shadow: none !important;
+    transition: all 0.3s ease !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+}
+
+button.hero-btn:hover,
+a.hero-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(109, 40, 217, 0.4) !important;
+    background: linear-gradient(90deg, #5b21b6 0%, #4338ca 100%) !important;
+    text-decoration: none !important;
+}
+
 /* Мобильная адаптация */
 @media (max-width: 768px) {
     .btn, 
@@ -65,5 +109,20 @@ a[class*="btn"] {
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+    }
+    
+    /* Мобильные стили для hero-btn */
+    .hero-btn,
+    button.hero-btn,
+    a.hero-btn {
+        transform: none !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .hero-btn:hover,
+    button.hero-btn:hover,
+    a.hero-btn:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 16px rgba(109, 40, 217, 0.4) !important;
     }
 } 

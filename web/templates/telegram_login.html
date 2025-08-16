@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>Вход через Telegram - Умный водитель</title>
-    <link rel="stylesheet" href="/static/button-styles.css">
-    <link rel="stylesheet" href="/static/dark-theme.css">
+    <!-- Временно отключено для диагностики CSP
+    <link rel="stylesheet" href="/static/button-styles.css?v=2">
+    <link rel="stylesheet" href="/static/dark-theme.css?v=2">
+    -->
     <style>
         body {
             font-family: 'Inter', Arial, sans-serif;
@@ -16,7 +22,6 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: background 0.3s, color 0.3s;
         }
         .container {
             flex: 1 0 auto;
@@ -30,13 +35,11 @@
             flex-direction: column;
             gap: 18px;
             text-align: center;
-            transition: background 0.3s, color 0.3s;
         }
         h2 {
             text-align: center;
             margin-bottom: 18px;
             color: #4338ca;
-            transition: color 0.3s;
         }
         .instruction {
             background: rgba(99, 102, 241, 0.1);
@@ -45,7 +48,6 @@
             margin-bottom: 20px;
             font-size: 0.9em;
             color: #4338ca;
-            transition: background 0.3s, color 0.3s;
         }
         .back-btn {
             display: block;
@@ -70,25 +72,6 @@
             background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
             transform: translateX(-50%) translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1001;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.2em;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-        .theme-toggle:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         }
         .alternative-links {
             margin-top: 20px;
@@ -129,34 +112,38 @@
         }
     </style>
 </head>
-<body class="dark telegram-login">
+<body>
+<body class="dark">
     <a href="/" class="back-btn">← Назад на главную</a>
-    <button id="theme-toggle" class="theme-toggle">🌙</button>
-    
+    <button id="theme-toggle" class="nav-btn theme-btn" style="position: fixed; top: 20px; right: 20px; z-index: 1001; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">🌙</button>
+
     <div class="container">
         <h2>📱 Вход через Telegram</h2>
-        
+
         <div class="instruction">
             <strong>Быстрый и безопасный вход</strong><br>
             Авторизуйтесь через Telegram для доступа к системе
         </div>
-        
+
         <div style="margin: 20px 0;">
-            <!-- Telegram Widget -->
-            <div id="telegram-widget-container" style="min-height: 60px; display: flex; justify-content: center; align-items: center; padding: 10px;">
-                <script async src="https://telegram.org/js/telegram-widget.js?7"
-                        data-telegram-login="{{ telegram_bot_username }}"
-                        data-size="large"
-                        data-userpic="true"
-                        data-request-access="read"
-                        data-auth-url="{{ auth_url }}"
-                        data-lang="ru">
-                </script>
+            <!-- Telegram Login Button вместо виджета -->
+            <div id="telegram-login-container" style="text-align: center; padding: 20px;">
+                <button id="telegram-login-btn" 
+                        style="display: inline-flex; align-items: center; gap: 12px; padding: 16px 32px; background: #0088cc; color: white; border: none; border-radius: 12px; font-size: 1.1em; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3); transition: all 0.3s ease;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    Войти через Telegram
+                </button>
+                
+                <p style="margin-top: 15px; color: #6b7280; font-size: 0.9em;">
+                    Нажмите кнопку, чтобы открыть окно авторизации Telegram
+                </p>
             </div>
-            
-            <!-- Fallback если виджет не загрузился -->
-            <div id="fallback-widget" style="display: none; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-top: 10px;">
-                <p style="color: #666; margin-bottom: 15px;">Виджет Telegram не загрузился</p>
+
+            <!-- Fallback если popup заблокирован -->
+            <div id="fallback-login" style="display: none; text-align: center; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-top: 10px;">
+                <p style="color: #666; margin-bottom: 15px;">Popup окно заблокировано браузером</p>
                 <a href="https://t.me/{{ telegram_bot_username }}" 
                    target="_blank" 
                    style="display: inline-block; padding: 12px 24px; background: #0088cc; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 5px;">
@@ -169,7 +156,7 @@
                 </a>
             </div>
         </div>
-        
+
         <div class="alternative-links">
             <p style="margin-bottom: 15px; color: #6b7280; font-size: 0.9em;">
                 Или используйте другие способы входа:
@@ -178,48 +165,276 @@
             <a href="/register">Зарегистрироваться</a>
         </div>
     </div>
+    <!-- Временно отключено для диагностики CSP
     <script src="/static/theme-manager.js"></script>
+    -->
     <script>
-        // Инициализация менеджера темы
-        const themeManager = new ThemeManager();
-        themeManager.init();
-        
-        // Проверка загрузки виджета Telegram
+        // Telegram Login через popup окно - версия 2 (исправлена обработка JSON)
         document.addEventListener('DOMContentLoaded', function() {
-            const widgetContainer = document.getElementById('telegram-widget-container');
-            const fallbackWidget = document.getElementById('fallback-widget');
-            
-            // Проверяем загрузку скрипта
-            const script = document.querySelector('script[src*="telegram-widget"]');
-            if (script) {
-                script.onload = function() {
-                    console.log('✅ Telegram widget script загружен успешно');
-                };
-                script.onerror = function() {
-                    console.log('❌ Ошибка загрузки Telegram widget script');
-                    fallbackWidget.style.display = 'block';
-                };
+            // Принудительно обновляем страницу при загрузке для избежания проблем с кэшем
+            if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+                console.log('🔧 Обнаружена навигация назад/вперед, обновляем страницу');
+                window.location.reload(true);
+                return;
             }
             
-            // Начинаем проверки через 1 секунду
-            setTimeout(function() {
-                const iframe = widgetContainer.querySelector('iframe');
-                const telegramElement = widgetContainer.querySelector('[data-telegram-login], .telegram-login-widget, .telegram-login, .telegram-login-button');
+            console.log('🔧 Страница загружена, версия 2, время:', Date.now());
+            // Принудительно обновляем страницу для избежания проблем с кэшем
+            if (window.location.search.indexOf('v=2') === -1) {
+                console.log('🔧 Принудительно обновляем страницу для применения исправлений');
+                window.location.href = window.location.href + (window.location.search ? '&' : '?') + 'v=2';
+                return;
+            }
+            const loginBtn = document.getElementById('telegram-login-btn');
+            const fallbackLogin = document.getElementById('fallback-login');
+            
+            // Обработчик клика по кнопке входа
+            loginBtn.addEventListener('click', function() {
+                // Формируем URL для Telegram OAuth
+                const botUsername = '{{ telegram_bot_username }}';
+                const botId = '{{ telegram_bot_id }}';
+                const authUrl = '{{ auth_url }}';
                 
-                const hasIframe = iframe && iframe.offsetHeight > 0 && iframe.style.display !== 'none';
-                const hasTelegramElement = telegramElement && telegramElement.offsetHeight > 0;
+                // Автоматически определяем протокол - используем текущий протокол страницы
+                const protocol = window.location.protocol;
+                const redirectUrl = protocol + '//' + window.location.host + '/telegram_auth';
+                const encodedRedirectUrl = encodeURIComponent(redirectUrl);
                 
-                const hasWidget = hasIframe || hasTelegramElement;
+                console.log('🔧 Отладочная информация:');
+                console.log('📍 Текущий протокол:', window.location.protocol);
+                console.log('🌐 Текущий хост:', window.location.host);
+                console.log('🔗 redirectUrl (автоопределение):', redirectUrl);
+                console.log('🔗 encodedRedirectUrl:', encodedRedirectUrl);
                 
-                if (!hasWidget) {
-                    console.log('Telegram widget не загрузился, показываем fallback');
-                    widgetContainer.style.display = 'none';
-                    fallbackWidget.style.display = 'block';
+                // URL для Telegram OAuth - используем bot_id вместо username
+                const telegramOAuthUrl = `https://oauth.telegram.org/auth?bot_id=${botId}&request_access=write&origin=${encodedRedirectUrl}`;
+                console.log('🔗 Telegram OAuth URL:', telegramOAuthUrl);
+                
+                // Открываем popup окно
+                const popup = window.open(
+                    telegramOAuthUrl,
+                    'telegram_auth',
+                    'width=500,height=600,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
+                );
+                
+                // Проверяем, не заблокирован ли popup
+                if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+                    console.log('Popup заблокирован браузером');
+                    fallbackLogin.style.display = 'block';
+                    return;
+                }
+                
+                // Проверяем состояние popup окна
+                const checkPopup = setInterval(function() {
+                    if (popup.closed) {
+                        clearInterval(checkPopup);
+                        console.log('Popup окно закрыто, проверяем localStorage');
+                        
+                        // Проверяем, есть ли данные авторизации в localStorage
+                        const authData = localStorage.getItem('telegram_auth');
+                        if (authData) {
+                            console.log('Найдены данные в localStorage:', authData);
+                            try {
+                                const data = JSON.parse(authData);
+                                console.log('Получены данные авторизации из localStorage:', data);
+                                
+                                // Проверяем, что у нас есть необходимые данные
+                                if (data.id && data.hash) {
+                                    console.log('Отправляем данные авторизации на сервер...');
+                                    // Отправляем данные на сервер - используем автоматическое определение протокола
+                                    const protocol = window.location.protocol;
+                                    const baseUrl = protocol + '//' + window.location.host;
+                                    const fetchUrl = baseUrl + '/telegram_auth';
+                                    console.log('🔧 Отправляем запрос на:', fetchUrl);
+                                    console.log('🔧 Протокол запроса:', protocol);
+                                    console.log('🔧 Текущий URL страницы:', window.location.href);
+                                    console.log('🔧 Текущий origin:', window.location.origin);
+                                    console.log('🔧 window.location.protocol:', window.location.protocol);
+                                    console.log('🔧 window.location.host:', window.location.host);
+                                    console.log('🔧 window.location.hostname:', window.location.hostname);
+                                    console.log('🔧 window.location.port:', window.location.port);
+                                    
+                                    // Принудительно используем относительный URL для избежания проблем с протоколом
+                                    const relativeUrl = '/telegram_auth';
+                                    console.log('🔧 Используем относительный URL:', relativeUrl);
+                                    
+                                    // Дополнительная проверка - принудительно используем HTTP
+                                    const forcedHttpUrl = 'http://' + window.location.host + '/telegram_auth';
+                                    console.log('🔧 Принудительно HTTP URL:', forcedHttpUrl);
+                                    
+                                    fetch(forcedHttpUrl, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify(data)
+                                    })
+                                    .then(response => {
+                                        console.log('Ответ сервера:', response.status, response.statusText);
+                                        
+                                        // Если сервер возвращает перенаправление (302), обрабатываем его
+                                        if (response.redirected) {
+                                            console.log('Сервер перенаправил на:', response.url);
+                                            // Используем автоматическое определение протокола
+                                            const currentProtocol = window.location.protocol;
+                                            if (response.url.startsWith('https://') && currentProtocol === 'http:') {
+                                                window.location.href = response.url.replace('https://', 'http://');
+                                            } else if (response.url.startsWith('http://') && currentProtocol === 'https:') {
+                                                window.location.href = response.url.replace('http://', 'https://');
+                                            } else {
+                                                window.location.href = response.url;
+                                            }
+                                            return;
+                                        }
+                                        
+                                        // Если статус 302, значит сервер хочет перенаправить
+                                        if (response.status === 302) {
+                                            const redirectUrl = response.headers.get('Location');
+                                            if (redirectUrl) {
+                                                console.log('Перенаправляем на:', redirectUrl);
+                                                // Если redirectUrl относительный, делаем его абсолютным с текущим протоколом
+                                                if (redirectUrl.startsWith('/')) {
+                                                    window.location.href = window.location.protocol + '//' + window.location.host + redirectUrl;
+                                                } else {
+                                                    // Если абсолютный URL, используем автоматическое определение протокола
+                                                    const currentProtocol = window.location.protocol;
+                                                    if (redirectUrl.startsWith('https://') && currentProtocol === 'http:') {
+                                                        window.location.href = redirectUrl.replace('https://', 'http://');
+                                                    } else if (redirectUrl.startsWith('http://') && currentProtocol === 'https:') {
+                                                        window.location.href = redirectUrl.replace('http://', 'https://');
+                                                    } else {
+                                                        window.location.href = redirectUrl;
+                                                    }
+                                                }
+                                            } else {
+                                                console.log('Перенаправляем на /select_role');
+                                                window.location.href = window.location.protocol + '//' + window.location.host + '/select_role';
+                                            }
+                                            return;
+                                        }
+                                        
+                                        // Для других статусов пытаемся получить JSON
+                                        if (response.ok) {
+                                            return response.json();
+                                        } else {
+                                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                        }
+                                    })
+                                    .then(result => {
+                                        console.log('Получен ответ от сервера:', result);
+                                        if (result && result.success) {
+                                            console.log('Авторизация успешна:', result.message);
+                                            if (result.redirect) {
+                                                console.log('Перенаправляем на:', result.redirect);
+                                                // Используем автоматическое определение протокола для перенаправления
+                                                window.location.href = window.location.protocol + '//' + window.location.host + result.redirect;
+                                            } else {
+                                                // По умолчанию перенаправляем на главную
+                                                window.location.href = window.location.protocol + '//' + window.location.host + '/';
+                                            }
+                                        } else if (result && result.error) {
+                                            console.error('Ошибка авторизации:', result.error);
+                                            alert('Ошибка авторизации: ' + result.error);
+                                        } else {
+                                            console.error('Неожиданный формат ответа:', result);
+                                            alert('Неожиданный формат ответа от сервера');
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Ошибка запроса:', error);
+                                        
+                                        // Детальная обработка ошибок
+                                        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                                            if (error.message.includes('SSL_PROTOCOL_ERROR')) {
+                                                console.error('🔒 Ошибка SSL: Сервер работает по HTTP, а браузер пытается подключиться по HTTPS');
+                                                alert('Ошибка SSL: Сервер работает по HTTP. Попробуйте обновить страницу или использовать HTTP протокол.');
+                                            } else {
+                                                console.error('🌐 Ошибка сети: Не удается подключиться к серверу');
+                                                alert('Ошибка сети: Не удается подключиться к серверу. Проверьте, запущен ли сервер.');
+                                            }
+                                        } else {
+                                            alert('Ошибка при отправке данных авторизации: ' + error.message);
+                                        }
+                                    })
+                                    .finally(() => {
+                                        // Очищаем данные из localStorage
+                                        localStorage.removeItem('telegram_auth');
+                                        console.log('Данные авторизации очищены из localStorage');
+                                    });
+                                } else {
+                                    console.error('Неполные данные авторизации:', data);
+                                    alert('Ошибка: неполные данные авторизации');
+                                    localStorage.removeItem('telegram_auth');
+                                }
+                            } catch (e) {
+                                console.error('Ошибка парсинга данных авторизации:', e);
+                                localStorage.removeItem('telegram_auth');
+                            }
                 } else {
-                    console.log('Telegram widget загрузился успешно');
+                            console.log('Данные авторизации не найдены в localStorage');
+                        }
                 }
             }, 1000);
+                
+                // Обработчик сообщений от popup окна
+                window.addEventListener('message', function(event) {
+                    console.log('Получено сообщение:', event.origin, event.data);
+                    
+                    if (event.origin === 'https://oauth.telegram.org') {
+                        console.log('Получено сообщение от Telegram OAuth:', event.data);
+                        
+                        // Telegram OAuth может отправлять данные как строку JSON
+                        let telegramData = event.data;
+                        if (typeof event.data === 'string') {
+                            try {
+                                telegramData = JSON.parse(event.data);
+                                console.log('Распарсенные данные:', telegramData);
+                            } catch (e) {
+                                console.error('Ошибка парсинга JSON:', e);
+                                return;
+                            }
+                        }
+                        
+                        // Проверяем, что это результат авторизации
+                        if (telegramData && telegramData.event === 'auth_result' && telegramData.result) {
+                            console.log('Получены данные авторизации:', telegramData.result);
+                            
+                            // Сохраняем данные авторизации
+                            const authDataToSave = JSON.stringify(telegramData.result);
+                            console.log('Сохраняем в localStorage:', authDataToSave);
+                            localStorage.setItem('telegram_auth', authDataToSave);
+                            console.log('Данные авторизации сохранены в localStorage');
+                            
+                            // Проверяем, что данные действительно сохранились
+                            const savedData = localStorage.getItem('telegram_auth');
+                            console.log('Проверяем сохраненные данные:', savedData);
+                            
+                            // Закрываем popup окно
+                            if (popup && !popup.closed) {
+                                popup.close();
+                                console.log('Popup окно закрыто');
+                            }
+                        } else {
+                            console.log('Сообщение не является результатом авторизации:', telegramData);
+                            console.log('telegramData.event:', telegramData?.event);
+                            console.log('telegramData.result:', telegramData?.result);
+                        }
+                    } else {
+                        console.log('Сообщение от неизвестного источника:', event.origin);
+                    }
+                });
+            });
+            
+            // Добавляем hover эффект для кнопки
+            loginBtn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 6px 20px rgba(0, 136, 204, 0.4)';
+            });
+            
+            loginBtn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 4px 15px rgba(0, 136, 204, 0.3)';
+            });
         });
     </script>
 </body>
-</html> 

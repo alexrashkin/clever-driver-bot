@@ -4,145 +4,134 @@
     <meta charset="UTF-8">
     <title>Умный водитель</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Принудительное применение светлой темы в head -->
-    <style>
-        html, body {
-            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-            background-color: #f0f9ff !important;
-        }
-        
-        /* Принудительно применяем светлую тему для всех элементов */
-        * {
-            background-color: transparent !important;
-        }
-        
-        /* Принудительно устанавливаем светлый фон для всех элементов */
-        html, body, header, section, div, main, .hero, .hero-inner {
-            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-            background-color: #f0f9ff !important;
-            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-        }
-        
-        /* Принудительно убираем все inline стили с тёмным фоном */
-        *[style*="background"] {
-            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-            background-color: #f0f9ff !important;
-            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-        }
-        
-        /* Принудительно применяем светлую тему для всех возможных классов тёмной темы */
-        body.dark,
-        body.dark.landing,
-        html.dark,
-        html.dark.landing {
-            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-            background-color: #f0f9ff !important;
-            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-        }
-        
-        /* Принудительно применяем светлую тему для всех элементов с тёмными классами */
-        body.dark *,
-        body.dark.landing *,
-        html.dark *,
-        html.dark.landing * {
-            background-color: transparent !important;
-        }
-        
-        body.dark html, 
-        body.dark body, 
-        body.dark header, 
-        body.dark section, 
-        body.dark div, 
-        body.dark main, 
-        body.dark .hero, 
-        body.dark .hero-inner,
-        body.dark.landing html, 
-        body.dark.landing body, 
-        body.dark.landing header, 
-        body.dark.landing section, 
-        body.dark.landing div, 
-        body.dark.landing main, 
-        body.dark.landing .hero, 
-        body.dark.landing .hero-inner {
-            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-            background-color: #f0f9ff !important;
-            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
-        }
-    </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/landing.css">
     <link rel="stylesheet" href="/static/modern.css">
     <link rel="stylesheet" href="/static/button-styles.css">
-    <link rel="stylesheet" href="/static/light-theme.css">
-    
-    <!-- Принудительное применение светлой темы -->
-    <script>
-        // Принудительно применяем светлую тему сразу
-        if (localStorage.getItem('theme') !== 'dark') {
-            document.documentElement.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
-            document.body.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+    <link rel="stylesheet" href="/static/dark-theme.css">
+
+    <!-- СТИЛИ ДЛЯ ТЕМНОГО ФОНА (только для авторизованных пользователей) -->
+    <style>
+        /* Стили для неавторизованных пользователей - оставляем текущий дизайн */
+        body:not(.authorized) {
+            /* Оставляем оригинальные стили */
         }
         
-        // Дополнительно применяем при загрузке DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            if (localStorage.getItem('theme') !== 'dark') {
-                document.documentElement.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
-                document.body.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
-                
-                // Принудительно применяем светлую тему для всех элементов
-                const allElements = document.querySelectorAll('*');
-                allElements.forEach(el => {
-                    if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
-                        const bg = el.style.background || el.style.backgroundColor || el.style.backgroundImage;
-                        if (bg.includes('#0b1220') || bg.includes('#1e293b') || bg.includes('#334155') || 
-                            bg.includes('#020617') || bg.includes('#0f172a') || bg.includes('#0a0a0a') ||
-                            bg.includes('rgb(11, 18, 32)') || bg.includes('rgb(30, 41, 59)') || 
-                            bg.includes('rgb(51, 65, 85)') || bg.includes('rgb(2, 6, 23)') || 
-                            bg.includes('rgb(15, 23, 42)') || bg.includes('rgb(10, 10, 10)')) {
-                            el.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
-                            el.style.backgroundColor = '#f0f9ff';
-                            el.style.backgroundImage = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
-                        }
-                    }
-                });
-            }
-        });
+        /* MagnumFocus стиль - чистый черный фон только для авторизованных */
+        body.authorized {
+            background: #0a0a0a !important;
+            background-color: #0a0a0a !important;
+            background-image: none !important;
+        }
         
-        // Принудительно применяем светлую тему при изменении DOM
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && 
-                    (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
-                    if (localStorage.getItem('theme') !== 'dark') {
-                        const target = mutation.target;
-                        if (target.style.background || target.style.backgroundColor || target.style.backgroundImage) {
-                            const bg = target.style.background || target.style.backgroundColor || target.style.backgroundImage;
-                            if (bg.includes('#0b1220') || bg.includes('#1e293b') || bg.includes('#334155') || 
-                                bg.includes('#020617') || bg.includes('#0f172a') || bg.includes('#0a0a0a') ||
-                                bg.includes('rgb(11, 18, 32)') || bg.includes('rgb(30, 41, 59)') || 
-                                bg.includes('rgb(51, 65, 85)') || bg.includes('rgb(2, 6, 23)') || 
-                                bg.includes('rgb(15, 23, 42)') || bg.includes('rgb(10, 10, 10)')) {
-                                target.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
-                                target.style.backgroundColor = '#f0f9ff';
-                                target.style.backgroundImage = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
-                            }
-                        }
-                    }
-                }
-            });
-        });
+        body.authorized * {
+            background-color: transparent !important;
+        }
         
-        // Начинаем наблюдение после загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            observer.observe(document.body, {
-                attributes: true,
-                childList: true,
-                subtree: true
-            });
-        });
-    </script>
+        body.authorized html, 
+        body.authorized body, 
+        body.authorized header, 
+        body.authorized section, 
+        body.authorized div, 
+        body.authorized main, 
+        body.authorized .hero, 
+        body.authorized .hero-inner {
+            background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+            background-color: #0b1220 !important;
+            background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
+        }
+    </style>
+    <style>
+/* СТИЛИ ДЛЯ ТЕМНОГО ФОНА (только для авторизованных пользователей) */
+html, body {
+    font-family: 'Inter', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Стили для неавторизованных пользователей - оставляем оригинальный дизайн */
+body:not(.authorized) {
+    background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+    color: #222;
+}
+
+/* Стили для авторизованных пользователей - темный фон */
+body.authorized {
+    background: #0a0a0a !important;
+    background-color: #0a0a0a !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+body.authorized * {
+    background-color: transparent !important;
+}
+
+body.authorized html, 
+body.authorized body, 
+body.authorized header, 
+body.authorized section, 
+body.authorized div, 
+body.authorized main {
+    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background-color: #020617 !important;
+    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+}
+
+/* Принудительно убираем все возможные светлые фоны для авторизованных */
+body.authorized.landing,
+body.authorized.dark,
+body.authorized.dark.landing,
+html.authorized.landing,
+html.authorized.dark,
+html.authorized.dark.landing {
+    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background-color: #020617 !important;
+    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+}
+
+/* Принудительно убираем все inline стили с фоном для авторизованных */
+body.authorized *[style*="background"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Принудительно устанавливаем темный фон для всех элементов с inline стилями для авторизованных */
+body.authorized *[style*="background"] {
+    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+    background-color: #020617 !important;
+    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
+}
+
+.container {
+    flex: 1 0 auto;
+    max-width: 420px;
+    margin: 48px auto 0 auto;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Стили для неавторизованных пользователей */
+body:not(.authorized) .container {
+    background: #e8ebf1;
+    box-shadow: 0 8px 32px #6366f11a, 0 1.5px 6px #6366f133;
+    color: #222;
+}
+
+/* Стили для авторизованных пользователей */
+body.authorized .container {
+    background: transparent;
+    box-shadow: none;
+    color: #ffffff;
+}
 
 .logo-wrap {
     display: flex;
@@ -276,29 +265,34 @@ a.btn {
     background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
 }
 .theme-btn {
-    background: rgba(59, 130, 246, 0.9);
-    color: white;
+    min-width: 40px;
+    max-height: 36px;
+    line-height: 1.1;
+    font-size: 1.1em;
+    box-shadow: none;
+    border: none;
+    background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
+    padding: 6px 16px;
+}
+
+.theme-btn {
+    background: rgba(255, 255, 255, 0.9);
     border: none;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 1.2em;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1em;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    min-width: 50px;
-    max-height: 50px;
-    line-height: 1.1;
-    padding: 0;
 }
 
 .theme-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-    background: rgba(59, 130, 246, 1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 .top-nav {
     width: 100vw;
@@ -333,26 +327,25 @@ a.btn {
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
-    
+
     .nav-btn {
         font-size: 0.85em;
         padding: 6px 12px;
         min-width: 80px;
         flex: 1;
     }
-    
+
     .theme-btn {
-        min-width: 40px;
-        padding: 0;
-        background: rgba(59, 130, 246, 0.9);
-        color: white;
+        min-width: 36px;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.9);
         border: none;
         border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        font-size: 1.1em;
+        width: 36px;
+        height: 36px;
+        font-size: 1em;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -367,26 +360,25 @@ a.btn {
         padding-left: 0 !important;
         padding-right: 0 !important;
     }
-    
+
     .nav-btn {
         font-size: 0.8em;
         padding: 5px 10px;
         min-width: 70px;
         flex: 1;
     }
-    
+
     .theme-btn {
-        min-width: 36px;
-        padding: 0;
-        background: rgba(59, 130, 246, 0.9);
-        color: white;
+        min-width: 32px;
+        padding: 5px 10px;
+        background: rgba(255, 255, 255, 0.9);
         border: none;
         border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        font-size: 1em;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9em;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: none;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -543,7 +535,7 @@ body {
         padding: 10px 12px;
         font-size: 0.85em;
     }
-    
+
     body {
         padding-bottom: 50px;
     }
@@ -584,13 +576,8 @@ html, body, header, section, div, main, .hero, .hero-inner {
 }
 </style>
 </head>
-<body class="landing">
+<body class="dark landing">
     <header style="max-width: 980px; margin: 4px auto 0 auto; padding: 0 16px;">
-      <!-- Кнопка переключения темы -->
-      <div style="position: fixed; top: 20px; right: 20px; z-index: 1001;">
-        <button id="theme-toggle" class="nav-btn theme-btn" style="background: rgba(59, 130, 246, 0.9); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">🌙</button>
-      </div>
-      
       {% if not is_authorized %}
       <div class="info-block" style="margin-bottom: 4px;">
         <div class="info-block-title">🚀 Добро пожаловать в «Умный водитель»!</div>
@@ -629,7 +616,9 @@ html, body, header, section, div, main, .hero, .hero-inner {
             <a href="/register" class="hero-btn-magnum">Регистрация</a>
           </div>
         </div>
-        
+
+        <!-- Блок "Как это работает?" поднят выше для видимости -->
+        <div style="max-width: 720px; margin: 0px auto 0 auto; padding: 0 16px; padding-top: 20px;">
         <!-- Блок "Как это работает?" поднят еще выше для полной видимости -->
         <div style="max-width: 720px; margin: 0px auto 0 auto; padding: 0 16px; padding-top: 10px;">
           <div class="info-block">
@@ -641,7 +630,7 @@ html, body, header, section, div, main, .hero, .hero-inner {
           </div>
         </div>
         {% endif %}
-        
+
 
         {% if is_authorized %}
         <div class="status-panel" style="margin: 0px auto;">
@@ -654,7 +643,7 @@ html, body, header, section, div, main, .hero, .hero-inner {
                 <span id="driverStatusTextTop">Загрузка...</span>
             </div>
         </div>
-        
+
         <!-- Авторизованный пользователь: переносим основные блоки в hero -->
         {% if is_recipient_only %}
         <div style="max-width: 720px; margin: 0px auto 0; padding: 0 16px; padding-top: 20px;">
@@ -675,19 +664,19 @@ html, body, header, section, div, main, .hero, .hero-inner {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 420px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none; white-space: normal;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 420px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; white-space: normal;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:4px;">
             <div class="hero-cta-row">
-              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">Ожидаю у подъезда</button>
+              <button class="hero-btn" onclick="return sendManualNotification(event);">Ожидаю у подъезда</button>
               {% for btn in buttons %}
-                <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">{{ btn }}</button>
+                <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});">{{ btn }}</button>
               {% endfor %}
             </div>
           </div>
           <div style="display: flex; justify-content: center; gap: 10px; margin: 0px 0; flex-wrap: wrap;">
-            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0; box-shadow: none;">🗺️ Трекер</a>
-            <a href="/mobile_tracker.html" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color: #001018; box-shadow: none;">📶 Резервная передача геоданных</a>
+            <a href="/tracker" class="hero-btn">🗺️ Трекер</a>
+            <a href="/mobile_tracker.html" class="hero-btn">📶 Резервная передача геоданных</a>
           </div>
         </div>
         {% elif is_driver %}
@@ -699,19 +688,19 @@ html, body, header, section, div, main, .hero, .hero-inner {
           <div class="status">Автоотслеживание: <b>{{ 'Включено' if tracking_status else 'Выключено' }}</b></div>
           {% if message %}<div class="msg">{{ message }}</div>{% endif %}
           <form method="post" action="/toggle" style="text-align:center;">
-            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 420px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; box-shadow: none; white-space: normal;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
+            <button class="btn btn-toggle {% if not tracking_status %}off{% else %}narrow{% endif %}" type="submit" style="max-width: 420px; width: 60%; min-width: 220px; display: inline-block; margin: 0 auto; white-space: normal;">{% if tracking_status %}Остановить{% else %}Включить{% endif %} автоотслеживание</button>
           </form>
           <div class="hero-cta" style="margin-top:4px;">
             <div class="hero-cta-row">
-              <button class="hero-btn" onclick="return sendManualNotification(event);" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color:#e2e8f0; box-shadow: none;">Ожидаю у подъезда</button>
+              <button class="hero-btn" onclick="return sendManualNotification(event);">Ожидаю у подъезда</button>
               {% for btn in buttons %}
                 <button class="hero-btn" onclick="return sendDynamicButton(event, {{ loop.index0 }});">{{ btn }}</button>
               {% endfor %}
             </div>
           </div>
           <div style="display: flex; justify-content: center; gap: 10px; margin: 0px 0; flex-wrap: wrap;">
-            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0; box-shadow: none;">🗺️ Трекер</a>
-            <a href="/mobile_tracker.html" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color: #001018; box-shadow: none;">📶 Резервная передача геоданных</a>
+            <a href="/tracker" class="hero-btn">🗺️ Трекер</a>
+            <a href="/mobile_tracker.html" class="hero-btn">📶 Резервная передача геоданных</a>
           </div>
         </div>
         {% elif needs_telegram_binding %}
@@ -721,8 +710,8 @@ html, body, header, section, div, main, .hero, .hero-inner {
             <div class="info-block-text">Для полного доступа необходимо привязать ваш Telegram аккаунт. Без этого доступны только просмотр статуса и трекер.</div>
           </div>
           <div style="display: flex; justify-content: center; gap: 10px; margin: 0px 0; flex-wrap: wrap;">
-            <a href="/bind_telegram_form" class="hero-btn" style="background: linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%); color:#001018; box-shadow: none;">📱 Привязать Telegram</a>
-            <a href="/tracker" class="hero-btn" style="background: linear-gradient(90deg, #6d28d9 0%, #4f46e5 100%); color: #e2e8f0; box-shadow: none;">🗺️ Трекер</a>
+            <a href="/bind_telegram_form" class="hero-btn">📱 Привязать Telegram</a>
+            <a href="/tracker" class="hero-btn">🗺️ Трекер</a>
           </div>
         </div>
         {% endif %}
@@ -730,7 +719,7 @@ html, body, header, section, div, main, .hero, .hero-inner {
 
       </div>
     </section>
-    <footer style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background: rgba(11, 18, 32, 0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(148, 163, 184, 0.1); padding: 12px 16px; text-align: center; font-size: 0.9em; z-index: 1000;">
+    <footer style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background: rgba(11, 18, 32, 0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(148, 163, 184, 0.1); padding: 12px 16px; text-align: center; color: #94a3b8; font-size: 0.9em; z-index: 1000;">
       © {{ year }} Все права защищены. CEO и разработчик: Александр Рашкин
     </footer>
     <!-- Скрипт обновления времени и статуса -->
@@ -777,10 +766,71 @@ html, body, header, section, div, main, .hero, .hero-inner {
     <script>
         window.IS_AUTHORIZED = "{{ is_authorized }}";
     </script>
-    
-    <!-- Менеджер тем -->
-    <script src="/static/theme-manager.js"></script>
+
+    <!-- УПРАВЛЕНИЕ ТЕМНЫМ ФОНОМ (только для авторизованных пользователей) -->
+    <script>
+        // Функция для установки темного фона только для авторизованных пользователей
+        function applyDarkThemeForAuthorized() {
+            const isAuthorized = window.IS_AUTHORIZED === "True";
+            
+            if (isAuthorized) {
+                // Добавляем класс authorized к body
+                document.body.classList.add('authorized');
+                console.log('Применяем темный фон для авторизованного пользователя');
+                
+                // Принудительно устанавливаем темный фон
+                const magnumBackground = '#0a0a0a';
+                
+                // Устанавливаем фон для html и body
+                document.documentElement.style.background = magnumBackground;
+                document.documentElement.style.backgroundColor = magnumBackground;
+                document.documentElement.style.backgroundImage = 'none';
+                
+                document.body.style.background = magnumBackground;
+                document.body.style.backgroundColor = magnumBackground;
+                document.body.style.backgroundImage = 'none';
+                
+                // Устанавливаем фон для всех div, section, header, main
+                const elements = document.querySelectorAll('div, section, header, main, .hero, .hero-inner');
+                elements.forEach(el => {
+                    if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
+                        el.style.background = magnumBackground;
+                        el.style.backgroundColor = magnumBackground;
+                        el.style.backgroundImage = 'none';
+                    }
+                });
+                
+                // Убираем все светлые фоны
+                const allElements = document.querySelectorAll('*');
+                allElements.forEach(el => {
+                    if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
+                        const bg = el.style.background || el.style.backgroundColor || el.style.backgroundImage;
+                        if (bg.includes('white') || bg.includes('#fff') || bg.includes('#ffffff') || 
+                            bg.includes('rgba(255') || bg.includes('rgb(255'))) {
+                            el.style.background = magnumBackground;
+                            el.style.backgroundColor = magnumBackground;
+                            el.style.backgroundImage = 'none';
+                        }
+                    }
+                });
+            } else {
+                // Убираем класс authorized для неавторизованных пользователей
+                document.body.classList.remove('authorized');
+                console.log('Оставляем оригинальный дизайн для неавторизованного пользователя');
+            }
+        }
+
+        // Выполняем сразу после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            applyDarkThemeForAuthorized();
+        });
+
+        // Выполняем после полной загрузки страницы
+        window.addEventListener('load', function() {
+            applyDarkThemeForAuthorized();
+        });
+    </script>
     <script src="/static/main.js?v=2"></script>
     <script src="/static/landing.js"></script>
+    <script src="/static/theme-manager.js"></script>
 </body>
-</html> 

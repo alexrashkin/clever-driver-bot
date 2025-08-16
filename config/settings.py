@@ -55,6 +55,9 @@ class Config:
     TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "clever_driver_bot")
     TELEGRAM_TOKEN = TELEGRAM_BOT_TOKEN  # Алиас для совместимости
     
+    # Извлекаем bot_id из токена (первая часть до двоеточия)
+    TELEGRAM_BOT_ID = TELEGRAM_BOT_TOKEN.split(':')[0] if TELEGRAM_BOT_TOKEN and ':' in TELEGRAM_BOT_TOKEN else ""
+    
     # Логирование
     LOG_LEVEL = "INFO"
     LOG_FILE = "app.log"
@@ -81,6 +84,9 @@ class Config:
     
     # HTTPS
     FORCE_HTTPS = os.getenv("FORCE_HTTPS", "False").lower() == "true"
+    SSL_CERT_FILE = os.getenv("SSL_CERT_FILE", "")
+    SSL_KEY_FILE = os.getenv("SSL_KEY_FILE", "")
+    SSL_ENABLED = os.getenv("SSL_ENABLED", "False").lower() == "true"
     
     # Координаты по умолчанию (Красная площадь)
     WORK_LATITUDE = 55.7539  # Красная площадь

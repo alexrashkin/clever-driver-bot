@@ -9,8 +9,17 @@ import os
 
 # Функция для логирования в файл
 def log_to_file(message):
-    with open('/tmp/run_web_debug.log', 'a', encoding='utf-8') as f:
-        f.write(f"{message}\n")
+    import platform
+    if platform.system() == 'Windows':
+        log_path = os.path.join(os.path.dirname(__file__), 'run_web_debug.log')
+    else:
+        log_path = '/tmp/run_web_debug.log'
+    
+    try:
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(f"{message}\n")
+    except Exception as e:
+        print(f"Ошибка записи в лог: {e}")
     print(message)
 
 # Загружаем переменные окружения из .env файла ПЕРЕД всеми импортами

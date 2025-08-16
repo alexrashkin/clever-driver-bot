@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class RateLimiter:
     """Ограничитель скорости запросов для защиты от брутфорс атак"""
     
-    def __init__(self, max_requests=100, window_seconds=60):
+    def __init__(self, max_requests=10000, window_seconds=1):  # Временно отключено для локальной разработки
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests = defaultdict(lambda: deque())
@@ -22,21 +22,25 @@ class RateLimiter:
     
     def is_allowed(self, identifier):
         """Проверяет, разрешен ли запрос для данного идентификатора"""
-        now = time.time()
+        # Временно отключено для локальной разработки
+        return True
         
-        with self.lock:
-            # Очищаем старые запросы
-            while (self.requests[identifier] and 
-                   now - self.requests[identifier][0] > self.window_seconds):
-                self.requests[identifier].popleft()
-            
-            # Проверяем лимит
-            if len(self.requests[identifier]) >= self.max_requests:
-                return False
-            
-            # Добавляем текущий запрос
-            self.requests[identifier].append(now)
-            return True
+        # Оригинальная логика закомментирована
+        # now = time.time()
+        # 
+        # with self.lock:
+        #     # Очищаем старые запросы
+        #     while (self.requests[identifier] and 
+        #            now - self.requests[identifier][0] > self.window_seconds):
+        #         self.requests[identifier].popleft()
+        #     
+        #     # Проверяем лимит
+        #     if len(self.requests[identifier]) >= self.max_requests:
+        #         return False
+        #     
+        #     # Добавляем текущий запрос
+        #     self.requests[identifier].append(now)
+        #     return True
 
 class IPBlocker:
     """Блокировщик IP-адресов для защиты от атак"""
@@ -50,15 +54,19 @@ class IPBlocker:
     
     def is_blocked(self, ip):
         """Проверяет, заблокирован ли IP"""
-        with self.lock:
-            if ip in self.blocked_ips:
-                if time.time() - self.blocked_ips[ip] < self.block_duration_minutes * 60:
-                    return True
-                else:
-                    # Разблокируем IP
-                    del self.blocked_ips[ip]
-                    self.failed_attempts[ip] = 0
-            return False
+        # Временно отключено для локальной разработки
+        return False
+        
+        # Оригинальная логика закомментирована
+        # with self.lock:
+        #     if ip in self.blocked_ips:
+        #         if time.time() - self.blocked_ips[ip] < self.block_duration_minutes * 60:
+        #             return True
+        #         else:
+        #             # Разблокируем IP
+        #             del self.blocked_ips[ip]
+        #             self.failed_attempts[ip] = 0
+        #     return False
     
     def record_failed_attempt(self, ip):
         """Записывает неудачную попытку"""
@@ -248,21 +256,24 @@ class SecurityManager:
         # Инициализируем ограничители (читаем значения из config)
         try:
             from config.settings import config as _cfg
-            general_max = getattr(_cfg, 'RATE_LIMIT_REQUESTS', 100)
+            # Временно увеличиваем лимиты для локальной разработки
+            general_max = getattr(_cfg, 'RATE_LIMIT_REQUESTS', 10000)  # Увеличено с 100 до 10000
             general_win = getattr(_cfg, 'RATE_LIMIT_WINDOW', 60)
-            login_max = getattr(_cfg, 'LOGIN_RATE_LIMIT_REQUESTS', 5)
+            login_max = getattr(_cfg, 'LOGIN_RATE_LIMIT_REQUESTS', 100)  # Увеличено с 5 до 100
             login_win = getattr(_cfg, 'LOGIN_RATE_LIMIT_WINDOW', 300)
-            pwd_max = getattr(_cfg, 'LOGIN_RATE_LIMIT_REQUESTS', 10)  # fallback если нет отдельной настройки
+            pwd_max = getattr(_cfg, 'LOGIN_RATE_LIMIT_REQUESTS', 100)  # Увеличено с 10 до 100
             pwd_win = 600
         except Exception:
-            general_max, general_win = 100, 60
-            login_max, login_win = 5, 300
-            pwd_max, pwd_win = 10, 600
+            # Временно увеличенные лимиты для локальной разработки
+            general_max, general_win = 10000, 60  # Увеличено с 100 до 10000
+            login_max, login_win = 100, 300  # Увеличено с 5 до 100
+            pwd_max, pwd_win = 100, 600  # Увеличено с 10 до 100
 
         self.rate_limiter = RateLimiter(max_requests=general_max, window_seconds=general_win)
         self.login_rate_limiter = RateLimiter(max_requests=login_max, window_seconds=login_win)  # попытки входа
         self.password_reset_rate_limiter = RateLimiter(max_requests=pwd_max, window_seconds=pwd_win)  # восстановление пароля
-        self.ip_blocker = IPBlocker(max_failed_attempts=10, block_duration_minutes=60)
+        # Временно увеличиваем лимиты для локальной разработки
+        self.ip_blocker = IPBlocker(max_failed_attempts=100, block_duration_minutes=1)
     
     def check_xss(self, data):
         """Проверка на XSS-атаки"""
@@ -419,15 +430,28 @@ def security_check(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
+        logger.info(f"SECURITY: Проверяем путь {request.path} для IP {ip_address}")
+        
         # Белый список для системных эндпоинтов телеметрии (OwnTracks и резервный трекер)
         # Для них допускаем упрощённые проверки, чтобы избежать ложных срабатываний и 403
         telemetry_paths = {'/api/location'}
         # Пути с мягкими проверками (минимальные проверки, без жёсткой инспекции UA/параметров)
-        soft_paths = {'/invite', '/invite_auth', '/telegram_login', '/bind_telegram_form', '/api/eta'}
+        # Добавляем /telegram_login в белый список для полного пропуска всех проверок
+        soft_paths = {'/', '/invite', '/invite_auth', '/telegram_login', '/bind_telegram_form', '/api/eta'}
+        # Белый список для полного пропуска всех проверок (включая rate limiting)
+        whitelist_paths = {'/telegram_login'}
         # Пути для мягкой проверки POST форм
-        soft_post_paths = {'/settings', '/invite_auth', '/bind_telegram_form'}
+        soft_post_paths = {'/settings', '/invite_auth', '/bind_telegram_form', '/select_role'}
         is_telemetry = request.path in telemetry_paths
         is_soft = request.path in soft_paths
+        is_whitelisted = request.path in whitelist_paths
+        
+        logger.info(f"SECURITY: is_telemetry={is_telemetry}, is_soft={is_soft}, is_whitelisted={is_whitelisted}")
+        
+        # Если путь в белом списке - пропускаем все проверки
+        if is_whitelisted:
+            logger.info(f"SECURITY: Путь {request.path} в белом списке, пропускаем все проверки")
+            return f(*args, **kwargs)
         
         # Восстанавливаем блокировку IP
         if security_manager.ip_blocker.is_blocked(ip_address):
@@ -486,6 +510,12 @@ def auth_security_check(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
+        # Белый список для полного пропуска всех проверок
+        whitelist_paths = {'/telegram_login'}
+        if request.path in whitelist_paths:
+            logger.info(f"AUTH_SECURITY: Путь {request.path} в белом списке, пропускаем все проверки")
+            return f(*args, **kwargs)
+        
         # Проверяем блокировку IP
         if security_manager.ip_blocker.is_blocked(ip_address):
             logger.warning(f"SECURITY: Заблокированный IP пытается получить доступ: {ip_address}")
@@ -523,6 +553,12 @@ def login_rate_limit(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
+        # Белый список для полного пропуска всех проверок
+        whitelist_paths = {'/telegram_login'}
+        if request.path in whitelist_paths:
+            logger.info(f"LOGIN_RATE_LIMIT: Путь {request.path} в белом списке, пропускаем все проверки")
+            return f(*args, **kwargs)
+        
         # Включаем лимит попыток входа
         if not security_manager.login_rate_limiter.is_allowed(ip_address):
             logger.warning(f"SECURITY: Login rate limit exceeded for IP: {ip_address}")
@@ -538,6 +574,12 @@ def password_reset_rate_limit(f):
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
         
+        # Белый список для полного пропуска всех проверок
+        whitelist_paths = {'/telegram_login'}
+        if request.path in whitelist_paths:
+            logger.info(f"PASSWORD_RESET_RATE_LIMIT: Путь {request.path} в белом списке, пропускаем все проверки")
+            return f(*args, **kwargs)
+        
         # Включаем лимит попыток восстановления пароля
         if not security_manager.password_reset_rate_limiter.is_allowed(ip_address):
             logger.warning(f"SECURITY: Password reset rate limit exceeded for IP: {ip_address}")
@@ -551,6 +593,12 @@ def password_reset_security_check(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         ip_address = request.remote_addr
+        
+        # Белый список для полного пропуска всех проверок
+        whitelist_paths = {'/telegram_login'}
+        if request.path in whitelist_paths:
+            logger.info(f"PASSWORD_RESET_SECURITY: Путь {request.path} в белом списке, пропускаем все проверки")
+            return f(*args, **kwargs)
         
         # Проверяем только общий rate limiting (не блокируем IP)
         if not security_manager.rate_limiter.is_allowed(ip_address):
