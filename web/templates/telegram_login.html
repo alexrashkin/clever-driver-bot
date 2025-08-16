@@ -190,7 +190,8 @@
             const loginBtn = document.getElementById('telegram-login-btn');
             const fallbackLogin = document.getElementById('fallback-login');
             
-
+            // Переменная для popup окна на уровне модуля
+            let popup = null;
             
             // Обработчик клика по кнопке входа
             loginBtn.addEventListener('click', function() {
@@ -215,7 +216,7 @@
                 console.log('🔗 Telegram OAuth URL:', telegramOAuthUrl);
                 
                 // Открываем popup окно
-                const popup = window.open(
+                popup = window.open(
                     telegramOAuthUrl,
                     'telegram_auth',
                     'width=500,height=600,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
