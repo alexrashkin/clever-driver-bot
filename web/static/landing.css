@@ -221,12 +221,31 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 }
 
 @media (max-width: 640px) {
-  .hero-cta-row { gap: 10px; }
-  .hero-cta-row .hero-btn { width: 100%; max-width: 420px; }
+  .hero-cta-row { 
+    gap: 10px; 
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hero-cta-row .hero-btn { 
+    width: calc(50% - 5px); 
+    min-width: 140px;
+    max-width: 180px;
+    font-size: 14px;
+    padding: 12px 16px;
+  }
 }
 
 @media (max-width: 420px) {
   .hero-center { font-size: clamp(32px, 7vw, 56px); }
+  
+  .hero-cta-row .hero-btn { 
+    width: calc(50% - 8px); 
+    min-width: 120px;
+    max-width: 160px;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
 }
 
 .hero-btn {
@@ -359,7 +378,8 @@ body.landing {
   padding: 0 !important;
   padding-bottom: 60px !important; /* Добавляем отступ снизу для футера */
   min-height: 100vh !important;
-  overflow: auto !important;
+  height: 100vh !important;
+  overflow: hidden !important;
 }
 
 /* Убираем отступы для html */
@@ -367,7 +387,7 @@ html {
   margin: 0 !important;
   padding: 0 !important;
   height: 100% !important;
-  overflow: auto !important;
+  overflow: hidden !important;
 }
 
 /* Стили для правильных отступов кнопок трекера и резервной передачи */
@@ -377,6 +397,24 @@ body.landing .hero-cta + div[style*="display: flex"] {
 
 body.landing .hero-cta + div[style*="gap: 10px"] {
   margin-top: 12px !important;
+}
+
+/* Стили для кнопок трекера на мобильных устройствах */
+@media (max-width: 640px) {
+  body.landing div[style*="gap: 10px"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+  
+  body.landing div[style*="gap: 10px"] > * {
+    width: calc(50% - 4px) !important;
+    min-width: 120px !important;
+    max-width: 160px !important;
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
 }
 
 /* Альтернативный способ - стили для всех блоков с кнопками трекера */
@@ -401,11 +439,7 @@ body.landing main {
   background-image: none !important;
 }
 
-/* Обеспечиваем правильную прокрутку */
-body.landing {
-  -webkit-overflow-scrolling: touch !important; /* Для iOS */
-  scroll-behavior: smooth !important;
-}
+
 
 /* Принудительно устанавливаем тёмный фон для html элемента */
 html.landing {
@@ -414,30 +448,6 @@ html.landing {
   background-image: none !important;
 }
 
-/* Медиа-запрос для мобильных устройств */
-@media (max-width: 768px) {
-  body.landing {
-    overflow: auto !important;
-    height: auto !important;
-    min-height: 100vh !important;
-  }
-  
-  html {
-    overflow: auto !important;
-    height: auto !important;
-  }
-  
-  /* Убираем фиксированную высоту для мобильных */
-  body.landing .hero {
-    min-height: auto !important;
-    height: auto !important;
-  }
-  
-  /* Футер на мобильных устройствах */
-  body.landing footer {
-    position: sticky !important;
-    bottom: 0 !important;
-  }
-}
+
 
 
