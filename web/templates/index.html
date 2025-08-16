@@ -10,6 +10,36 @@
     <link rel="stylesheet" href="/static/modern.css">
     <link rel="stylesheet" href="/static/button-styles.css">
     <link rel="stylesheet" href="/static/dark-theme.css">
+    
+    <!-- Стили для фонового изображения -->
+    <style>
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        
+        .hero-inner {
+            max-width: 1200px;
+            width: 100%;
+            padding: 2rem;
+        }
+        
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .hero {
+                min-height: 80vh;
+            }
+            
+            .hero-inner {
+                padding: 1rem;
+            }
+        }
+    </style>
 
     <!-- СТИЛИ ДЛЯ ТЕМНОГО ФОНА (только для авторизованных пользователей) -->
     <style>
@@ -600,8 +630,10 @@ html, body, header, section, div, main, .hero, .hero-inner {
       </div>
       {% endif %}
     </header>
-    <section class="hero">
-      <div class="hero-inner">
+    <section class="hero" style="background-image: url('/static/hero-background.png'); background-size: cover; background-position: center; background-repeat: no-repeat; position: relative;">
+      <!-- Затемнение для лучшей читаемости текста -->
+      <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); z-index: 1;"></div>
+      <div class="hero-inner" style="position: relative; z-index: 2;">
         {% if not is_authorized %}
         <!-- MagnumFocus стиль заголовка -->
         <div class="hero-title-container">
