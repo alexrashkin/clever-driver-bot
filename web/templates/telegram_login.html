@@ -125,6 +125,22 @@
             Авторизуйтесь через Telegram для доступа к системе
         </div>
 
+        <!-- Информация о настройке домена -->
+        <div id="domain-info" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px; margin: 20px 0; text-align: left;">
+            <h4 style="color: #dc2626; margin: 0 0 12px 0; font-size: 1.1em;">⚠️ Требуется настройка домена</h4>
+            <p style="color: #7f1d1d; margin: 0 0 12px 0; font-size: 0.9em; line-height: 1.5;">
+                Для работы входа через Telegram необходимо добавить домен <strong>cleverdriver.ru</strong> в настройки бота.
+            </p>
+            <div style="background: rgba(0, 0, 0, 0.05); border-radius: 8px; padding: 12px; font-size: 0.85em; color: #374151;">
+                <strong>Инструкция:</strong><br>
+                1. Откройте @BotFather в Telegram<br>
+                2. Отправьте команду <code>/mybots</code><br>
+                3. Выберите вашего бота<br>
+                4. Нажмите "Bot Settings" → "Domain"<br>
+                5. Добавьте: <code>cleverdriver.ru</code>
+            </div>
+        </div>
+
         <div style="margin: 20px 0;">
             <!-- Telegram Login Button вместо виджета -->
             <div id="telegram-login-container" style="text-align: center; padding: 20px;">
@@ -188,6 +204,20 @@
             const loginBtn = document.getElementById('telegram-login-btn');
             const fallbackLogin = document.getElementById('fallback-login');
             
+            // Проверяем, есть ли ошибка в URL (например, после возврата с OAuth)
+            if (window.location.search.includes('error') || window.location.hash.includes('error')) {
+                console.log('Обнаружена ошибка в URL, показываем информационное сообщение');
+                document.getElementById('domain-info').style.display = 'block';
+            }
+            
+            // Проверяем, есть ли сообщение об ошибке в localStorage
+            const errorMessage = localStorage.getItem('telegram_auth_error');
+            if (errorMessage && errorMessage.includes('Bot domain invalid')) {
+                console.log('Обнаружена ошибка "Bot domain invalid" в localStorage');
+                document.getElementById('domain-info').style.display = 'block';
+                localStorage.removeItem('telegram_auth_error');
+            }
+            
             // Обработчик клика по кнопке входа
             loginBtn.addEventListener('click', function() {
                 // Формируем URL для Telegram OAuth
@@ -223,6 +253,12 @@
                     fallbackLogin.style.display = 'block';
                     return;
                 }
+                
+                // Обработка ошибок OAuth
+                popup.onerror = function() {
+                    console.error('Ошибка при открытии OAuth окна');
+                    fallbackLogin.style.display = 'block';
+                };
                 
                 // Проверяем состояние popup окна
                 const checkPopup = setInterval(function() {
@@ -423,6 +459,29 @@
                         console.log('Сообщение от неизвестного источника:', event.origin);
                     }
                 });
+                
+                // Обработка ошибок OAuth
+                window.addEventListener('error', function(event) {
+                    console.error('Ошибка OAuth:', event.error);
+                    if (event.error && event.error.message && event.error.message.includes('Bot domain invalid')) {
+                        console.error('Обнаружена ошибка "Bot domain invalid"');
+                        document.getElementById('domain-info').style.display = 'block';
+                    }
+                });
+                
+                // Обработка ошибок в popup окне
+                if (popup) {
+                    popup.addEventListener('error', function(event) {
+                        console.error('Ошибка в popup окне:', event);
+                        if (event.target && event.target.document && event.target.document.body) {
+                            const bodyText = event.target.document.body.textContent;
+                            if (bodyText.includes('Bot domain invalid')) {
+                                console.error('Обнаружена ошибка "Bot domain invalid" в popup');
+                                document.getElementById('domain-info').style.display = 'block';
+                            }
+                        }
+                    });
+                }
             });
             
             // Добавляем hover эффект для кнопки
