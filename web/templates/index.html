@@ -4,12 +4,145 @@
     <meta charset="UTF-8">
     <title>Умный водитель</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Принудительное применение светлой темы в head -->
+    <style>
+        html, body {
+            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+            background-color: #f0f9ff !important;
+        }
+        
+        /* Принудительно применяем светлую тему для всех элементов */
+        * {
+            background-color: transparent !important;
+        }
+        
+        /* Принудительно устанавливаем светлый фон для всех элементов */
+        html, body, header, section, div, main, .hero, .hero-inner {
+            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+            background-color: #f0f9ff !important;
+            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+        }
+        
+        /* Принудительно убираем все inline стили с тёмным фоном */
+        *[style*="background"] {
+            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+            background-color: #f0f9ff !important;
+            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+        }
+        
+        /* Принудительно применяем светлую тему для всех возможных классов тёмной темы */
+        body.dark,
+        body.dark.landing,
+        html.dark,
+        html.dark.landing {
+            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+            background-color: #f0f9ff !important;
+            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+        }
+        
+        /* Принудительно применяем светлую тему для всех элементов с тёмными классами */
+        body.dark *,
+        body.dark.landing *,
+        html.dark *,
+        html.dark.landing * {
+            background-color: transparent !important;
+        }
+        
+        body.dark html, 
+        body.dark body, 
+        body.dark header, 
+        body.dark section, 
+        body.dark div, 
+        body.dark main, 
+        body.dark .hero, 
+        body.dark .hero-inner,
+        body.dark.landing html, 
+        body.dark.landing body, 
+        body.dark.landing header, 
+        body.dark.landing section, 
+        body.dark.landing div, 
+        body.dark.landing main, 
+        body.dark.landing .hero, 
+        body.dark.landing .hero-inner {
+            background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+            background-color: #f0f9ff !important;
+            background-image: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+        }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/landing.css">
     <link rel="stylesheet" href="/static/modern.css">
     <link rel="stylesheet" href="/static/button-styles.css">
     <link rel="stylesheet" href="/static/light-theme.css">
+    
+    <!-- Принудительное применение светлой темы -->
+    <script>
+        // Принудительно применяем светлую тему сразу
+        if (localStorage.getItem('theme') !== 'dark') {
+            document.documentElement.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+            document.body.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+        }
+        
+        // Дополнительно применяем при загрузке DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('theme') !== 'dark') {
+                document.documentElement.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+                document.body.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+                
+                // Принудительно применяем светлую тему для всех элементов
+                const allElements = document.querySelectorAll('*');
+                allElements.forEach(el => {
+                    if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
+                        const bg = el.style.background || el.style.backgroundColor || el.style.backgroundImage;
+                        if (bg.includes('#0b1220') || bg.includes('#1e293b') || bg.includes('#334155') || 
+                            bg.includes('#020617') || bg.includes('#0f172a') || bg.includes('#0a0a0a') ||
+                            bg.includes('rgb(11, 18, 32)') || bg.includes('rgb(30, 41, 59)') || 
+                            bg.includes('rgb(51, 65, 85)') || bg.includes('rgb(2, 6, 23)') || 
+                            bg.includes('rgb(15, 23, 42)') || bg.includes('rgb(10, 10, 10)')) {
+                            el.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+                            el.style.backgroundColor = '#f0f9ff';
+                            el.style.backgroundImage = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Принудительно применяем светлую тему при изменении DOM
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && 
+                    (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+                    if (localStorage.getItem('theme') !== 'dark') {
+                        const target = mutation.target;
+                        if (target.style.background || target.style.backgroundColor || target.style.backgroundImage) {
+                            const bg = target.style.background || target.style.backgroundColor || target.style.backgroundImage;
+                            if (bg.includes('#0b1220') || bg.includes('#1e293b') || bg.includes('#334155') || 
+                                bg.includes('#020617') || bg.includes('#0f172a') || bg.includes('#0a0a0a') ||
+                                bg.includes('rgb(11, 18, 32)') || bg.includes('rgb(30, 41, 59)') || 
+                                bg.includes('rgb(51, 65, 85)') || bg.includes('rgb(2, 6, 23)') || 
+                                bg.includes('rgb(15, 23, 42)') || bg.includes('rgb(10, 10, 10)')) {
+                                target.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+                                target.style.backgroundColor = '#f0f9ff';
+                                target.style.backgroundImage = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Начинаем наблюдение после загрузки DOM
+        document.addEventListener('DOMContentLoaded', function() {
+            observer.observe(document.body, {
+                attributes: true,
+                childList: true,
+                subtree: true
+            });
+        });
+    </script>
 
 .logo-wrap {
     display: flex;

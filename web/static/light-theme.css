@@ -36,6 +36,69 @@ html, body {
   flex-direction: column !important;
 }
 
+/* Принудительно убираем все тёмные фоны */
+* {
+  background-color: transparent !important;
+}
+
+/* Принудительно устанавливаем светлый фон для всех элементов */
+html, body, header, section, div, main, .hero, .hero-inner {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно убираем все inline стили с тёмным фоном */
+*[style*="background"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно убираем все тёмные цвета в любом формате */
+*[style*="#0b1220"],
+*[style*="#1e293b"],
+*[style*="#334155"],
+*[style*="#020617"],
+*[style*="#0f172a"],
+*[style*="#0a0a0a"],
+*[style*="rgb(11, 18, 32)"],
+*[style*="rgb(30, 41, 59)"],
+*[style*="rgb(51, 65, 85)"],
+*[style*="rgb(2, 6, 23)"],
+*[style*="rgb(15, 23, 42)"],
+*[style*="rgb(10, 10, 10)"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно применяем светлую тему для главной страницы (landing) */
+body.landing {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  color: var(--light-text-primary) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов на главной странице */
+body.landing * {
+  background-color: transparent !important;
+}
+
+body.landing html, 
+body.landing body, 
+body.landing header, 
+body.landing section, 
+body.landing div, 
+body.landing main, 
+body.landing .hero, 
+body.landing .hero-inner {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
 /* Контейнер с красивым стеклянным эффектом */
 .container {
   flex: 1 0 auto;
@@ -282,4 +345,246 @@ footer {
 
 .status .status-icon {
   margin-right: 8px;
+}
+
+/* ===== СПЕЦИАЛЬНЫЕ СТИЛИ ДЛЯ ГЛАВНОЙ СТРАНИЦЫ ===== */
+
+/* Принудительно применяем светлую тему для всех элементов на главной странице */
+body.landing .hero {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+body.landing .hero-inner {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* Стили для информационных блоков на главной странице */
+body.landing .info-block {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid var(--light-border) !important;
+  border-left: 4px solid var(--light-accent-primary) !important;
+  color: var(--light-text-primary) !important;
+  margin: 12px auto !important;
+  padding: 20px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px var(--light-shadow) !important;
+}
+
+body.landing .info-block-title {
+  color: var(--light-accent-primary) !important;
+  font-weight: 700 !important;
+  margin-bottom: 12px !important;
+  font-size: 1.1rem;
+}
+
+body.landing .info-block-text {
+  color: var(--light-text-secondary) !important;
+  line-height: 1.6 !important;
+  margin: 0;
+}
+
+/* Стили для кнопок на главной странице */
+body.landing .hero-btn {
+  background: linear-gradient(135deg, var(--light-accent-primary), var(--light-accent-secondary)) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 14px 24px !important;
+  font-weight: 600 !important;
+  font-size: 1rem;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+body.landing .hero-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4) !important;
+  color: #ffffff !important;
+  text-decoration: none;
+}
+
+/* Стили для ссылок на главной странице */
+body.landing .hero-top-links a {
+  color: var(--light-accent-primary) !important;
+  transition: color 0.3s ease !important;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 4px;
+}
+
+body.landing .hero-top-links a:hover {
+  color: #ffffff !important;
+  background: rgba(59, 130, 246, 0.2) !important;
+  text-decoration: none !important;
+}
+
+/* Стили для статусных элементов на главной странице */
+body.landing .status-panel {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+  margin: 20px auto !important;
+  backdrop-filter: blur(10px);
+}
+
+body.landing .status-item {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: var(--light-text-primary) !important;
+  border: 1px solid var(--light-border) !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 2px 8px var(--light-shadow) !important;
+}
+
+/* Стили для заголовка на главной странице */
+body.landing .hero-title {
+  color: var(--light-text-primary) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для футера на главной странице */
+body.landing footer {
+  color: var(--light-text-muted) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--light-border);
+  padding: 16px 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 40px;
+  border-radius: 16px 16px 0 0;
+}
+
+/* ===== ПРИНУДИТЕЛЬНОЕ ПРИМЕНЕНИЕ СВЕТЛОЙ ТЕМЫ ===== */
+
+/* Принудительно применяем светлую тему для всех возможных тёмных классов */
+body.dark,
+body.dark.landing,
+html.dark,
+html.dark.landing {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  color: var(--light-text-primary) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов с тёмными классами */
+body.dark *,
+body.dark.landing *,
+html.dark *,
+html.dark.landing * {
+  background-color: transparent !important;
+}
+
+body.dark html, 
+body.dark body, 
+body.dark header, 
+body.dark section, 
+body.dark div, 
+body.dark main, 
+body.dark .hero, 
+body.dark .hero-inner,
+body.dark.landing html, 
+body.dark.landing body, 
+body.dark.landing header, 
+body.dark.landing section, 
+body.dark.landing div, 
+body.dark.landing main, 
+body.dark.landing .hero, 
+body.dark.landing .hero-inner {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов с тёмными стилями */
+*[style*="background: #0b1220"],
+*[style*="background: #1e293b"],
+*[style*="background: #334155"],
+*[style*="background: #020617"],
+*[style*="background: #0f172a"],
+*[style*="background: #0a0a0a"],
+*[style*="background-color: #0b1220"],
+*[style*="background-color: #1e293b"],
+*[style*="background-color: #334155"],
+*[style*="background-color: #020617"],
+*[style*="background-color: #0f172a"],
+*[style*="background-color: #0a0a0a"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов с тёмными градиентами */
+*[style*="linear-gradient(135deg, #0b1220"],
+*[style*="linear-gradient(135deg, #1e293b"],
+*[style*="linear-gradient(135deg, #334155"],
+*[style*="linear-gradient(135deg, #020617"],
+*[style*="linear-gradient(135deg, #0f172a"],
+*[style*="linear-gradient(180deg, #0b1220"],
+*[style*="linear-gradient(180deg, #1e293b"],
+*[style*="linear-gradient(180deg, #334155"],
+*[style*="linear-gradient(180deg, #020617"],
+*[style*="linear-gradient(180deg, #0f172a"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов с тёмными rgb значениями */
+*[style*="rgb(11, 18, 32)"],
+*[style*="rgb(30, 41, 59)"],
+*[style*="rgb(51, 65, 85)"],
+*[style*="rgb(2, 6, 23)"],
+*[style*="rgb(15, 23, 42)"],
+*[style*="rgb(10, 10, 10)"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов с тёмными rgba значениями */
+*[style*="rgba(11, 18, 32"],
+*[style*="rgba(30, 41, 59"],
+*[style*="rgba(51, 65, 85"],
+*[style*="rgba(2, 6, 23"],
+*[style*="rgba(15, 23, 42"],
+*[style*="rgba(10, 10, 10"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов с тёмными hsl значениями */
+*[style*="hsl(220, 26%, 14%)"],
+*[style*="hsl(220, 26%, 18%)"],
+*[style*="hsl(220, 26%, 22%)"],
+*[style*="hsl(220, 26%, 8%)"],
+*[style*="hsl(220, 26%, 12%)"],
+*[style*="hsl(0, 0%, 4%)"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+}
+
+/* Принудительно применяем светлую тему для всех элементов с тёмными hsla значениями */
+*[style*="hsla(220, 26%, 14%"],
+*[style*="hsla(220, 26%, 18%"],
+*[style*="hsla(220, 26%, 22%"],
+*[style*="hsla(220, 26%, 8%"],
+*[style*="hsla(220, 26%, 12%"],
+*[style*="hsla(0, 0%, 4%"] {
+  background: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
+  background-color: var(--light-bg-secondary) !important;
+  background-image: linear-gradient(135deg, var(--light-bg-gradient-start), var(--light-bg-gradient-end)) !important;
 }
