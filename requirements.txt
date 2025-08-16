@@ -7,5 +7,7 @@ pywhatkit==5.4
 pyautogui==0.9.54
 Pillow==11.2.1
 python-telegram-bot==20.7
+PySocks==1.7.1
+requests[socks]==2.31.0
 pytz==2024.1
 python-dotenv==1.0.0 

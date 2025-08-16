@@ -91,6 +91,15 @@ class NotificationSystem:
                     
             except Exception as e:
                 error_msg = str(e)
+                
+                # Специальная обработка ошибок SOCKS
+                if "Missing dependencies for SOCKS support" in error_msg:
+                    error_msg = "Ошибка SOCKS прокси - попробуйте перезапустить бота"
+                    logger.warning(f"🔧 SOCKS ошибка для {recipient_id}: {e}")
+                elif "SOCKS" in error_msg:
+                    error_msg = "Проблема с SOCKS соединением"
+                    logger.warning(f"🔧 SOCKS проблема для {recipient_id}: {e}")
+                
                 db.update_notification_detail(
                     notification_log_id=notification_log_id,
                     recipient_telegram_id=recipient_id,
