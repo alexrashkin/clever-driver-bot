@@ -29,6 +29,14 @@
             padding: 2rem;
         }
         
+        /* Принудительно показываем фоновое изображение */
+        .hero[style*="background-image"] {
+            background-image: url('/static/hero-background.png') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+        
         /* Адаптивность для мобильных устройств */
         @media (max-width: 768px) {
             .hero {
@@ -800,7 +808,7 @@ html, body, header, section, div, main, .hero, .hero-inner {
     </script>
 
     <!-- Управление темой перенесено в theme-manager.js -->
-    <script src="/static/main.js?v=3"></script>
+    <script src="/static/main.js?v=4"></script>
     <script src="/static/landing.js"></script>
     <script src="/static/theme-manager.js"></script>
 </body>
