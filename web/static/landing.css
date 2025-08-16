@@ -206,13 +206,23 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 @media (max-width: 640px) {
   .hero { 
     min-height: auto; 
-    padding-top: 30px; /* Уменьшил еще больше */
-    padding-bottom: 8px; /* Уменьшил еще больше */
+    padding-top: 20px; /* Уменьшил еще больше */
+    padding-bottom: 4px; /* Уменьшил еще больше */
   }
-  body.landing header .info-block { margin-bottom: 2px !important; } /* Уменьшил еще больше */
-  body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уменьшил еще больше */
-  .hero-top-links { row-gap: 8px; } /* Уменьшил еще больше */
+  body.landing header .info-block { margin-bottom: 1px !important; } /* Уменьшил еще больше */
+  body.landing header .hero-top-links { margin-bottom: 2px !important; } /* Уменьшил еще больше */
+  .hero-top-links { row-gap: 6px; } /* Уменьшил еще больше */
   .hero-words { margin-top: 0px; } /* Убрал отступ */
+  
+  /* Уменьшаем отступы для заголовка */
+  body.landing header {
+    padding: 8px 16px !important;
+  }
+  
+  /* Уменьшаем отступы для hero-title-container */
+  .hero-title-container {
+    margin-bottom: 20px !important;
+  }
 }
 
 /* Responsive adjustments */
@@ -222,17 +232,18 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
 
 @media (max-width: 640px) {
   .hero-cta-row { 
-    gap: 10px; 
+    gap: 8px; 
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
+    margin-top: 8px;
   }
   .hero-cta-row .hero-btn { 
-    width: calc(50% - 5px); 
-    min-width: 140px;
-    max-width: 180px;
-    font-size: 14px;
-    padding: 12px 16px;
+    width: calc(50% - 4px); 
+    min-width: 130px;
+    max-width: 170px;
+    font-size: 13px;
+    padding: 10px 14px;
   }
 }
 
@@ -240,11 +251,56 @@ body.landing header .hero-top-links { margin-bottom: 4px !important; } /* Уме
   .hero-center { font-size: clamp(32px, 7vw, 56px); }
   
   .hero-cta-row .hero-btn { 
-    width: calc(50% - 8px); 
-    min-width: 120px;
-    max-width: 160px;
-    font-size: 13px;
-    padding: 10px 14px;
+    width: calc(50% - 6px); 
+    min-width: 100px;
+    max-width: 140px;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  
+  /* Дополнительные оптимизации для очень маленьких экранов */
+  body.landing div[style*="gap: 10px"] > * {
+    width: calc(50% - 2px) !important;
+    min-width: 90px !important;
+    max-width: 130px !important;
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+  }
+  
+  body.landing .info-block {
+    margin: 2px auto !important;
+    padding: 6px 10px !important;
+  }
+  
+  body.landing .btn-toggle {
+    margin: 1px auto !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+  
+  body.landing footer {
+    padding: 6px 8px !important;
+    font-size: 0.75em !important;
+  }
+  
+  /* Дополнительные оптимизации для заголовка */
+  .hero {
+    padding-top: 15px !important;
+    padding-bottom: 2px !important;
+  }
+  
+  body.landing header {
+    padding: 6px 12px !important;
+  }
+  
+  .hero-title-container {
+    margin-bottom: 15px !important;
+  }
+  
+  /* Уменьшаем размер заголовка */
+  .hero-title {
+    font-size: clamp(20px, 3.5vw, 40px) !important;
+    margin-bottom: 25px !important;
   }
 }
 
@@ -405,15 +461,57 @@ body.landing .hero-cta + div[style*="gap: 10px"] {
     display: flex !important;
     flex-wrap: wrap !important;
     justify-content: center !important;
-    gap: 8px !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
   }
   
   body.landing div[style*="gap: 10px"] > * {
-    width: calc(50% - 4px) !important;
-    min-width: 120px !important;
-    max-width: 160px !important;
-    font-size: 13px !important;
+    width: calc(50% - 3px) !important;
+    min-width: 110px !important;
+    max-width: 150px !important;
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+  
+  /* Уменьшаем отступы для всех элементов на мобильных */
+  body.landing .info-block {
+    margin: 4px auto !important;
     padding: 8px 12px !important;
+  }
+  
+  body.landing .btn-toggle {
+    margin: 2px auto !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  body.landing .status {
+    margin: 2px auto !important;
+  }
+  
+  body.landing .msg {
+    margin: 2px auto !important;
+    font-size: 12px !important;
+  }
+  
+  /* Уменьшаем отступы для hero элементов */
+  body.landing .hero-cta {
+    margin-top: 4px !important;
+  }
+  
+  body.landing .hero-cta-row {
+    margin-top: 4px !important;
+    gap: 6px !important;
+  }
+  
+  /* Уменьшаем отступы для футера */
+  body.landing {
+    padding-bottom: 50px !important;
+  }
+  
+  body.landing footer {
+    padding: 8px 12px !important;
+    font-size: 0.8em !important;
   }
 }
 
