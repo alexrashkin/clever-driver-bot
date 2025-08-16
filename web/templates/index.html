@@ -9,95 +9,7 @@
     <link rel="stylesheet" href="/static/landing.css">
     <link rel="stylesheet" href="/static/modern.css">
     <link rel="stylesheet" href="/static/button-styles.css">
-    <link rel="stylesheet" href="/static/dark-theme.css">
-    
-    <!-- ПРИНУДИТЕЛЬНЫЕ СТИЛИ ДЛЯ ТЕМНОГО ФОНА -->
-    <style>
-        /* MagnumFocus стиль - чистый черный фон */
-        html, body {
-            background: #0a0a0a !important;
-            background-color: #0a0a0a !important;
-            background-image: none !important;
-        }
-        
-        /* Принудительно убираем все светлые фоны */
-        * {
-            background-color: transparent !important;
-        }
-        
-        /* Принудительно устанавливаем темный фон для всех элементов */
-        html, body, header, section, div, main, .hero, .hero-inner {
-            background: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
-            background-color: #0b1220 !important;
-            background-image: linear-gradient(135deg, #0b1220 0%, #1e293b 50%, #334155 100%) !important;
-        }
-    </style>
-    <style>
-/* ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН ДЛЯ ВСЕХ ЭЛЕМЕНТОВ */
-html, body {
-    font-family: 'Inter', Arial, sans-serif;
-    background: #0a0a0a !important;
-    background-color: #0a0a0a !important;
-    background-image: none !important;
-    color: #ffffff !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-height: 100vh !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-/* Принудительно убираем ВСЕ светлые фоны */
-* {
-    background-color: transparent !important;
-}
-
-/* Принудительно устанавливаем темный фон для всех элементов */
-html, body, header, section, div, main {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-    background-color: #020617 !important;
-    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-}
-
-/* Принудительно убираем все возможные светлые фоны */
-body.landing,
-body.dark,
-body.dark.landing,
-html.landing,
-html.dark,
-html.dark.landing {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-    background-color: #020617 !important;
-    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-}
-
-/* Принудительно убираем все inline стили с фоном */
-*[style*="background"] {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-}
-
-/* Принудительно устанавливаем темный фон для всех элементов с inline стилями */
-*[style*="background"] {
-    background: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-    background-color: #020617 !important;
-    background-image: linear-gradient(135deg, #020617 0%, #0f172a 30%, #1e293b 70%, #334155 100%) !important;
-}
-
-.container {
-    flex: 1 0 auto;
-    max-width: 420px;
-    margin: 48px auto 0 auto;
-    background: transparent;
-    border-radius: 18px;
-    box-shadow: none;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    transition: background 0.3s, color 0.3s;
-    color: #ffffff;
-}
+    <link rel="stylesheet" href="/static/light-theme.css">
 
 .logo-wrap {
     display: flex;
@@ -231,34 +143,29 @@ a.btn {
     background: linear-gradient(90deg,#818cf8 0%,#6366f1 100%);
 }
 .theme-btn {
-    min-width: 40px;
-    max-height: 36px;
-    line-height: 1.1;
-    font-size: 1.1em;
-    box-shadow: none;
-    border: none;
-    background: linear-gradient(90deg,#6366f1 0%,#818cf8 100%);
-    padding: 6px 16px;
-}
-
-.theme-btn {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
     border: none;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.1em;
+    width: 50px;
+    height: 50px;
+    font-size: 1.2em;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    min-width: 50px;
+    max-height: 50px;
+    line-height: 1.1;
+    padding: 0;
 }
 
 .theme-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    background: rgba(59, 130, 246, 1);
 }
 .top-nav {
     width: 100vw;
@@ -302,16 +209,17 @@ a.btn {
     }
     
     .theme-btn {
-        min-width: 36px;
-        padding: 6px 12px;
-        background: rgba(255, 255, 255, 0.9);
+        min-width: 40px;
+        padding: 0;
+        background: rgba(59, 130, 246, 0.9);
+        color: white;
         border: none;
         border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        font-size: 1em;
+        width: 40px;
+        height: 40px;
+        font-size: 1.1em;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -335,16 +243,17 @@ a.btn {
     }
     
     .theme-btn {
-        min-width: 32px;
-        padding: 5px 10px;
-        background: rgba(255, 255, 255, 0.9);
+        min-width: 36px;
+        padding: 0;
+        background: rgba(59, 130, 246, 0.9);
+        color: white;
         border: none;
         border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        font-size: 0.9em;
+        width: 36px;
+        height: 36px;
+        font-size: 1em;
         cursor: pointer;
-        box-shadow: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -542,8 +451,13 @@ html, body, header, section, div, main, .hero, .hero-inner {
 }
 </style>
 </head>
-<body class="dark landing">
+<body class="landing">
     <header style="max-width: 980px; margin: 4px auto 0 auto; padding: 0 16px;">
+      <!-- Кнопка переключения темы -->
+      <div style="position: fixed; top: 20px; right: 20px; z-index: 1001;">
+        <button id="theme-toggle" class="nav-btn theme-btn" style="background: rgba(59, 130, 246, 0.9); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">🌙</button>
+      </div>
+      
       {% if not is_authorized %}
       <div class="info-block" style="margin-bottom: 4px;">
         <div class="info-block-title">🚀 Добро пожаловать в «Умный водитель»!</div>
@@ -731,84 +645,9 @@ html, body, header, section, div, main, .hero, .hero-inner {
         window.IS_AUTHORIZED = "{{ is_authorized }}";
     </script>
     
-    <!-- ПРИНУДИТЕЛЬНО УСТАНАВЛИВАЕМ ТЕМНЫЙ ФОН -->
-    <script>
-        // Функция для принудительной установки MagnumFocus стиля
-        function forceMagnumFocusStyle() {
-            // Принудительно устанавливаем MagnumFocus стиль для всех элементов
-            const magnumBackground = '#0a0a0a';
-            
-            // Устанавливаем фон для html и body
-            document.documentElement.style.background = magnumBackground + ' !important';
-            document.documentElement.style.backgroundColor = magnumBackground + ' !important';
-            document.documentElement.style.backgroundImage = 'none !important';
-            
-            document.body.style.background = magnumBackground + ' !important';
-            document.body.style.backgroundColor = magnumBackground + ' !important';
-            document.body.style.backgroundImage = 'none !important';
-            
-            // Устанавливаем фон для всех div, section, header, main
-            const elements = document.querySelectorAll('div, section, header, main, .hero, .hero-inner');
-            elements.forEach(el => {
-                if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
-                    el.style.background = magnumBackground + ' !important';
-                    el.style.backgroundColor = magnumBackground + ' !important';
-                    el.style.backgroundImage = 'none !important';
-                }
-            });
-            
-            // Убираем все светлые фоны
-            const allElements = document.querySelectorAll('*');
-            allElements.forEach(el => {
-                if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
-                    const bg = el.style.background || el.style.backgroundColor || el.style.backgroundImage;
-                    if (bg.includes('white') || bg.includes('#fff') || bg.includes('#ffffff') || 
-                        bg.includes('rgba(255') || bg.includes('rgb(255')) {
-                        el.style.background = magnumBackground + ' !important';
-                        el.style.backgroundColor = magnumBackground + ' !important';
-                        el.style.backgroundImage = 'none !important';
-                    }
-                }
-            });
-        }
-        
-        // Выполняем сразу после загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            forceDarkBackground();
-            
-            // Повторно выполняем через небольшую задержку
-            setTimeout(forceDarkBackground, 100);
-            setTimeout(forceDarkBackground, 500);
-            setTimeout(forceDarkBackground, 1000);
-        });
-        
-        // Выполняем после полной загрузки страницы
-        window.addEventListener('load', function() {
-            forceDarkBackground();
-            setTimeout(forceDarkBackground, 100);
-        });
-        
-        // Выполняем при изменении DOM
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && 
-                    (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
-                    forceDarkBackground();
-                }
-            });
-        });
-        
-        // Начинаем наблюдение
-        document.addEventListener('DOMContentLoaded', function() {
-            observer.observe(document.body, {
-                attributes: true,
-                childList: true,
-                subtree: true
-            });
-        });
-    </script>
+    <!-- Менеджер тем -->
+    <script src="/static/theme-manager.js"></script>
     <script src="/static/main.js?v=2"></script>
     <script src="/static/landing.js"></script>
-    <script src="/static/theme-manager.js"></script>
 </body>
 </html> 

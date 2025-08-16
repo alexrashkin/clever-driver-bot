@@ -24,33 +24,39 @@ body {
   color: var(--text-color) !important;
 }
 
-/* Тёмный фон для главной страницы после авторизации (как на landing page) */
+/* Светлый фон для главной страницы после авторизации */
 body:not(.landing) {
-  background: linear-gradient(180deg, #0b1220 0%, #0b1220 100%) !important;
-  color: #e2e8f0 !important;
+  background: linear-gradient(135deg, #e0f2fe, #f0f9ff) !important;
+  color: #0f172a !important;
 }
 
 /* Специальные стили для главной страницы */
 body:not(.landing) .container {
-  background: rgba(99, 102, 241, 0.08) !important;
-  border-left: 4px solid #6366f1 !important;
-  color: #cbd5e1 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
 body:not(.landing) .status {
-  color: #a5b4fc !important;
-  background: rgba(99, 102, 241, 0.12) !important;
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
 }
 
 body:not(.landing) .msg {
-  background: rgba(16, 185, 129, 0.12) !important;
-  color: #34d399 !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
 }
 
 body:not(.landing) .msg.error {
-  background: rgba(239, 68, 68, 0.12) !important;
-  color: #f87171 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #dc2626 !important;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
 }
 
 /* Glass containers */
@@ -68,24 +74,25 @@ body:not(.landing) .msg.error {
 
 /* Специальные стили для информационных блоков на главной странице */
 body:not(.landing) .info-block {
-  background: rgba(99, 102, 241, 0.08) !important;
-  border-left: 4px solid #6366f1 !important;
-  color: #cbd5e1 !important;
-  margin: 8px auto !important;
-  padding: 16px !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left: 4px solid #3b82f6 !important;
+  color: #0f172a !important;
+  margin: 12px auto !important;
+  padding: 20px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
 }
 
 body:not(.landing) .info-block-title {
-  color: #a5b4fc !important;
-  font-weight: 600 !important;
-  margin-bottom: 8px !important;
+  color: #3b82f6 !important;
+  font-weight: 700 !important;
+  margin-bottom: 12px !important;
 }
 
 body:not(.landing) .info-block-text {
-  color: #cbd5e1 !important;
-  line-height: 1.5 !important;
+  color: #475569 !important;
+  line-height: 1.6 !important;
 }
 
 /* Header blocks */
@@ -100,22 +107,29 @@ body:not(.landing) .info-block-text {
 
 /* Специальные стили для навигации на главной странице */
 body:not(.landing) .navbar {
-  background: linear-gradient(90deg, #6366f1, #8b5cf6) !important;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3) !important;
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25) !important;
+  border-radius: 16px;
 }
 
 body:not(.landing) .navbar-brand {
   color: #fff !important;
   font-weight: 700 !important;
+  font-size: 1.25rem;
 }
 
 body:not(.landing) .nav-link {
   color: rgba(255, 255, 255, 0.9) !important;
-  transition: color 0.3s ease !important;
+  transition: all 0.3s ease !important;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin: 0 4px;
 }
 
 body:not(.landing) .nav-link:hover {
   color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-1px);
 }
 
 /* Tables (light) */
@@ -129,24 +143,25 @@ tr:hover { background: #f1f5f9; }
 
 /* Специальные стили для таблиц на главной странице */
 body:not(.landing) table {
-  background: rgba(99, 102, 241, 0.05) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   border-radius: 12px !important;
   overflow: hidden !important;
+  border: 1px solid #e2e8f0;
 }
 
 body:not(.landing) th {
-  background: rgba(99, 102, 241, 0.15) !important;
-  color: #a5b4fc !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
   font-weight: 600 !important;
 }
 
 body:not(.landing) td {
-  color: #cbd5e1 !important;
-  border-bottom: 1px solid rgba(99, 102, 241, 0.1) !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
 }
 
 body:not(.landing) tr:hover {
-  background: rgba(99, 102, 241, 0.08) !important;
+  background: rgba(59, 130, 246, 0.05) !important;
 }
 
 /* Buttons */
@@ -169,9 +184,9 @@ body:not(.landing) tr:hover {
 
 /* Специальные стили для кнопок на главной странице */
 body:not(.landing) .btn {
-  background: linear-gradient(90deg, #6366f1, #8b5cf6) !important;
+  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
   color: #fff !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
   border: none !important;
   border-radius: 12px !important;
   font-weight: 600 !important;
@@ -180,15 +195,17 @@ body:not(.landing) .btn {
 
 body:not(.landing) .btn:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
 }
 
 body:not(.landing) .btn.btn-toggle {
   width: 60% !important;
   min-width: 220px !important;
   max-width: 320px !important;
-  margin: 0 auto 16px auto !important;
+  margin: 0 auto 20px auto !important;
   display: block !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
 }
 .btn-success { background: linear-gradient(90deg, var(--success-start), var(--success-end)); color: #fff; }
 .btn-danger { background: linear-gradient(90deg, var(--danger-start), var(--danger-end)); color: #fff; }
@@ -204,12 +221,12 @@ a:hover { text-decoration: none; }
 
 /* Специальные стили для ссылок на главной странице */
 body:not(.landing) a {
-  color: #a5b4fc !important;
+  color: #3b82f6 !important;
   transition: color 0.3s ease !important;
 }
 
 body:not(.landing) a:hover {
-  color: #c7d2fe !important;
+  color: #1d4ed8 !important;
   text-decoration: none !important;
 }
 
@@ -223,7 +240,7 @@ body:not(.landing) a:hover {
 
 /* Специальные стили для градиентного текста на главной странице */
 body:not(.landing) .gradient-text {
-  background: linear-gradient(90deg, #a5b4fc, #c7d2fe) !important;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   color: transparent !important;
@@ -237,8 +254,9 @@ body:not(.landing) .gradient-text {
 /* Специальные стили для мобильных устройств на главной странице */
 @media (max-width: 768px) {
   body:not(.landing) .container {
-    margin: 16px auto !important;
-    border-radius: 12px !important;
+    margin: 24px 16px 0 16px !important;
+    border-radius: 20px !important;
+    padding: 20px !important;
   }
   
   body:not(.landing) .btn.btn-toggle {
@@ -246,18 +264,39 @@ body:not(.landing) .gradient-text {
     min-width: 200px !important;
     max-width: 280px !important;
   }
+  
+  body:not(.landing) .navbar {
+    padding: 12px 16px !important;
+  }
 }
 
 /* Специальные стили для футера на главной странице */
 body:not(.landing) footer {
-  color: #94a3b8 !important;
-  background: rgba(11, 18, 32, 0.95) !important;
+  color: #64748b !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(10px) !important;
-  border-top: 1px solid rgba(148, 163, 184, 0.1) !important;
-  padding: 12px 16px !important;
+  border-top: 1px solid #e2e8f0 !important;
+  padding: 16px 20px !important;
   text-align: center !important;
   font-size: 0.9em !important;
-  margin-top: 32px !important;
+  margin-top: 40px !important;
+  border-radius: 16px 16px 0 0;
+}
+
+/* Специальные стили для автоотслеживания на главной странице */
+body:not(.landing) .auto-tracking {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+body:not(.landing) .auto-tracking-status {
+  color: #059669;
+  font-weight: 600;
+  margin-bottom: 12px;
 }
 
 

@@ -9,6 +9,10 @@ class ThemeManager {
 
     init() {
         // Применяем сохранённую тему при загрузке страницы
+        // Если тема не сохранена, применяем светлую по умолчанию
+        if (!localStorage.getItem('theme')) {
+            localStorage.setItem('theme', 'light');
+        }
         this.applyTheme();
         
         // Настраиваем обработчик клика для кнопки переключения
@@ -19,6 +23,7 @@ class ThemeManager {
 
     applyTheme() {
         const savedTheme = localStorage.getItem('theme');
+        // По умолчанию применяем светлую тему, если не сохранена тёмная
         if (savedTheme === 'dark') {
             document.body.classList.add('dark');
             // Применяем тёмный фон для html и body
@@ -64,15 +69,15 @@ class ThemeManager {
     }
 
     applyLightBackground() {
-        // Светлый градиентный фон для страниц about и settings
+        // Светлый градиентный фон для всех страниц
         if (!document.body.classList.contains('landing')) {
-            document.documentElement.style.background = 'linear-gradient(135deg, #eef2ff, #f8fafc)';
-            document.body.style.background = 'linear-gradient(135deg, #eef2ff, #f8fafc)';
+            document.documentElement.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
+            document.body.style.background = 'linear-gradient(135deg, #e0f2fe, #f0f9ff)';
         }
     }
 
     applyDarkBackground() {
-        // Тёмный фон для страниц about и settings
+        // Тёмный фон для всех страниц
         if (!document.body.classList.contains('landing')) {
             document.documentElement.style.background = '#0b1220';
             document.body.style.background = 'linear-gradient(180deg, #0b1220 0%, #0b1220 100%)';
