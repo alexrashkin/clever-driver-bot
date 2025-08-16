@@ -228,9 +228,12 @@
                     return;
                 }
                 
-                // Обработка ошибок OAuth - убрано popup.onerror из-за CORS ограничений
-                
-                // Проверяем состояние popup окна
+                // Запускаем проверку popup окна
+                startPopupCheck(popup);
+            });
+            
+            // Функция проверки popup окна
+            function startPopupCheck(popup) {
                 const checkPopup = setInterval(function() {
                     if (popup.closed) {
                         clearInterval(checkPopup);
@@ -388,60 +391,54 @@
                         }
                     }
                 }, 1000);
+            }
+            
+            // Обработчик сообщений от popup окна
+            window.addEventListener('message', function(event) {
+                console.log('Получено сообщение:', event.origin, event.data);
                 
-                // Обработчик сообщений от popup окна
-                window.addEventListener('message', function(event) {
-                    console.log('Получено сообщение:', event.origin, event.data);
+                if (event.origin === 'https://oauth.telegram.org') {
+                    console.log('Получено сообщение от Telegram OAuth:', event.data);
                     
-                    if (event.origin === 'https://oauth.telegram.org') {
-                        console.log('Получено сообщение от Telegram OAuth:', event.data);
-                        
-                        // Telegram OAuth может отправлять данные как строку JSON
-                        let telegramData = event.data;
-                        if (typeof event.data === 'string') {
-                            try {
-                                telegramData = JSON.parse(event.data);
-                                console.log('Распарсенные данные:', telegramData);
-                            } catch (e) {
-                                console.error('Ошибка парсинга JSON:', e);
-                                return;
-                            }
+                    // Telegram OAuth может отправлять данные как строку JSON
+                    let telegramData = event.data;
+                    if (typeof event.data === 'string') {
+                        try {
+                            telegramData = JSON.parse(event.data);
+                            console.log('Распарсенные данные:', telegramData);
+                        } catch (e) {
+                            console.error('Ошибка парсинга JSON:', e);
+                            return;
                         }
+                    }
+                    
+                    // Проверяем, что это результат авторизации
+                    if (telegramData && telegramData.event === 'auth_result' && telegramData.result) {
+                        console.log('Получены данные авторизации:', telegramData.result);
                         
-                        // Проверяем, что это результат авторизации
-                        if (telegramData && telegramData.event === 'auth_result' && telegramData.result) {
-                            console.log('Получены данные авторизации:', telegramData.result);
-                            
-                            // Сохраняем данные авторизации
-                            const authDataToSave = JSON.stringify(telegramData.result);
-                            console.log('Сохраняем в localStorage:', authDataToSave);
-                            localStorage.setItem('telegram_auth', authDataToSave);
-                            console.log('Данные авторизации сохранены в localStorage');
-                            
-                            // Проверяем, что данные действительно сохранились
-                            const savedData = localStorage.getItem('telegram_auth');
-                            console.log('Проверяем сохраненные данные:', savedData);
-                            
-                            // Закрываем popup окно
-                            if (popup && !popup.closed) {
-                                popup.close();
-                                console.log('Popup окно закрыто');
-                            }
-                        } else {
-                            console.log('Сообщение не является результатом авторизации:', telegramData);
-                            console.log('telegramData.event:', telegramData?.event);
-                            console.log('telegramData.result:', telegramData?.result);
+                        // Сохраняем данные авторизации
+                        const authDataToSave = JSON.stringify(telegramData.result);
+                        console.log('Сохраняем в localStorage:', authDataToSave);
+                        localStorage.setItem('telegram_auth', authDataToSave);
+                        console.log('Данные авторизации сохранены в localStorage');
+                        
+                        // Проверяем, что данные действительно сохранились
+                        const savedData = localStorage.getItem('telegram_auth');
+                        console.log('Проверяем сохраненные данные:', savedData);
+                        
+                        // Закрываем popup окно
+                        if (popup && !popup.closed) {
+                            popup.close();
+                            console.log('Popup окно закрыто');
                         }
                     } else {
-                        console.log('Сообщение от неизвестного источника:', event.origin);
+                        console.log('Сообщение не является результатом авторизации:', telegramData);
+                        console.log('telegramData.event:', telegramData?.event);
+                        console.log('telegramData.result:', telegramData?.result);
                     }
-                });
-                
-
-                
-                // Обработка ошибок в popup окне - убрано из-за CORS ограничений
-                
-
+                } else {
+                    console.log('Сообщение от неизвестного источника:', event.origin);
+                }
             });
             
             // Добавляем hover эффект для кнопки
