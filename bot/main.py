@@ -5,7 +5,6 @@ import os
 import sys
 import time
 import sqlite3
-import httpx
 
 # Добавляем путь к корневой директории проекта
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,7 +12,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, filters, ContextTypes
 )
-from telegram.request import HTTPXRequest
 from config.settings import config
 from bot.handlers import (
     start_command, help_command, handle_text, error_handler, bind_command
@@ -32,13 +30,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LAST_ID_FILE = os.path.join(BASE_DIR, "last_checked_id.txt")  # Теперь файл будет рядом с bot/main.py
 LAST_TIME_FILE = os.path.join(BASE_DIR, "last_checked_time.txt")  # новый файл для времени последнего выхода
 
-def create_http_client():
-    """Создает HTTP клиент без прокси для избежания ошибок SOCKS"""
-    return httpx.AsyncClient(
-        proxies={},
-        trust_env=False,
-        timeout=httpx.Timeout(30.0)
-    )
+
 
 # Удаляю определения функций load_last_checked_id, save_last_checked_id, load_last_checked_time, save_last_checked_time
 
@@ -377,11 +369,13 @@ async def monitor_database(application: Application):
 async def main():
     """Основная функция"""
     try:
-        # Создаем HTTP клиент без прокси
-        http_client = create_http_client()
-        
         # Создаем приложение с настройками таймаутов и отключением прокси
-        application = Application.builder().token(config.TELEGRAM_TOKEN).request(HTTPXRequest(http_client=http_client)).build()
+        application = Application.builder().token(config.TELEGRAM_TOKEN).build()
+        
+        # Отключаем прокси для избежания ошибок SOCKS
+        if hasattr(application.bot, '_request') and hasattr(application.bot._request, '_session'):
+            application.bot._request._session.proxies = {}
+            application.bot._request._session.trust_env = False
         
         # Добавляем обработчики команд
         application.add_handler(CommandHandler("start", start_command))
