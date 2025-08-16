@@ -767,69 +767,7 @@ html, body, header, section, div, main, .hero, .hero-inner {
         window.IS_AUTHORIZED = "{{ is_authorized }}";
     </script>
 
-    <!-- УПРАВЛЕНИЕ ТЕМНЫМ ФОНОМ (только для авторизованных пользователей) -->
-    <script>
-        // Функция для установки темного фона только для авторизованных пользователей
-        function applyDarkThemeForAuthorized() {
-            const isAuthorized = window.IS_AUTHORIZED === "True";
-            
-            if (isAuthorized) {
-                // Добавляем класс authorized к body
-                document.body.classList.add('authorized');
-                console.log('Применяем темный фон для авторизованного пользователя');
-                
-                // Принудительно устанавливаем темный фон
-                const magnumBackground = '#0a0a0a';
-                
-                // Устанавливаем фон для html и body
-                document.documentElement.style.background = magnumBackground;
-                document.documentElement.style.backgroundColor = magnumBackground;
-                document.documentElement.style.backgroundImage = 'none';
-                
-                document.body.style.background = magnumBackground;
-                document.body.style.backgroundColor = magnumBackground;
-                document.body.style.backgroundImage = 'none';
-                
-                // Устанавливаем фон для всех div, section, header, main
-                const elements = document.querySelectorAll('div, section, header, main, .hero, .hero-inner');
-                elements.forEach(el => {
-                    if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
-                        el.style.background = magnumBackground;
-                        el.style.backgroundColor = magnumBackground;
-                        el.style.backgroundImage = 'none';
-                    }
-                });
-                
-                // Убираем все светлые фоны
-                const allElements = document.querySelectorAll('*');
-                allElements.forEach(el => {
-                    if (el.style.background || el.style.backgroundColor || el.style.backgroundImage) {
-                        const bg = el.style.background || el.style.backgroundColor || el.style.backgroundImage;
-                        if (bg.includes('white') || bg.includes('#fff') || bg.includes('#ffffff') || 
-                            bg.includes('rgba(255') || bg.includes('rgb(255'))) {
-                            el.style.background = magnumBackground;
-                            el.style.backgroundColor = magnumBackground;
-                            el.style.backgroundImage = 'none';
-                        }
-                    }
-                });
-            } else {
-                // Убираем класс authorized для неавторизованных пользователей
-                document.body.classList.remove('authorized');
-                console.log('Оставляем оригинальный дизайн для неавторизованного пользователя');
-            }
-        }
-
-        // Выполняем сразу после загрузки DOM
-        document.addEventListener('DOMContentLoaded', function() {
-            applyDarkThemeForAuthorized();
-        });
-
-        // Выполняем после полной загрузки страницы
-        window.addEventListener('load', function() {
-            applyDarkThemeForAuthorized();
-        });
-    </script>
+    <!-- Управление темой перенесено в theme-manager.js -->
     <script src="/static/main.js?v=3"></script>
     <script src="/static/landing.js"></script>
     <script src="/static/theme-manager.js"></script>
