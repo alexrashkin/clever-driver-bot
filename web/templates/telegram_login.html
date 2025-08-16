@@ -125,29 +125,7 @@
             Авторизуйтесь через Telegram для доступа к системе
         </div>
 
-        <!-- Информация о настройке домена -->
-        <div id="domain-info" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px; margin: 20px 0; text-align: left;">
-            <h4 style="color: #dc2626; margin: 0 0 12px 0; font-size: 1.1em;">⚠️ Требуется настройка домена</h4>
-            <p style="color: #7f1d1d; margin: 0 0 12px 0; font-size: 0.9em; line-height: 1.5;">
-                Для работы входа через Telegram необходимо добавить домен <strong>cleverdriver.ru</strong> в настройки бота.
-            </p>
-            <div style="background: rgba(0, 0, 0, 0.05); border-radius: 8px; padding: 12px; font-size: 0.85em; color: #374151;">
-                <strong>Инструкция:</strong><br>
-                1. Откройте @BotFather в Telegram<br>
-                2. Отправьте команду <code>/mybots</code><br>
-                3. Выберите вашего бота<br>
-                4. Нажмите "Bot Settings" → "Domain"<br>
-                5. Добавьте: <code>cleverdriver.ru</code>
-            </div>
-        </div>
-        
-        <!-- Кнопка для показа информации о настройке домена -->
-        <div style="text-align: center; margin: 10px 0;">
-            <button id="show-domain-info" 
-                    style="padding: 8px 16px; background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 0.9em; cursor: pointer; transition: all 0.3s ease;">
-                ℹ️ Информация о настройке домена
-            </button>
-        </div>
+
 
         <div style="margin: 20px 0;">
             <!-- Telegram Login Button вместо виджета -->
@@ -212,19 +190,7 @@
             const loginBtn = document.getElementById('telegram-login-btn');
             const fallbackLogin = document.getElementById('fallback-login');
             
-            // Проверяем, есть ли ошибка в URL (например, после возврата с OAuth)
-            if (window.location.search.includes('error') || window.location.hash.includes('error')) {
-                console.log('Обнаружена ошибка в URL, показываем информационное сообщение');
-                document.getElementById('domain-info').style.display = 'block';
-            }
-            
-            // Проверяем, есть ли сообщение об ошибке в localStorage
-            const errorMessage = localStorage.getItem('telegram_auth_error');
-            if (errorMessage && errorMessage.includes('Bot domain invalid')) {
-                console.log('Обнаружена ошибка "Bot domain invalid" в localStorage');
-                document.getElementById('domain-info').style.display = 'block';
-                localStorage.removeItem('telegram_auth_error');
-            }
+
             
             // Обработчик клика по кнопке входа
             loginBtn.addEventListener('click', function() {
@@ -420,7 +386,6 @@
                 } else {
                             console.log('Данные авторизации не найдены в localStorage');
                         }
-                }
             }, 1000);
                 
                 // Обработчик сообщений от popup окна
@@ -471,44 +436,11 @@
                     }
                 });
                 
-                // Обработка ошибок OAuth
-                window.addEventListener('error', function(event) {
-                    console.error('Ошибка OAuth:', event.error);
-                    if (event.error && event.error.message && event.error.message.includes('Bot domain invalid')) {
-                        console.error('Обнаружена ошибка "Bot domain invalid"');
-                        document.getElementById('domain-info').style.display = 'block';
-                    }
-                });
+
                 
                 // Обработка ошибок в popup окне - убрано из-за CORS ограничений
                 
-                // Дополнительная проверка на ошибки через URL параметры
-                function checkForOAuthErrors() {
-                    // Проверяем URL на наличие ошибок
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                    
-                    if (urlParams.has('error') || hashParams.has('error')) {
-                        const errorValue = urlParams.get('error') || hashParams.get('error');
-                        console.log('Обнаружена ошибка в URL:', errorValue);
-                        
-                        if (errorValue.includes('domain') || errorValue.includes('invalid')) {
-                            console.error('Обнаружена ошибка домена, показываем информационное сообщение');
-                            document.getElementById('domain-info').style.display = 'block';
-                        }
-                    }
-                    
-                    // Проверяем, есть ли сообщение об ошибке в localStorage
-                    const errorMessage = localStorage.getItem('telegram_auth_error');
-                    if (errorMessage && (errorMessage.includes('Bot domain invalid') || errorMessage.includes('domain'))) {
-                        console.log('Обнаружена ошибка домена в localStorage');
-                        document.getElementById('domain-info').style.display = 'block';
-                        localStorage.removeItem('telegram_auth_error');
-                    }
-                }
-                
-                // Запускаем проверку ошибок
-                checkForOAuthErrors();
+
             });
             
             // Добавляем hover эффект для кнопки
@@ -522,22 +454,7 @@
                 this.style.boxShadow = '0 4px 15px rgba(0, 136, 204, 0.3)';
             });
             
-            // Обработчик для кнопки показа информации о настройке домена
-            const showDomainInfoBtn = document.getElementById('show-domain-info');
-            if (showDomainInfoBtn) {
-                showDomainInfoBtn.addEventListener('click', function() {
-                    const domainInfo = document.getElementById('domain-info');
-                    if (domainInfo.style.display === 'none') {
-                        domainInfo.style.display = 'block';
-                        this.textContent = '🔒 Скрыть информацию';
-                        this.style.background = 'rgba(239, 68, 68, 0.2)';
-                    } else {
-                        domainInfo.style.display = 'none';
-                        this.textContent = 'ℹ️ Информация о настройке домена';
-                        this.style.background = 'rgba(239, 68, 68, 0.1)';
-                    }
-                });
-            }
+
         });
     </script>
 </body>
